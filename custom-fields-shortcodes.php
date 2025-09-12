@@ -4,7 +4,7 @@ Plugin Name: Contact Custom Fields Shortcodes
 Description: Gestionare câmpuri personalizate și construirea mesajului Contact Info.
 Version: 0.0.1
 Author: Steel..xD
-GitHub Plugin URI: https://github.com/vadikonline1/Contact-Custom-Fields-Wordpress
+GitHub Plugin URI: https://github.com/vadikonline1/custom-fields-shortcodes/
 */
 
 if (!defined('ABSPATH')) exit;
