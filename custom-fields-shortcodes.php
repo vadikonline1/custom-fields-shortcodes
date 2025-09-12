@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: Concat Custom Fields Shortcodes
+Plugin Name: Contact Custom Fields Shortcodes
 Description: Gestionare câmpuri personalizate și construirea mesajului Contact Info.
 Version: 0.0.1
 Author: Steel..xD
@@ -11,6 +11,22 @@ if (!defined('ABSPATH')) exit;
 
 if (!class_exists('WP_List_Table')) {
     require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
+}
+
+// === Setări link în lista pluginurilor
+add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'custom_function_settings_link');
+function custom_function_settings_link($links) {
+    $settings_link = '<a href="' . admin_url('admin.php?page=custom-fields-shortcodes') . '">Setări</a>';
+    array_unshift($links, $settings_link);
+    return $links;
+}
+
+add_filter('plugin_row_meta', 'custom_plugin_row_meta', 10, 4);
+function custom_plugin_row_meta($links, $file, $plugin_data, $status) {
+    if ($file === plugin_basename(__FILE__)) {
+        $links[] = '<a href="https://github.com/vadikonline1/custom-fields-shortcodes" target="_blank">Documentație</a>';
+    }
+    return $links;
 }
 
 // =======================
@@ -116,7 +132,7 @@ class CFS_List_Table extends WP_List_Table {
 // 2. Admin Menu
 // =======================
 add_action('admin_menu',function(){
-    add_menu_page('Contact - Fields','Contact - Fields','manage_options','custom-fields-shortcodes','cfs_admin_page','dashicons-edit',20);
+    add_menu_page('Custom Shortcodes','Custom Shortcodes','manage_options','custom-fields-shortcodes','cfs_admin_page','dashicons-edit',20);
 });
 
 // =======================
