@@ -1,8 +1,8 @@
 <?php
 /*
 Plugin Name: Contact Custom Fields Shortcodes
-Description: Gestionare câmpuri personalizate și construirea mesajului Contact Info.
-Version: 0.0.1
+Description: Manage custom fields, export/import JSON, build Contact Info message with wp_editor, mobile-friendly modals.
+Version: 0.6.0
 Author: Steel..xD
 GitHub Plugin URI: https://github.com/vadikonline1/custom-fields-shortcodes/
 */
@@ -13,132 +13,77 @@ if (!class_exists('WP_List_Table')) {
     require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 }
 
-// === Setări link în lista pluginurilor
-add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'custom_function_settings_link');
-function custom_function_settings_link($links) {
-    $settings_link = '<a href="' . admin_url('admin.php?page=custom-fields-shortcodes') . '">Setări</a>';
+// Settings link
+add_filter('plugin_action_links_' . plugin_basename(__FILE__), function($links) {
+    $settings_link = '<a href="' . admin_url('admin.php?page=custom-fields-shortcodes') . '">Settings</a>';
     array_unshift($links, $settings_link);
     return $links;
-}
+});
 
-add_filter('plugin_row_meta', 'custom_plugin_row_meta', 10, 4);
-function custom_plugin_row_meta($links, $file, $plugin_data, $status) {
+// Row meta
+add_filter('plugin_row_meta', function($links, $file) {
     if ($file === plugin_basename(__FILE__)) {
-        $links[] = '<a href="https://github.com/vadikonline1/custom-fields-shortcodes" target="_blank">Documentație</a>';
+        $links[] = '<a href="https://github.com/vadikonline1/custom-fields-shortcodes" target="_blank">Docs</a>';
     }
     return $links;
-}
+}, 10, 2);
 
-// =======================
-// 1. Clasa pentru tabel
-// =======================
+// Table class
 class CFS_List_Table extends WP_List_Table {
     private $fields;
-
     public function __construct($fields) {
-        parent::__construct([
-            'singular'=>'field',
-            'plural'=>'fields',
-            'ajax'=>false
-        ]);
+        parent::__construct(['singular'=>'field','plural'=>'fields','ajax'=>false]);
         $this->fields = $fields;
     }
-
     public function get_columns() {
         return [
-            'cb' => '<input type="checkbox" />',
-            'name' => 'Nume',
-            'value' => 'Valoare',
-            'shortcode' => 'Shortcode',
-            'php_shortcode'=> 'PHP Shortcode',
-            'actions' => 'Acțiuni'
+            'cb'=>'<input type="checkbox" />',
+            'name'=>'Name',
+            'value'=>'Value',
+            'shortcode'=>'Shortcode',
+            'php_shortcode'=>'PHP Shortcode',
+            'actions'=>'Actions'
         ];
     }
-
-    public function get_sortable_columns() {
-        return ['name'=>['name',false]];
-    }
-
     public function prepare_items() {
-        $columns = $this->get_columns();
-        $hidden = [];
-        $sortable = $this->get_sortable_columns();
-        $this->_column_headers = [$columns,$hidden,$sortable];
-
         $data = [];
         foreach($this->fields as $name=>$value){
             $data[] = ['name'=>$name,'value'=>$value];
         }
-
-        // Căutare
-        if(!empty($_REQUEST['s'])){
-            $search = strtolower($_REQUEST['s']);
-            $data = array_filter($data,function($item) use($search){
-                return strpos(strtolower($item['name']),$search)!==false;
-            });
-        }
-
-        // Sortare
-        usort($data,function($a,$b){
-            $order = $_REQUEST['order'] ?? 'asc';
-            $res = strcmp($a['name'],$b['name']);
-            return ($order==='asc')?$res:-$res;
-        });
-
-        // Paginare
-        $per_page = 20;
-        $current_page = $this->get_pagenum();
-        $total_items = count($data);
-        $data = array_slice($data,($current_page-1)*$per_page,$per_page);
-
-        $this->items = $data;
-        $this->set_pagination_args(['total_items'=>$total_items,'per_page'=>$per_page]);
+        $columns=$this->get_columns();
+        $this->_column_headers=[$columns,[],[]];
+        $this->items=$data;
     }
-
-    public function column_cb($item){
-        return '<input type="checkbox" name="fields[]" value="'.esc_attr($item['name']).'">';
-    }
-
-    public function column_name($item){
-        return '<strong>'.esc_html($item['name']).'</strong>';
-    }
-
+    public function column_cb($item){ return '<input type="checkbox" name="fields[]" value="'.esc_attr($item['name']).'">'; }
+    public function column_name($item){ return '<strong>'.esc_html($item['name']).'</strong>'; }
     public function column_value($item){
-        $text = wp_strip_all_tags($item['value']);
-        if(strlen($text)>100) $text = substr($text,0,100).'…';
-        return '<div style="max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="'.esc_attr($item['value']).'">'.esc_html($text).'</div>';
+        $text=wp_strip_all_tags($item['value']);
+        if(strlen($text)>100) $text=substr($text,0,100).'…';
+        return '<div title="'.esc_attr($item['value']).'">'.esc_html($text).'</div>';
     }
-
     public function column_shortcode($item){
-        $code = '[cfs field="'.esc_attr($item['name']).'"]';
+        $code='[cfs field="'.esc_attr($item['name']).'"]';
         return '<code class="copy-on-dblclick">'.esc_html($code).'</code>';
     }
-
     public function column_php_shortcode($item){
-        $code = 'echo do_shortcode(\'[cfs field="'.esc_attr($item['name']).'"]\');';
+        $code='echo do_shortcode(\'[cfs field="'.esc_attr($item['name']).'"]\');';
         return '<code class="copy-on-dblclick">'.esc_html($code).'</code>';
     }
-
     public function column_actions($item){
-        return '<button type="button" class="button edit-field" data-name="'.esc_attr($item['name']).'" data-value="'.esc_attr($item['value']).'">Editează</button>';
+        return '<button type="button" class="button edit-field" data-name="'.esc_attr($item['name']).'" data-value="'.esc_attr($item['value']).'">Edit</button>';
     }
-
-    public function get_bulk_actions(){
-        return ['delete'=>'Șterge'];
-    }
+    public function get_bulk_actions(){ return ['delete'=>'Delete']; }
 }
 
-// =======================
-// 2. Admin Menu
-// =======================
-add_action('admin_menu',function(){
+// Admin menu
+add_action('admin_menu', function(){
     add_menu_page('Custom Shortcodes','Custom Shortcodes','manage_options','custom-fields-shortcodes','cfs_admin_page','dashicons-edit',20);
 });
 
-// =======================
-// 3. Pagina Admin
-// =======================
+// Admin page
 function cfs_admin_page(){
+    if(!current_user_can('administrator')) wp_die('Access denied.');
+
     $fields = get_option('cfs_fields',[]);
     $contact_message = get_option('contact_info_message','');
 
@@ -147,14 +92,14 @@ function cfs_admin_page(){
             case 'add':
                 $name = sanitize_key($_POST['field_name']);
                 if(!empty($name) && !isset($fields[$name])){
-                    $fields[$name] = wp_kses_post($_POST['field_value']);
+                    $fields[$name] = wp_unslash($_POST['field_value']);
                     update_option('cfs_fields',$fields);
                 }
                 break;
             case 'edit':
                 $name = sanitize_key($_POST['field_name']);
                 if(isset($fields[$name])){
-                    $fields[$name] = wp_kses_post($_POST['field_value']);
+                    $fields[$name] = wp_unslash($_POST['field_value']);
                     update_option('cfs_fields',$fields);
                 }
                 break;
@@ -164,105 +109,123 @@ function cfs_admin_page(){
                     update_option('cfs_fields',$fields);
                 }
                 break;
-            case 'import':
+            case 'import_json':
                 if(!empty($_FILES['import_file']['tmp_name'])){
                     $content = file_get_contents($_FILES['import_file']['tmp_name']);
-                    if($_POST['import_type']==='json'){
-                        $data = json_decode($content,true);
-                    }else{
-                        $lines = explode("\n",$content);
-                        $data=[];
-                        foreach($lines as $line){
-                            $parts = str_getcsv($line);
-                            if(count($parts)===2) $data[$parts[0]]=$parts[1];
-                        }
-                    }
+                    $data = json_decode($content,true);
                     if(is_array($data)){
-                        $fields = array_merge($fields,$data);
-                        update_option('cfs_fields',$fields);
+                        $mode = $_POST['import_mode'] ?? 'overwrite';
+                        if($mode==='rewrite_all') $fields = [];
+                        foreach($data as $key=>$val){
+                            $new_key = sanitize_key($key);
+                            if($mode==='merge' && isset($fields[$new_key])){
+                                $suffix = 1;
+                                while(isset($fields[$new_key.'_'.$suffix])) $suffix++;
+                                $new_key = $new_key.'_'.$suffix;
+                            }
+                            $fields[$new_key] = $val;
+                        }
+                        update_option('cfs_fields', $fields);
                     }
                 }
                 break;
             case 'save_contact_info':
-                $contact_message = wp_kses_post($_POST['contact_info_message']);
+                $contact_message = wp_unslash($_POST['contact_info_message']);
                 update_option('contact_info_message',$contact_message);
                 break;
+            case 'export_json':
+                header('Content-Type: application/json');
+                header('Content-Disposition: attachment; filename="cfs-export.json"');
+                echo json_encode($fields, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+                exit;
         }
+        wp_safe_redirect(admin_url('admin.php?page=custom-fields-shortcodes'));
+        exit;
     }
 
     $table = new CFS_List_Table($fields);
     $table->prepare_items();
     ?>
-    <style>
-    /* POPUP ELEGANT CSS */
-    .cfs-modal-overlay {
-        position: fixed; top:0; left:0; width:100%; height:100%;
-        background: rgba(0,0,0,0.6); display:none; z-index:9998;
-    }
-    .cfs-modal {
-        background:#fff; border-radius:8px; padding:20px;
-        max-width:700px; width:90%; margin:50px auto;
-        position:relative; z-index:9999; box-shadow:0 5px 20px rgba(0,0,0,0.3);
-    }
-    .cfs-modal h2 { margin-top:0; font-size:1.5em; }
-    .cfs-modal textarea { width:100%; padding:8px; font-size:14px; border:1px solid #ccc; border-radius:4px; }
-    .cfs-modal select { width:100%; padding:6px; border-radius:4px; margin-bottom:10px; }
-    .cfs-modal .cfs-close { position:absolute; top:10px; right:10px; cursor:pointer; font-size:20px; color:#888; }
-    .cfs-modal button.button { margin-top:10px; }
-    </style>
-
     <div class="wrap">
         <h1>Custom Fields Shortcodes</h1>
+
         <div style="margin-bottom:15px;">
-            <button id="openImportModal" class="button">Export/Import</button>
-            <button id="openAddModal" class="button button-primary">Adaugă un nou câmp</button>
-            <button id="openContactInfoModal" class="button button-secondary">Contact Info</button>
+            <button id="openImportModal" class="button">Import JSON</button>
+            <form method="post" style="display:inline-block; margin-left:10px;">
+                <?php wp_nonce_field('cfs_save_fields'); ?>
+                <input type="hidden" name="cfs_action" value="export_json">
+                <button type="submit" class="button">Export JSON</button>
+            </form>
+            <button id="openAddModal" class="button button-primary" style="margin-left:10px;">Add New Field</button>
+            <button id="openContactInfoModal" class="button button-secondary" style="margin-left:10px;">Contact Info</button>
         </div>
 
         <form method="post">
             <?php wp_nonce_field('cfs_save_fields'); ?>
             <input type="hidden" name="cfs_action" value="delete_bulk">
-            <?php $table->search_box('Caută','search_id'); ?>
             <?php $table->display(); ?>
         </form>
     </div>
 
-    <!-- MODAL ELEGANT ADD -->
-    <div class="cfs-modal-overlay" id="modalAdd">
+    <!-- MODALS -->
+    <!-- Import JSON Modal -->
+    <div class="cfs-modal-overlay" id="modalImport">
         <div class="cfs-modal">
-            <span class="cfs-close" data-target="#modalAdd">&times;</span>
-            <h2>Adaugă un nou câmp</h2>
-            <form method="post">
+            <span class="cfs-close" data-target="#modalImport">&times;</span>
+            <h2>Import JSON</h2>
+            <form method="post" enctype="multipart/form-data">
                 <?php wp_nonce_field('cfs_save_fields'); ?>
-                <input type="hidden" name="cfs_action" value="add">
-                <p><label>Nume (minuscule):</label></p>
-                <input type="text" name="field_name" required>
-                <p><label>Valoare:</label></p>
-                <textarea name="field_value" rows="6"></textarea>
-                <p><button type="submit" class="button button-primary">Salvează</button></p>
+                <input type="hidden" name="cfs_action" value="import_json">
+                <p><label>Select JSON File:</label></p>
+                <input type="file" name="import_file" accept=".json" required>
+                <p><strong>Import Options:</strong></p>
+                <p><label><input type="radio" name="import_mode" value="overwrite" checked> Overwrite existing fields</label><br>
+                <small>If a field exists, its value will be replaced with the new one.</small></p>
+                <p><label><input type="radio" name="import_mode" value="merge"> Merge with existing fields</label><br>
+                <small>If a field exists, a suffix _1, _2, ... will be added until unique.</small></p>
+                <p><label><input type="radio" name="import_mode" value="rewrite_all"> Rewrite all</label><br>
+                <small>All existing fields will be deleted before import.</small></p>
+                <p><button type="submit" class="button button-primary">Import JSON</button></p>
             </form>
         </div>
     </div>
 
-    <!-- MODAL ELEGANT EDIT -->
+    <!-- Add Field Modal -->
+    <div class="cfs-modal-overlay" id="modalAdd">
+        <div class="cfs-modal">
+            <span class="cfs-close" data-target="#modalAdd">&times;</span>
+            <h2>Add New Field</h2>
+            <form method="post">
+                <?php wp_nonce_field('cfs_save_fields'); ?>
+                <input type="hidden" name="cfs_action" value="add">
+                <p><label>Name (lowercase):</label></p>
+                <input type="text" name="field_name" required>
+                <p><label>Value:</label></p>
+                <?php wp_editor('', 'field_value', ['textarea_name'=>'field_value','media_buttons'=>true,'teeny'=>true]); ?>
+                <p><button type="submit" class="button button-primary">Save</button></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Field Modal -->
     <div class="cfs-modal-overlay" id="modalEdit">
         <div class="cfs-modal">
             <span class="cfs-close" data-target="#modalEdit">&times;</span>
-            <h2>Editează valoare</h2>
+            <h2>Edit Field</h2>
             <form method="post">
                 <?php wp_nonce_field('cfs_save_fields'); ?>
                 <input type="hidden" name="cfs_action" value="edit">
                 <input type="hidden" name="field_name" id="edit_field_name">
-                <p><label>Nume:</label></p>
+                <p><label>Name:</label></p>
                 <input type="text" id="display_field_name" disabled style="background:#f0f0f0;">
-                <p><label>Valoare:</label></p>
-                <textarea id="edit_field_value" name="field_value" rows="6"></textarea>
-                <p><button type="submit" class="button button-primary">Actualizează</button></p>
+                <p><label>Value:</label></p>
+                <?php wp_editor('', 'edit_field_value', ['textarea_name'=>'field_value','media_buttons'=>true,'teeny'=>true]); ?>
+                <p><button type="submit" class="button button-primary">Update</button></p>
             </form>
         </div>
     </div>
 
-    <!-- MODAL ELEGANT CONTACT INFO -->
+    <!-- Contact Info Modal -->
     <div class="cfs-modal-overlay" id="modalContactInfo">
         <div class="cfs-modal">
             <span class="cfs-close" data-target="#modalContactInfo">&times;</span>
@@ -270,71 +233,71 @@ function cfs_admin_page(){
             <form method="post">
                 <?php wp_nonce_field('cfs_save_fields'); ?>
                 <input type="hidden" name="cfs_action" value="save_contact_info">
-                <p><label>Text mesaj:</label></p>
-                <textarea id="contact_info_message" name="contact_info_message" rows="10"><?php echo esc_textarea(stripslashes($contact_message)); ?></textarea>
-                <p><label>Inserare shortcut din tabel:</label></p>
-                <select id="cfs_shortcut_select">
-                    <option value="">Selectează câmp</option>
+                <?php wp_editor(stripslashes($contact_message), 'contact_info_message', ['textarea_name'=>'contact_info_message','media_buttons'=>true,'teeny'=>true,'textarea_rows'=>10]); ?>
+                <p><button type="button" id="toggle_fields_list" class="button">Insert Field</button></p>
+                <div id="fields_list">
                     <?php foreach($fields as $name=>$value): ?>
-                        <option value="<?php echo esc_attr($name); ?>"><?php echo esc_html($name); ?></option>
+                        <div class="cfs-field-item" data-field="<?php echo esc_attr($name); ?>"><?php echo esc_html($name); ?></div>
                     <?php endforeach; ?>
-                </select>
-                <p><button type="button" id="insert_selected_shortcut" class="button">Insert Shortcut</button></p>
-                <p><button type="submit" class="button button-primary">Salvează mesajul</button></p>
+                </div>
+                <p><button type="submit" class="button button-primary">Save Message</button></p>
             </form>
         </div>
     </div>
 
+    <!-- JS -->
     <script>
     jQuery(document).ready(function($){
-        function openModal(id){ $(id).fadeIn(); }
-        function closeModal(id){ $(id).fadeOut(); }
+        $('#openImportModal').click(()=>$('#modalImport').fadeIn());
+        $('#openAddModal').click(()=>$('#modalAdd').fadeIn());
+        $('#openContactInfoModal').click(()=>$('#modalContactInfo').fadeIn());
 
-        $('#openAddModal').click(function(){ openModal('#modalAdd'); });
-        $('#openContactInfoModal').click(function(){ openModal('#modalContactInfo'); });
+        $('.cfs-close').click(function(){ $($(this).data('target')).fadeOut(); });
+        $(window).on('click',function(e){ if($(e.target).hasClass('cfs-modal-overlay')) $(e.target).fadeOut(); });
+
         $('.edit-field').click(function(){
-            var name = $(this).data('name');
-            var value = $(this).data('value');
+            var name=$(this).data('name');
+            var value=$(this).data('value');
             $('#edit_field_name').val(name);
             $('#display_field_name').val(name);
-            $('#edit_field_value').val(value);
-            openModal('#modalEdit');
+            if(tinymce.get('edit_field_value')) tinymce.get('edit_field_value').setContent(value);
+            $('#modalEdit').fadeIn();
         });
 
-        $('.cfs-close').click(function(){ closeModal($(this).data('target')); });
-        $(window).on('click',function(e){
-            if($(e.target).hasClass('cfs-modal-overlay')) $(e.target).fadeOut();
-        });
+        $(document).on('dblclick','.copy-on-dblclick',function(){ navigator.clipboard.writeText($(this).text()); alert('Copied: '+$(this).text()); });
 
-        // Copiere la dublu click
-        $(document).on('dblclick','.copy-on-dblclick',function(){
-            navigator.clipboard.writeText($(this).text());
-            alert('Copiat: '+$(this).text());
-        });
+        $('#toggle_fields_list').click(function(){ $('#fields_list').toggle(); });
 
-        // Insert shortcut în textarea
-        $('#insert_selected_shortcut').click(function(){
-            var field = $('#cfs_shortcut_select').val();
-            if(!field) return;
-            var shortcode = '[cfs field="'+field+'"]';
-            var ta = $('#contact_info_message');
-            ta.val(ta.val()+shortcode);
+        $(document).on('dblclick','.cfs-field-item',function(){
+            var field=$(this).data('field');
+            var shortcode='[cfs field="'+field+'"]';
+            if(tinymce.get('contact_info_message')){
+                tinymce.get('contact_info_message').execCommand('mceInsertContent',false,shortcode);
+            }else $('#contact_info_message').val($('#contact_info_message').val()+shortcode);
         });
     });
     </script>
 
+    <!-- CSS -->
+    <style>
+    .cfs-modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter: blur(2px);display:none;z-index:9998;}
+    .cfs-modal{background:#fff;border-radius:12px;padding:25px;max-width:700px;width:90%;margin:50px auto;position:relative;z-index:9999;box-shadow:0 8px 25px rgba(0,0,0,0.35);max-height:80vh;overflow-y:auto;transition: all 0.3s ease;}
+    .cfs-modal h2{margin-top:0;font-size:1.7em;font-weight:600;color:#333;}
+    .cfs-modal .cfs-close{position:absolute;top:12px;right:12px;cursor:pointer;font-size:24px;color:#555;transition:color 0.2s ease;}
+    .cfs-modal .cfs-close:hover{color:#000;}
+    #fields_list{display:none;border:1px solid #ccc;border-radius:6px;padding:10px;margin:10px 0;max-height:200px;overflow:auto;background:#fafafa;}
+    .cfs-field-item{cursor:pointer;padding:5px 8px;border-radius:4px;transition: background 0.2s ease;}
+    .cfs-field-item:hover{background:#e0f7ff;}
+    @media (max-width: 768px){.cfs-modal{width:95%;margin:30px auto;padding:20px;} .cfs-modal h2{font-size:1.4em;} #fields_list{max-height:150px;}}
+    </style>
+
 <?php
 }
 
-// =======================
-// 4. Shortcode
-// =======================
+// Shortcode
 add_shortcode('cfs',function($atts){
     $atts=shortcode_atts(['field'=>''],$atts);
     $fields=get_option('cfs_fields',[]);
-    if($atts['field']==='contact_info_message') {
-        $text = stripslashes(get_option('contact_info_message',''));
-        return do_shortcode($text); // procesăm shortcode-urile din text
-    }
-    return isset($fields[$atts['field']]) ? stripslashes($fields[$atts['field']]) : '';
+    if($atts['field']==='contact_info_message') return do_shortcode(stripslashes(get_option('contact_info_message','')));
+    return isset($fields[$atts['field']])?stripslashes($fields[$atts['field']]):'';
 });
