@@ -2,7 +2,7 @@
 /*
 Plugin Name: Contact Custom Fields Shortcodes
 Description: Manage custom fields, export/import JSON, build Contact Info message with wp_editor, mobile-friendly modals.
-Version: 0.6.0
+Version: 0.6.1
 Author: Steel..xD
 GitHub Plugin URI: https://github.com/vadikonline1/custom-fields-shortcodes/
 */
