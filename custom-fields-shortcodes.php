@@ -2,7 +2,7 @@
 /*
 Plugin Name: Contact Custom Fields Shortcodes
 Description: Manage custom fields, export/import JSON, build Contact Info message with wp_editor, mobile-friendly modals.
-Version: 0.6.1
+Version: 0.6.2
 Author: Steel..xD
 GitHub Plugin URI: https://github.com/vadikonline1/custom-fields-shortcodes/
 */
@@ -185,7 +185,9 @@ function cfs_admin_page(){
                 <small>If a field exists, a suffix _1, _2, ... will be added until unique.</small></p>
                 <p><label><input type="radio" name="import_mode" value="rewrite_all"> Rewrite all</label><br>
                 <small>All existing fields will be deleted before import.</small></p>
-                <p><button type="submit" class="button button-primary">Import JSON</button></p>
+                <div class="cfs-modal-footer">
+                    <button type="submit" class="button button-primary">Import JSON</button>
+                </div>
             </form>
         </div>
     </div>
@@ -201,8 +203,16 @@ function cfs_admin_page(){
                 <p><label>Name (lowercase):</label></p>
                 <input type="text" name="field_name" required>
                 <p><label>Value:</label></p>
-                <?php wp_editor('', 'field_value', ['textarea_name'=>'field_value','media_buttons'=>true,'teeny'=>true]); ?>
-                <p><button type="submit" class="button button-primary">Save</button></p>
+                <?php wp_editor('', 'field_value', [
+                    'textarea_name'=>'field_value',
+                    'media_buttons'=>true,
+                    'teeny'=>false,
+                    'quicktags'=>true,
+                    'textarea_rows'=>10
+                ]); ?>
+                <div class="cfs-modal-footer">
+                    <button type="submit" class="button button-primary">Save</button>
+                </div>
             </form>
         </div>
     </div>
@@ -219,8 +229,16 @@ function cfs_admin_page(){
                 <p><label>Name:</label></p>
                 <input type="text" id="display_field_name" disabled style="background:#f0f0f0;">
                 <p><label>Value:</label></p>
-                <?php wp_editor('', 'edit_field_value', ['textarea_name'=>'field_value','media_buttons'=>true,'teeny'=>true]); ?>
-                <p><button type="submit" class="button button-primary">Update</button></p>
+                <?php wp_editor('', 'edit_field_value', [
+                    'textarea_name'=>'field_value',
+                    'media_buttons'=>true,
+                    'teeny'=>false,
+                    'quicktags'=>true,
+                    'textarea_rows'=>10
+                ]); ?>
+                <div class="cfs-modal-footer">
+                    <button type="submit" class="button button-primary">Update</button>
+                </div>
             </form>
         </div>
     </div>
@@ -233,14 +251,22 @@ function cfs_admin_page(){
             <form method="post">
                 <?php wp_nonce_field('cfs_save_fields'); ?>
                 <input type="hidden" name="cfs_action" value="save_contact_info">
-                <?php wp_editor(stripslashes($contact_message), 'contact_info_message', ['textarea_name'=>'contact_info_message','media_buttons'=>true,'teeny'=>true,'textarea_rows'=>10]); ?>
+                <?php wp_editor(stripslashes($contact_message), 'contact_info_message', [
+                    'textarea_name'=>'contact_info_message',
+                    'media_buttons'=>true,
+                    'teeny'=>false,
+                    'quicktags'=>true,
+                    'textarea_rows'=>12
+                ]); ?>
                 <p><button type="button" id="toggle_fields_list" class="button">Insert Field</button></p>
                 <div id="fields_list">
                     <?php foreach($fields as $name=>$value): ?>
                         <div class="cfs-field-item" data-field="<?php echo esc_attr($name); ?>"><?php echo esc_html($name); ?></div>
                     <?php endforeach; ?>
                 </div>
-                <p><button type="submit" class="button button-primary">Save Message</button></p>
+                <div class="cfs-modal-footer">
+                    <button type="submit" class="button button-primary">Save Message</button>
+                </div>
             </form>
         </div>
     </div>
@@ -253,18 +279,26 @@ function cfs_admin_page(){
         $('#openContactInfoModal').click(()=>$('#modalContactInfo').fadeIn());
 
         $('.cfs-close').click(function(){ $($(this).data('target')).fadeOut(); });
-        $(window).on('click',function(e){ if($(e.target).hasClass('cfs-modal-overlay')) $(e.target).fadeOut(); });
 
+        // Fix: load value in editor after modal open
         $('.edit-field').click(function(){
             var name=$(this).data('name');
             var value=$(this).data('value');
             $('#edit_field_name').val(name);
             $('#display_field_name').val(name);
-            if(tinymce.get('edit_field_value')) tinymce.get('edit_field_value').setContent(value);
-            $('#modalEdit').fadeIn();
+            $('#modalEdit').fadeIn(function(){
+                if(tinymce.get('edit_field_value')){
+                    tinymce.get('edit_field_value').setContent(value);
+                }else{
+                    $('#edit_field_value').val(value);
+                }
+            });
         });
 
-        $(document).on('dblclick','.copy-on-dblclick',function(){ navigator.clipboard.writeText($(this).text()); alert('Copied: '+$(this).text()); });
+        $(document).on('dblclick','.copy-on-dblclick',function(){
+            navigator.clipboard.writeText($(this).text());
+            alert('Copied: '+$(this).text());
+        });
 
         $('#toggle_fields_list').click(function(){ $('#fields_list').toggle(); });
 
@@ -281,10 +315,11 @@ function cfs_admin_page(){
     <!-- CSS -->
     <style>
     .cfs-modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter: blur(2px);display:none;z-index:9998;}
-    .cfs-modal{background:#fff;border-radius:12px;padding:25px;max-width:700px;width:90%;margin:50px auto;position:relative;z-index:9999;box-shadow:0 8px 25px rgba(0,0,0,0.35);max-height:80vh;overflow-y:auto;transition: all 0.3s ease;}
+    .cfs-modal{background:#fff;border-radius:12px;padding:25px;max-width:700px;width:90%;margin:50px auto;position:relative;z-index:9999;box-shadow:0 8px 25px rgba(0,0,0,0.35);max-height:80vh;overflow-y:auto;transition: all 0.3s ease;display:flex;flex-direction:column;}
     .cfs-modal h2{margin-top:0;font-size:1.7em;font-weight:600;color:#333;}
     .cfs-modal .cfs-close{position:absolute;top:12px;right:12px;cursor:pointer;font-size:24px;color:#555;transition:color 0.2s ease;}
     .cfs-modal .cfs-close:hover{color:#000;}
+    .cfs-modal-footer{position:sticky;bottom:0;background:#fff;padding-top:10px;margin-top:auto;border-top:1px solid #ddd;}
     #fields_list{display:none;border:1px solid #ccc;border-radius:6px;padding:10px;margin:10px 0;max-height:200px;overflow:auto;background:#fafafa;}
     .cfs-field-item{cursor:pointer;padding:5px 8px;border-radius:4px;transition: background 0.2s ease;}
     .cfs-field-item:hover{background:#e0f7ff;}
@@ -302,6 +337,7 @@ add_shortcode('cfs',function($atts){
     return isset($fields[$atts['field']])?stripslashes($fields[$atts['field']]):'';
 });
 
+// Auto-update from GitHub
 add_filter('site_transient_update_plugins', function($transient){
     if(empty($transient->checked)) return $transient;
 
@@ -328,3 +364,17 @@ add_filter('site_transient_update_plugins', function($transient){
     }
     return $transient;
 });
+
+
+// În functions.php sau în pluginul tău
+function enqueue_fontawesome_kit() {
+    // Înregistrăm și încărcăm script-ul FontAwesome
+    wp_enqueue_script(
+        'fontawesome-kit', // handle
+        'https://kit.fontawesome.com/0f950e4537.js', // URL
+        array(), // dependențe
+        null, // versiune
+        true // plasare înainte de </body>
+    );
+}
+add_action('wp_enqueue_scripts', 'enqueue_fontawesome_kit');
