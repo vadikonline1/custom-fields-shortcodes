@@ -2,7 +2,7 @@
 /*
 Plugin Name: Social & Custom Fields Shortcodes
 Description: Manage custom fields and social floating buttons with shortcodes and modals.
-Version: 0.0.1
+Version: 0.0.2
 Author: Steel..xD
 Author URI: https://github.com/vadikonline1
 Text Domain: sc-fields-shortcodes
@@ -247,24 +247,10 @@ function scfs_check_version_status() {
         'error' => 'Unknown error'
     ];
     
-    // Verifică direct fișierul de pe branch-ul main
-    // Încercăm mai multe URL-uri posibile
-    $possible_urls = [
-        'https://raw.githubusercontent.com/vadikonline1/custom-fields-shortcodes/main/custom-social-fields-shortcodes.php',
-        'https://raw.githubusercontent.com/vadikonline1/custom-fields-shortcodes/main/social-custom-fields-shortcodes.php',
-        'https://raw.githubusercontent.com/vadikonline1/custom-fields-shortcodes/main/custom-fields-shortcodes.php'
-    ];
+    // URL-ul principal pentru verificare
+    $remote_url = 'https://raw.githubusercontent.com/vadikonline1/custom-fields-shortcodes/main/custom-social-fields-shortcodes.php';
     
-    $response = null;
-    $remote_url_used = '';
-    
-    foreach ($possible_urls as $remote_url) {
-        $response = wp_remote_get($remote_url, ['timeout' => 10]);
-        if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
-            $remote_url_used = $remote_url;
-            break;
-        }
-    }
+    $response = wp_remote_get($remote_url, ['timeout' => 10]);
     
     if (is_wp_error($response)) {
         $result['error'] = 'HTTP Error: ' . $response->get_error_message();
@@ -273,15 +259,12 @@ function scfs_check_version_status() {
     }
     
     if (wp_remote_retrieve_response_code($response) !== 200) {
-        $result['error'] = 'HTTP Status: ' . wp_remote_retrieve_response_code($response) . ' - URL: ' . $remote_url_used;
+        $result['error'] = 'HTTP Status: ' . wp_remote_retrieve_response_code($response) . ' - URL: ' . $remote_url;
         set_transient($cache_key, $result, 15 * MINUTE_IN_SECONDS);
         return $result;
     }
     
     $remote_plugin_data = wp_remote_retrieve_body($response);
-    
-    // Debug: Salvează datele primite pentru analiză (doar în development)
-    // file_put_contents(plugin_dir_path(__FILE__) . 'debug_remote.txt', $remote_plugin_data);
     
     if (preg_match('/Version:\s*([0-9.]+)/', $remote_plugin_data, $matches)) {
         $latest_version = trim($matches[1]);
@@ -304,11 +287,7 @@ function scfs_check_version_status() {
             ];
         }
     } else {
-        $result['error'] = 'Could not extract version from remote file. URL: ' . $remote_url_used;
-        
-        // Debug: verifică primele 500 de caractere din răspuns
-        $debug_preview = substr($remote_plugin_data, 0, 500);
-        $result['error'] .= ' | Preview: ' . esc_html($debug_preview);
+        $result['error'] = 'Could not extract version from remote file. URL: ' . $remote_url;
     }
     
     // Cache pentru 1 oră (sau 15 minute pentru erori)
