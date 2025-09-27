@@ -2,7 +2,7 @@
 /*
 Plugin Name: Social & Custom Fields Shortcodes
 Description: Manage custom fields and social floating buttons with shortcodes and modals.
-Version: 1.0.1
+Version: 0.0.1
 Author: Steel..xD
 Author URI: https://github.com/vadikonline1
 Text Domain: sc-fields-shortcodes
@@ -13,6 +13,18 @@ if (!defined('ABSPATH')) exit;
 // Include module files
 require_once plugin_dir_path(__FILE__) . 'custom-fields-shortcodes.php';
 require_once plugin_dir_path(__FILE__) . 'social-popup-buttons.php';
+
+// Funcție pentru a extrage versiunea din header
+function scfs_get_plugin_version() {
+    static $version = null;
+    
+    if ($version === null) {
+        $plugin_data = get_file_data(__FILE__, array('Version' => 'Version'), 'plugin');
+        $version = $plugin_data['Version'];
+    }
+    
+    return $version;
+}
 
 // Settings link
 add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'scfs_settings_link');
@@ -82,6 +94,7 @@ function scfs_admin_overview_page(){
     
     // Verificare versiune pentru badge
     $version_check = scfs_check_version_status();
+    $current_version = scfs_get_plugin_version();
     ?>
     <div class="wrap">
         <h1>Social & Custom Fields Shortcodes</h1>
@@ -144,13 +157,14 @@ function scfs_admin_overview_page(){
                 
                 <div style="margin-bottom: 15px;">
                     <strong>🔄 Version:</strong><br>
-                    <span style="color: #0073aa;">v1.0.0</span>
+                    <span style="color: #0073aa;">v<?php echo esc_html($current_version); ?></span>
                     <?php if ($version_check['status'] === 'latest') : ?>
                         <span style="background: #46b450; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 5px;">Latest</span>
                     <?php elseif ($version_check['status'] === 'update_available') : ?>
-                        <span style="background: #ffb900; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 5px;">Update Available</span>
+                        <span style="background: #ffb900; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 5px;">Update Available: v<?php echo esc_html($version_check['latest_version']); ?></span>
                     <?php else : ?>
                         <span style="background: #dc3232; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 5px;">Check Failed</span>
+                        <div style="font-size: 11px; color: #666; margin-top: 5px;">Error: <?php echo esc_html($version_check['error']); ?></div>
                     <?php endif; ?>
                 </div>
                 
@@ -179,7 +193,11 @@ function scfs_admin_overview_page(){
                 nonce: '<?php echo wp_create_nonce("scfs_version_check"); ?>'
             }, function(response) {
                 if (response.success) {
-                    resultDiv.html('<div style="color: #46b450;">✓ ' + response.data.message + '</div>').show();
+                    if (response.data.status === 'update_available') {
+                        resultDiv.html('<div style="color: #ffb900;">⚠ ' + response.data.message + '</div>').show();
+                    } else {
+                        resultDiv.html('<div style="color: #46b450;">✓ ' + response.data.message + '</div>').show();
+                    }
                 } else {
                     resultDiv.html('<div style="color: #dc3232;">✗ ' + response.data + '</div>').show();
                 }
@@ -187,6 +205,10 @@ function scfs_admin_overview_page(){
                 resultDiv.html('<div style="color: #dc3232;">✗ Check failed. Try again.</div>').show();
             }).always(function() {
                 button.prop('disabled', false).text('🔄 Check for Updates');
+                // Reîmprospătare pagină pentru a afișa statusul actualizat
+                setTimeout(function() {
+                    location.reload();
+                }, 2000);
             });
         });
     });
@@ -207,9 +229,9 @@ function scfs_admin_overview_page(){
     <?php
 }
 
-// Funcție pentru verificarea statusului versiunii
+// Funcție pentru verificarea statusului versiunii - verifică direct fișierul de pe GitHub
 function scfs_check_version_status() {
-    $current_version = '1.0.0';
+    $current_version = scfs_get_plugin_version();
     $cache_key = 'scfs_version_check';
     $cached = get_transient($cache_key);
     
@@ -221,46 +243,77 @@ function scfs_check_version_status() {
         'status' => 'check_failed',
         'current_version' => $current_version,
         'latest_version' => $current_version,
-        'message' => 'Version check failed'
+        'message' => 'Version check failed',
+        'error' => 'Unknown error'
     ];
     
-    $api_url = "https://api.github.com/repos/vadikonline1/custom-fields-shortcodes/releases/latest";
+    // Verifică direct fișierul de pe branch-ul main
+    // Încercăm mai multe URL-uri posibile
+    $possible_urls = [
+        'https://raw.githubusercontent.com/vadikonline1/custom-fields-shortcodes/main/custom-social-fields-shortcodes.php',
+        'https://raw.githubusercontent.com/vadikonline1/custom-fields-shortcodes/main/social-custom-fields-shortcodes.php',
+        'https://raw.githubusercontent.com/vadikonline1/custom-fields-shortcodes/main/custom-fields-shortcodes.php'
+    ];
     
-    $response = wp_remote_get($api_url, [
-        'headers' => [
-            'User-Agent' => 'WordPress Plugin',
-            'Accept' => 'application/vnd.github.v3+json'
-        ],
-        'timeout' => 10
-    ]);
+    $response = null;
+    $remote_url_used = '';
     
-    if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
-        $body = wp_remote_retrieve_body($response);
-        $release = json_decode($body);
-        
-        if (isset($release->tag_name)) {
-            $latest_version = ltrim($release->tag_name, 'v');
-            
-            if (version_compare($latest_version, $current_version, '>')) {
-                $result = [
-                    'status' => 'update_available',
-                    'current_version' => $current_version,
-                    'latest_version' => $latest_version,
-                    'message' => 'Update available: v' . $latest_version
-                ];
-            } else {
-                $result = [
-                    'status' => 'latest',
-                    'current_version' => $current_version,
-                    'latest_version' => $latest_version,
-                    'message' => 'You have the latest version'
-                ];
-            }
+    foreach ($possible_urls as $remote_url) {
+        $response = wp_remote_get($remote_url, ['timeout' => 10]);
+        if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
+            $remote_url_used = $remote_url;
+            break;
         }
     }
     
-    // Cache pentru 1 oră
-    set_transient($cache_key, $result, HOUR_IN_SECONDS);
+    if (is_wp_error($response)) {
+        $result['error'] = 'HTTP Error: ' . $response->get_error_message();
+        set_transient($cache_key, $result, 15 * MINUTE_IN_SECONDS);
+        return $result;
+    }
+    
+    if (wp_remote_retrieve_response_code($response) !== 200) {
+        $result['error'] = 'HTTP Status: ' . wp_remote_retrieve_response_code($response) . ' - URL: ' . $remote_url_used;
+        set_transient($cache_key, $result, 15 * MINUTE_IN_SECONDS);
+        return $result;
+    }
+    
+    $remote_plugin_data = wp_remote_retrieve_body($response);
+    
+    // Debug: Salvează datele primite pentru analiză (doar în development)
+    // file_put_contents(plugin_dir_path(__FILE__) . 'debug_remote.txt', $remote_plugin_data);
+    
+    if (preg_match('/Version:\s*([0-9.]+)/', $remote_plugin_data, $matches)) {
+        $latest_version = trim($matches[1]);
+        
+        if (version_compare($latest_version, $current_version, '>')) {
+            $result = [
+                'status' => 'update_available',
+                'current_version' => $current_version,
+                'latest_version' => $latest_version,
+                'message' => 'Update available: v' . $latest_version,
+                'error' => ''
+            ];
+        } else {
+            $result = [
+                'status' => 'latest',
+                'current_version' => $current_version,
+                'latest_version' => $latest_version,
+                'message' => 'You have the latest version',
+                'error' => ''
+            ];
+        }
+    } else {
+        $result['error'] = 'Could not extract version from remote file. URL: ' . $remote_url_used;
+        
+        // Debug: verifică primele 500 de caractere din răspuns
+        $debug_preview = substr($remote_plugin_data, 0, 500);
+        $result['error'] .= ' | Preview: ' . esc_html($debug_preview);
+    }
+    
+    // Cache pentru 1 oră (sau 15 minute pentru erori)
+    $cache_time = ($result['status'] === 'check_failed') ? 15 * MINUTE_IN_SECONDS : HOUR_IN_SECONDS;
+    set_transient($cache_key, $result, $cache_time);
     
     return $result;
 }
@@ -309,75 +362,42 @@ function scfs_display_social_buttons() {
     }
 }
 
-// GitHub updater (rămâne la fel ca în versiunea anterioară)
-add_filter('site_transient_update_plugins', 'scfs_github_updater');
-function scfs_github_updater($transient) {
-    if (empty($transient->checked)) {
-        return $transient;
-    }
+// Auto-update from GitHub - METODA SIMPLĂ DIRECTĂ
+add_filter('site_transient_update_plugins', function($transient){
+    if(empty($transient->checked)) return $transient;
 
     $plugin_slug = plugin_basename(__FILE__);
     
+    // Verifică dacă plugin-ul curent este în lista de checked
     if (!isset($transient->checked[$plugin_slug])) {
         return $transient;
     }
 
-    $current_version = $transient->checked[$plugin_slug];
-    $repo_user = 'vadikonline1';
-    $repo_name = 'custom-fields-shortcodes';
-    $api_url = "https://api.github.com/repos/$repo_user/$repo_name/releases/latest";
+    // Folosim același URL ca în funcția de verificare
+    $remote_url = 'https://raw.githubusercontent.com/vadikonline1/custom-fields-shortcodes/main/custom-social-fields-shortcodes.php';
+    
+    $response = wp_remote_get($remote_url, ['timeout' => 10]);
+    if(is_wp_error($response)) return $transient;
 
-    $cache_key = 'scfs_github_latest_version';
-    $cached_data = get_transient($cache_key);
+    $remote_plugin_data = $response['body'];
+    
+    if(preg_match('/Version:\s*([0-9.]+)/', $remote_plugin_data, $matches)){
+        $remote_version = trim($matches[1]);
+        $current_version = $transient->checked[$plugin_slug];
 
-    if (false === $cached_data) {
-        $response = wp_remote_get($api_url, [
-            'headers' => [
-                'User-Agent' => 'WordPress Plugin Updater',
-                'Accept' => 'application/vnd.github.v3+json'
-            ],
-            'timeout' => 10
-        ]);
-
-        if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
-            set_transient($cache_key, ['error' => true], 30 * MINUTE_IN_SECONDS);
-            return $transient;
+        if(version_compare($remote_version, $current_version, '>')){
+            $transient->response[$plugin_slug] = (object) [
+                'slug' => dirname($plugin_slug),
+                'plugin' => $plugin_slug,
+                'new_version' => $remote_version,
+                'url' => 'https://github.com/vadikonline1/custom-fields-shortcodes/',
+                'package' => 'https://github.com/vadikonline1/custom-fields-shortcodes/archive/refs/heads/main.zip',
+                'tested' => get_bloginfo('version')
+            ];
         }
-
-        $body = wp_remote_retrieve_body($response);
-        $release = json_decode($body);
-
-        if (!isset($release->tag_name, $release->zipball_url)) {
-            set_transient($cache_key, ['error' => true], 30 * MINUTE_IN_SECONDS);
-            return $transient;
-        }
-
-        $remote_version = ltrim($release->tag_name, 'v');
-        $cached_data = [
-            'version' => $remote_version,
-            'package' => $release->zipball_url,
-            'url' => "https://github.com/$repo_user/$repo_name/releases/latest"
-        ];
-
-        set_transient($cache_key, $cached_data, 12 * HOUR_IN_SECONDS);
     }
-
-    if (isset($cached_data['error'])) {
-        return $transient;
-    }
-
-    if (version_compare($cached_data['version'], $current_version, '>')) {
-        $transient->response[$plugin_slug] = (object) [
-            'slug' => dirname($plugin_slug),
-            'new_version' => $cached_data['version'],
-            'url' => $cached_data['url'],
-            'package' => $cached_data['package'],
-            'tested' => get_bloginfo('version')
-        ];
-    }
-
     return $transient;
-}
+});
 
 // Load textdomain
 add_action('plugins_loaded', 'scfs_load_textdomain');
