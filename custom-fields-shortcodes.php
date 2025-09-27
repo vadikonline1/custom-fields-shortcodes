@@ -1,32 +1,9 @@
 <?php
-/*
-Plugin Name: Contact Custom Fields Shortcodes
-Description: Manage custom fields, export/import JSON, build Contact Info message with wp_editor, mobile-friendly modals.
-Version: 0.6.2
-Author: Steel..xD
-GitHub Plugin URI: https://github.com/vadikonline1/custom-fields-shortcodes/
-*/
-
 if (!defined('ABSPATH')) exit;
 
 if (!class_exists('WP_List_Table')) {
     require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 }
-
-// Settings link
-add_filter('plugin_action_links_' . plugin_basename(__FILE__), function($links) {
-    $settings_link = '<a href="' . admin_url('admin.php?page=custom-fields-shortcodes') . '">Settings</a>';
-    array_unshift($links, $settings_link);
-    return $links;
-});
-
-// Row meta
-add_filter('plugin_row_meta', function($links, $file) {
-    if ($file === plugin_basename(__FILE__)) {
-        $links[] = '<a href="https://github.com/vadikonline1/custom-fields-shortcodes" target="_blank">Docs</a>';
-    }
-    return $links;
-}, 10, 2);
 
 // Table class
 class CFS_List_Table extends WP_List_Table {
@@ -74,11 +51,6 @@ class CFS_List_Table extends WP_List_Table {
     }
     public function get_bulk_actions(){ return ['delete'=>'Delete']; }
 }
-
-// Admin menu
-add_action('admin_menu', function(){
-    add_menu_page('Custom Shortcodes','Custom Shortcodes','manage_options','custom-fields-shortcodes','cfs_admin_page','dashicons-edit',20);
-});
 
 // Admin page
 function cfs_admin_page(){
@@ -337,44 +309,3 @@ add_shortcode('cfs',function($atts){
     return isset($fields[$atts['field']])?stripslashes($fields[$atts['field']]):'';
 });
 
-// Auto-update from GitHub
-add_filter('site_transient_update_plugins', function($transient){
-    if(empty($transient->checked)) return $transient;
-
-    $plugin_slug = plugin_basename(__FILE__);
-    $remote_url = 'https://raw.githubusercontent.com/vadikonline1/custom-fields-shortcodes/main/custom-fields-shortcodes.php';
-    
-    $response = wp_remote_get($remote_url);
-    if(is_wp_error($response)) return $transient;
-
-    $remote_plugin_data = $response['body'];
-    
-    if(preg_match('/Version:\s*(\S+)/', $remote_plugin_data, $matches)){
-        $remote_version = $matches[1];
-        $current_version = $transient->checked[$plugin_slug];
-
-        if(version_compare($remote_version, $current_version, '>')){
-            $transient->response[$plugin_slug] = (object) [
-                'slug' => $plugin_slug,
-                'new_version' => $remote_version,
-                'url' => 'https://github.com/vadikonline1/custom-fields-shortcodes/',
-                'package' => 'https://github.com/vadikonline1/custom-fields-shortcodes/archive/refs/heads/main.zip'
-            ];
-        }
-    }
-    return $transient;
-});
-
-
-// În functions.php sau în pluginul tău
-function enqueue_fontawesome_kit() {
-    // Înregistrăm și încărcăm script-ul FontAwesome
-    wp_enqueue_script(
-        'fontawesome-kit', // handle
-        'https://kit.fontawesome.com/0f950e4537.js', // URL
-        array(), // dependențe
-        null, // versiune
-        true // plasare înainte de </body>
-    );
-}
-add_action('wp_enqueue_scripts', 'enqueue_fontawesome_kit');
