@@ -2,7 +2,7 @@
 /*
 Plugin Name: Social & Custom Fields Shortcodes
 Description: Manage custom fields and social floating buttons with shortcodes and modals.
-Version: 1.0.0
+Version: 1.0.1
 Author: Steel..xD
 Author URI: https://github.com/vadikonline1
 Text Domain: sc-fields-shortcodes
@@ -86,10 +86,10 @@ function scfs_admin_overview_page(){
     <div class="wrap">
         <h1>Social & Custom Fields Shortcodes</h1>
         
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; margin: 20px 0;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;">
             <!-- Left Column - Plugin Info -->
-            <div style="flex: 1;">
-                <div class="card" style="background: #f6f7f7; padding: 20px; border-radius: 4px; border-left: 4px solid #2271b1;">
+            <div style="display: inline-flex;gap: 10px;">
+                <div class="card" style="background: #f6f7f7; padding: 20px; border-radius: 4px; border-left: 4px solid #2271b1;margin-top: 0px;">
                     <h2 style="margin-top: 0;">Plugin Features</h2>
                     <p>This plugin allows you to manage:</p>
                     <ul style="list-style: disc; margin-left: 20px; margin-bottom: 20px;">
@@ -109,7 +109,7 @@ function scfs_admin_overview_page(){
                 </div>
 
                 <!-- Shortcode Examples -->
-                <div class="card" style="background: #f0f6fc; padding: 20px; border-radius: 4px; border-left: 4px solid #0073aa; margin-top: 20px;">
+                <div class="card" style="background: #f0f6fc; padding: 20px; border-radius: 4px; border-left: 4px solid #0073aa; margin-top: 0px;">
                     <h3>Shortcode Examples</h3>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                         <div>
