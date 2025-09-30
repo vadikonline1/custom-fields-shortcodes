@@ -2,9 +2,11 @@
 /*
 Plugin Name: Social & Custom Fields Shortcodes
 Description: Manage custom fields and social floating buttons with shortcodes and modals.
-Version: 0.0.2
+Version: 0.0.3
 Author: Steel..xD
-Author URI: https://github.com/vadikonline1
+Plugin URI: https://github.com/vadikonline1/custom-fields-shortcodes/
+Author URI: https://github.com/vadikonline1/custom-fields-shortcodes/
+GitHub Plugin URI: https://github.com/vadikonline1/custom-fields-shortcodes/
 Text Domain: sc-fields-shortcodes
 */
 
