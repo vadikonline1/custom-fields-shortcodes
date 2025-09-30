@@ -2,13 +2,20 @@
 if (!defined('ABSPATH')) exit;
 
 // =========================
-// ADMIN PAGE
+// ADMIN PAGE - COMPLETĂ CU NONCE FIELD
 // =========================
 function sfb_admin_page(){
     $current_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'buttons';
     ?>
     <div class="wrap">
         <h1>Social Floating Buttons</h1>
+        
+        <!-- ADD BUTTONUL DE "ADD NEW" -->
+        <?php if($current_tab === 'buttons' && !isset($_GET['action'])): ?>
+            <a href="<?php echo admin_url('admin.php?page=social-floating-buttons&action=add'); ?>" class="page-title-action">
+                + Add New Button
+            </a>
+        <?php endif; ?>
         
         <h2 class="nav-tab-wrapper">
             <a href="<?php echo admin_url('admin.php?page=social-floating-buttons'); ?>" class="nav-tab <?php echo $current_tab === 'buttons' ? 'nav-tab-active' : ''; ?>">
@@ -38,6 +45,7 @@ function sfb_admin_page(){
             $table = new SFB_List_Table();
             $table->prepare_items();
             echo '<form method="post" id="sfb-buttons-form">';
+            wp_nonce_field('sfb_bulk_action', 'sfb_nonce');
             $table->display();
             echo '</form>';
         }
@@ -358,7 +366,7 @@ function sfb_cdn_management_page(){
     ?>
     
     <div class="sfb-cdn-management">
-        <<div class="sfb-cdn-section">
+        <div class="sfb-cdn-section">
             <h3>➕ Add New CDN</h3>
             <form method="post" class="sfb-cdn-form">
                 <table class="form-table">
@@ -822,40 +830,58 @@ class SFB_List_Table extends WP_List_Table {
         ];
     }
 
-    function process_bulk_action(){
-        if(!isset($_POST['id']) || empty($_POST['id'])) return;
-        
-        $ids = is_array($_POST['id']) ? $_POST['id'] : [$_POST['id']];
-        
-        switch($this->current_action()){
-            case 'trash':
-                foreach($ids as $id){
-                    sfb_move_to_trash($id);
-                }
-                echo '<div class="updated"><p>Items moved to trash!</p></div>';
-                break;
-            case 'delete_permanently':
-                $buttons = get_option('sfb_buttons', []);
-                $buttons = array_filter($buttons, function($button) use ($ids){
-                    return !in_array($button['id'], $ids);
-                });
-                update_option('sfb_buttons', array_values($buttons));
-                echo '<div class="updated"><p>Items permanently deleted!</p></div>';
-                break;
-        }
-    }
+	function process_bulk_action(){
+		    if(!isset($_POST['sfb_nonce']) || !wp_verify_nonce($_POST['sfb_nonce'], 'sfb_bulk_action')) { return; }
+
+		$ids = is_array($_POST['id']) ? $_POST['id'] : [$_POST['id']];
+		$ids = array_map('sanitize_text_field', $ids);
+
+		switch($this->current_action()){
+			case 'trash':
+				foreach($ids as $id){
+					sfb_move_to_trash($id);
+				}
+				echo '<div class="updated"><p>Items moved to trash!</p></div>';
+				break;
+			case 'delete_permanently':
+				foreach($ids as $id){
+					sfb_delete_permanently($id);
+				}
+				echo '<div class="updated"><p>Items permanently deleted!</p></div>';
+				break;
+		}
+
+		// Re-preparați items după acțiune
+		$this->prepare_items();
+	}
 }
 
 // =========================
 // HANDLE ACTIONS
 // =========================
-function sfb_handle_actions(){
-    if(isset($_GET['action']) && $_GET['action'] === 'trash' && !empty($_GET['id'])){
-        $id = sanitize_text_field($_GET['id']);
-        check_admin_referer('sfb_trash_'.$id);
-        sfb_move_to_trash($id);
-        wp_redirect(admin_url('admin.php?page=social-floating-buttons&message=trashed'));
-        exit;
+function sfb_handle_actions() {
+    // Verificăm că suntem pe pagina pluginului nostru
+    if ( ! isset($_GET['page']) || $_GET['page'] !== 'social-floating-buttons' ) {
+        return;
+    }
+
+    if ( isset($_GET['action']) && $_GET['action'] === 'trash' && !empty($_GET['id']) ) {
+        $id = $_GET['id'];
+
+        if (is_array($id)) {
+            $id = reset($id); // luam primul element dacă e array
+        }
+
+        // ID-ul poate fi alfanumeric, deci nu facem intval
+        $id = sanitize_text_field($id);
+
+        if ( isset($_GET['_wpnonce']) && wp_verify_nonce($_GET['_wpnonce'], 'sfb_trash_' . $id) ) {
+            sfb_move_to_trash($id);
+            wp_redirect(admin_url('admin.php?page=social-floating-buttons&message=trashed'));
+            exit;
+        } else {
+            wp_die('Nonce verification failed. Action not allowed.');
+        }
     }
 }
 add_action('admin_init', 'sfb_handle_actions');
@@ -1052,9 +1078,7 @@ add_shortcode('sfb_floating', function($atts){
     
     ob_start(); ?>
     
-    <div class="sfb-container <?php echo esc_attr("$position_class $animation_class $mobile_class"); ?> 
-         <?php echo $show_names ? 'sfb-show-names' : 'sfb-icons-only'; ?>
-         <?php echo $transparent_icons ? 'sfb-transparent-icons' : ''; ?>">
+    <div class="sfb-container <?php echo esc_attr("$position_class $animation_class $mobile_class"); ?>  <?php echo $show_names ? 'sfb-show-names' : 'sfb-icons-only'; ?> <?php echo $transparent_icons ? 'sfb-transparent-icons' : ''; ?>">
         
         <div class="sfb-cta" style="background-color: <?php echo esc_attr($settings['button_color']); ?>">
             <span class="sfb-cta-icon"><?php echo $settings['button_icon']; ?></span>
