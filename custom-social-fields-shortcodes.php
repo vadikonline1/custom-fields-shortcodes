@@ -2,7 +2,7 @@
 /*
 Plugin Name: Social & Custom Fields Shortcodes
 Description: Manage custom fields and social floating buttons with shortcodes and modals.
-Version: 0.0.3
+Version: 0.0.4
 Author: Steel..xD
 Plugin URI: https://github.com/vadikonline1/custom-fields-shortcodes/
 Author URI: https://github.com/vadikonline1/custom-fields-shortcodes/
@@ -88,7 +88,7 @@ function scfs_admin_menu() {
     );
 }
 
-// General Info Page (Main menu)
+// General Info Page (Main menu) - MODIFICATĂ CU BUTOANELE SOCIAL
 function scfs_admin_overview_page(){
     if (!current_user_can('manage_options')) {
         wp_die(__('You do not have sufficient permissions to access this page.'));
@@ -97,14 +97,21 @@ function scfs_admin_overview_page(){
     // Verificare versiune pentru badge
     $version_check = scfs_check_version_status();
     $current_version = scfs_get_plugin_version();
+    
+    // Obține butoanele sociale pentru a le afișa
+    $social_buttons = get_option('sfb_buttons', []);
+    $settings = get_option('sfb_settings', [
+        'show_shortcut_names' => 1,
+        'transparent_icons' => 0
+    ]);
     ?>
     <div class="wrap">
         <h1>Social & Custom Fields Shortcodes</h1>
         
         <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;">
             <!-- Left Column - Plugin Info -->
-            <div style="display: inline-flex;gap: 10px;">
-                <div class="card" style="background: #f6f7f7; padding: 20px; border-radius: 4px; border-left: 4px solid #2271b1;margin-top: 0px;">
+            <div style="flex: 1;">
+                <div class="card" style="background: #f6f7f7; padding: 20px; border-radius: 4px; border-left: 4px solid #2271b1; margin-bottom: 20px;">
                     <h2 style="margin-top: 0;">Plugin Features</h2>
                     <p>This plugin allows you to manage:</p>
                     <ul style="list-style: disc; margin-left: 20px; margin-bottom: 20px;">
@@ -123,19 +130,113 @@ function scfs_admin_overview_page(){
                     </div>
                 </div>
 
-                <!-- Shortcode Examples -->
-                <div class="card" style="background: #f0f6fc; padding: 20px; border-radius: 4px; border-left: 4px solid #0073aa; margin-top: 0px;">
-                    <h3>Shortcode Examples</h3>
+<!-- Social Buttons Shortcodes Section -->
+<div class="card" style="background: #f0f6fc; padding: 20px; border-radius: 4px; border-left: 4px solid #0073aa; margin-bottom: 20px;">
+    <h3>🔗 Social Buttons Shortcodes</h3>
+    
+    <!-- Butoane individuale - MODIFICAT: DOAR EXEMPLU -->
+    <?php if(!empty($social_buttons)): ?>
+    <div style="margin-bottom: 25px;">
+        <h4>Individual Button Shortcodes</h4>
+        <div style="background: #fff; padding: 15px; border-radius: 4px; border: 1px solid #ddd;">
+            <p style="margin-top: 0; margin-bottom: 15px; color: #666;">
+                <strong>Example for button "<?php echo esc_html($social_buttons[0]['name']); ?>":</strong>
+            </p>
+            <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
+                <div>
+                    <strong>Default:</strong>
+                    <code style="display: block; background: #f1f1f1; padding: 8px; border-radius: 3px; margin-top: 5px; font-size: 12px; cursor: pointer;" onclick="copyToClipboard(this)">
+                        [sfb_button id="<?php echo esc_attr($social_buttons[0]['id']); ?>"]
+                    </code>
+                </div>
+                <div>
+                    <strong>Transparent:</strong>
+                    <code style="display: block; background: #f1f1f1; padding: 8px; border-radius: 3px; margin-top: 5px; font-size: 12px; cursor: pointer;" onclick="copyToClipboard(this)">
+                        [sfb_button id="<?php echo esc_attr($social_buttons[0]['id']); ?>" transparent="true"]
+                    </code>
+                </div>
+                <div>
+                    <strong>Icon Only (Transparent):</strong>
+                    <code style="display: block; background: #f1f1f1; padding: 8px; border-radius: 3px; margin-top: 5px; font-size: 12px; cursor: pointer;" onclick="copyToClipboard(this)">
+                        [sfb_button id="<?php echo esc_attr($social_buttons[0]['id']); ?>" show_name="false" transparent="true"]
+                    </code>
+                </div>
+            </div>
+            <p style="margin: 10px 0 0 0; font-size: 12px; color: #666;">
+                💡 <strong>Replace the ID</strong> with any button ID from the Social Buttons settings page.
+            </p>
+        </div>
+    </div>
+    <?php else: ?>
+    <div style="margin-bottom: 25px;">
+        <h4>Individual Button Shortcodes</h4>
+        <div style="background: #fff; padding: 15px; border-radius: 4px; border: 1px solid #ddd; text-align: center;">
+            <p style="margin: 0; color: #666;">
+                No social buttons created yet. 
+                <a href="<?php echo admin_url('admin.php?page=social-floating-buttons&action=add'); ?>">Create your first button</a>
+            </p>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- Toate butoanele -->
+    <div style="margin-bottom: 20px;">
+        <h4>All Buttons Shortcodes</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div style="background: #fff; padding: 12px; border-radius: 4px; border: 1px solid #ddd;">
+                <strong>Default Display</strong>
+                <code style="display: block; background: #f1f1f1; padding: 8px; border-radius: 3px; margin-top: 8px; font-size: 12px; cursor: pointer;" onclick="copyToClipboard(this)">
+                    [sfb_all_buttons]
+                </code>
+            </div>
+            <div style="background: #fff; padding: 12px; border-radius: 4px; border: 1px solid #ddd;">
+                <strong>Icons Only</strong>
+                <code style="display: block; background: #f1f1f1; padding: 8px; border-radius: 3px; margin-top: 8px; font-size: 12px; cursor: pointer;" onclick="copyToClipboard(this)">
+                    [sfb_all_buttons show_names="false"]
+                </code>
+            </div>
+            <div style="background: #fff; padding: 12px; border-radius: 4px; border: 1px solid #ddd;">
+                <strong>Transparent Icons</strong>
+                <code style="display: block; background: #f1f1f1; padding: 8px; border-radius: 3px; margin-top: 8px; font-size: 12px; cursor: pointer;" onclick="copyToClipboard(this)">
+                    [sfb_all_buttons transparent="true"]
+                </code>
+            </div>
+            <div style="background: #fff; padding: 12px; border-radius: 4px; border: 1px solid #ddd;">
+                <strong>Transparent Icons Only</strong>
+                <code style="display: block; background: #f1f1f1; padding: 8px; border-radius: 3px; margin-top: 8px; font-size: 12px; cursor: pointer;" onclick="copyToClipboard(this)">
+                    [sfb_all_buttons show_names="false" transparent="true"]
+                </code>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Buttons -->
+    <div>
+        <h4>Floating Buttons</h4>
+        <div style="background: #fff; padding: 12px; border-radius: 4px; border: 1px solid #ddd;">
+            <code style="display: block; background: #f1f1f1; padding: 8px; border-radius: 3px; font-size: 12px; cursor: pointer;" onclick="copyToClipboard(this)">
+                [sfb_floating]
+            </code>
+            <p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">
+                Displays the floating social buttons menu
+            </p>
+        </div>
+    </div>
+</div>
+
+                <!-- Custom Fields Shortcodes -->
+                <div class="card" style="background: #f0f8f4; padding: 20px; border-radius: 4px; border-left: 4px solid #46b450;">
+                    <h3>🛠️ Custom Fields Shortcodes</h3>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                         <div>
-                            <h4>Custom Fields</h4>
+                            <h4>Basic Usage</h4>
                             <code style="display: block; background: #fff; padding: 8px; border-radius: 3px;">[custom_field name="field_name"]</code>
                             <code style="display: block; background: #fff; padding: 8px; border-radius: 3px; margin-top: 5px;">[custom_field name="phone"]</code>
                         </div>
                         <div>
-                            <h4>Social Buttons</h4>
-                            <code style="display: block; background: #fff; padding: 8px; border-radius: 3px;">[sfb_floating]</code>
-                            <code style="display: block; background: #fff; padding: 8px; border-radius: 3px; margin-top: 5px;">[sfb_popup]</code>
+                            <h4>Advanced Usage</h4>
+                            <code style="display: block; background: #fff; padding: 8px; border-radius: 3px;">[custom_field name="email" default="example@email.com"]</code>
+                            <code style="display: block; background: #fff; padding: 8px; border-radius: 3px; margin-top: 5px;">[custom_field name="address" class="my-class"]</code>
                         </div>
                     </div>
                 </div>
@@ -170,6 +271,15 @@ function scfs_admin_overview_page(){
                     <?php endif; ?>
                 </div>
                 
+                <!-- Quick Stats -->
+                <div style="margin-bottom: 15px; padding: 10px; background: #f9f9f9; border-radius: 4px;">
+                    <strong>📊 Quick Stats:</strong><br>
+                    <div style="font-size: 12px; margin-top: 5px;">
+                        • Social Buttons: <?php echo count($social_buttons); ?><br>
+                        • Custom Fields: <?php echo count(get_option('cfs_custom_fields', [])); ?>
+                    </div>
+                </div>
+                
                 <!-- Version Check Button -->
                 <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd;">
                     <button type="button" id="scfs-check-version" class="button button-secondary" style="width: 100%;">
@@ -182,6 +292,26 @@ function scfs_admin_overview_page(){
     </div>
 
     <script>
+    function copyToClipboard(element) {
+        var text = element.textContent || element.innerText;
+        var textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+        
+        // Show copied message
+        var originalText = element.textContent;
+        element.textContent = 'Copied!';
+        element.style.background = '#d1f7c4';
+        
+        setTimeout(function() {
+            element.textContent = originalText;
+            element.style.background = '#f1f1f1';
+        }, 1500);
+    }
+
     jQuery(document).ready(function($) {
         $('#scfs-check-version').on('click', function() {
             var button = $(this);
@@ -226,6 +356,10 @@ function scfs_admin_overview_page(){
     code {
         font-family: 'Courier New', monospace;
         font-size: 13px;
+        transition: all 0.3s ease;
+    }
+    code:hover {
+        background: #e8e8e8 !important;
     }
     </style>
     <?php
@@ -398,3 +532,4 @@ function scfs_activation_notice() {
         delete_option('scfs_plugin_activated');
     }
 }
+
