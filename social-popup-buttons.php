@@ -55,7 +55,7 @@ function sfb_admin_page(){
 }
 
 // =========================
-// SETTINGS PAGE - VARIANTĂ SIMPLIFICATĂ
+// SETTINGS PAGE
 // =========================
 function sfb_settings_page(){
     if(isset($_POST['sfb_save_settings'])){
@@ -66,7 +66,8 @@ function sfb_settings_page(){
             'animation' => sanitize_text_field($_POST['sfb_animation']),
             'mobile_enabled' => isset($_POST['sfb_mobile_enabled']) ? 1 : 0,
             'show_names' => isset($_POST['sfb_show_names']) ? 1 : 0,
-            'transparent_icons' => isset($_POST['sfb_transparent_icons']) ? 1 : 0 // NOU - doar pentru iconițe
+            'transparent_icons' => isset($_POST['sfb_transparent_icons']) ? 1 : 0,
+            'custom_message' => sanitize_text_field($_POST['sfb_custom_message']) // NOU
         ];
         update_option('sfb_settings', $settings);
         echo '<div class="updated"><p>Settings saved successfully!</p></div>';
@@ -79,13 +80,24 @@ function sfb_settings_page(){
         'animation' => 'slide',
         'mobile_enabled' => 1,
         'show_names' => 1,
-        'transparent_icons' => 0 // NOU
+        'transparent_icons' => 0,
+        'custom_message' => "Let's chat with US!" // VALOARE IMPLICITĂ
     ]);
     ?>
     
     <div class="sfb-settings-page">
         <form method="post">
             <table class="form-table">
+                <tr>
+                    <th scope="row"><label for="sfb_custom_message">Custom Message</label></th>
+                    <td>
+                        <input type="text" name="sfb_custom_message" id="sfb_custom_message" 
+                               value="<?php echo esc_attr($settings['custom_message']); ?>" 
+                               class="regular-text" placeholder="Let's chat with US!">
+                        <p class="description">This message will be displayed in the UI when hovering or interacting with the button</p>
+                    </td>
+                </tr>
+                
                 <tr>
                     <th scope="row"><label for="sfb_position">Button Position</label></th>
                     <td>
@@ -99,6 +111,7 @@ function sfb_settings_page(){
                     </td>
                 </tr>
                 
+                <!-- Restul setărilor rămân la fel -->
                 <tr>
                     <th scope="row"><label for="sfb_button_color">Main Button Color</label></th>
                     <td>
@@ -172,6 +185,11 @@ function sfb_settings_page(){
                 <span class="sfb-preview-icon"><?php echo $settings['button_icon']; ?></span>
             </div>
             
+            <!-- Custom Message Preview -->
+            <div class="sfb-custom-message-preview">
+                <strong>Custom Message:</strong> "<?php echo esc_html($settings['custom_message']); ?>"
+            </div>
+            
             <!-- Buttons List Preview -->
             <div class="sfb-preview-items">
                 <?php if($settings['show_names']): ?>
@@ -227,6 +245,14 @@ function sfb_settings_page(){
             font-size: 18px;
             margin: 0 auto 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .sfb-custom-message-preview {
+            background: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            text-align: center;
+            border-left: 4px solid <?php echo esc_attr($settings['button_color']); ?>;
         }
         .sfb-preview-items {
             display: flex;
@@ -771,6 +797,7 @@ class SFB_List_Table extends WP_List_Table {
     function get_columns(){
         return [
             'cb' => '<input type="checkbox" />',
+            'order' => 'Order',
             'name' => 'Name',
             'icon' => 'Icon',
             'type' => 'Type',
@@ -781,8 +808,17 @@ class SFB_List_Table extends WP_List_Table {
     }
 
     function prepare_items(){
-        $this->_column_headers = [$this->get_columns(), [], []];
-        $this->items = get_option('sfb_buttons', []);
+        $this->_column_headers = [$this->get_columns(), [], ['order' => 'asc']];
+        $buttons = get_option('sfb_buttons', []);
+        
+        // Sort buttons by order field
+        usort($buttons, function($a, $b) {
+            $order_a = isset($a['order']) ? intval($a['order']) : 0;
+            $order_b = isset($b['order']) ? intval($b['order']) : 0;
+            return $order_a - $order_b;
+        });
+        
+        $this->items = $buttons;
         
         // Process bulk actions
         $this->process_bulk_action();
@@ -790,6 +826,15 @@ class SFB_List_Table extends WP_List_Table {
 
     function column_cb($item){
         return sprintf('<input type="checkbox" name="id[]" value="%s" />', $item['id']);
+    }
+
+    function column_order($item){
+        $order = isset($item['order']) ? intval($item['order']) : 0;
+        return sprintf(
+            '<input type="number" name="order[%s]" value="%d" class="sfb-order-input" min="0" size="3" />',
+            $item['id'],
+            $order
+        );
     }
 
     function column_name($item){
@@ -826,34 +871,81 @@ class SFB_List_Table extends WP_List_Table {
     function get_bulk_actions(){
         return [
             'trash' => 'Move to Trash',
-            'delete_permanently' => 'Delete Permanently'
+            'delete_permanently' => 'Delete Permanently',
+            'update_order' => 'Update Order'
         ];
     }
 
-	function process_bulk_action(){
-		    if(!isset($_POST['sfb_nonce']) || !wp_verify_nonce($_POST['sfb_nonce'], 'sfb_bulk_action')) { return; }
+    function process_bulk_action(){
+        if(!isset($_POST['sfb_nonce']) || !wp_verify_nonce($_POST['sfb_nonce'], 'sfb_bulk_action')) { return; }
 
-		$ids = is_array($_POST['id']) ? $_POST['id'] : [$_POST['id']];
-		$ids = array_map('sanitize_text_field', $ids);
+        $ids = is_array($_POST['id']) ? $_POST['id'] : [$_POST['id']];
+        $ids = array_map('sanitize_text_field', $ids);
 
-		switch($this->current_action()){
-			case 'trash':
-				foreach($ids as $id){
-					sfb_move_to_trash($id);
-				}
-				echo '<div class="updated"><p>Items moved to trash!</p></div>';
-				break;
-			case 'delete_permanently':
-				foreach($ids as $id){
-					sfb_delete_permanently($id);
-				}
-				echo '<div class="updated"><p>Items permanently deleted!</p></div>';
-				break;
-		}
+        switch($this->current_action()){
+            case 'trash':
+                foreach($ids as $id){
+                    sfb_move_to_trash($id);
+                }
+                echo '<div class="updated"><p>Items moved to trash!</p></div>';
+                break;
+            case 'delete_permanently':
+                foreach($ids as $id){
+                    sfb_delete_permanently($id);
+                }
+                echo '<div class="updated"><p>Items permanently deleted!</p></div>';
+                break;
+            case 'update_order':
+                if(isset($_POST['order']) && is_array($_POST['order'])){
+                    $buttons = get_option('sfb_buttons', []);
+                    foreach($_POST['order'] as $button_id => $order_value){
+                        $order_value = intval($order_value);
+                        foreach($buttons as &$button){
+                            if($button['id'] === $button_id){
+                                $button['order'] = $order_value;
+                                break;
+                            }
+                        }
+                    }
+                    update_option('sfb_buttons', $buttons);
+                    echo '<div class="updated"><p>Order updated successfully!</p></div>';
+                }
+                break;
+        }
 
-		// Re-preparați items după acțiune
-		$this->prepare_items();
-	}
+        // Re-preparați items după acțiune
+        $this->prepare_items();
+    }
+
+    function display(){
+        echo '<form method="post" id="sfb-buttons-form">';
+        wp_nonce_field('sfb_bulk_action', 'sfb_nonce');
+        parent::display();
+        echo '</form>';
+        
+        // Adaugă stiluri pentru afișarea mai bună a multor butoane
+        echo '
+        <style>
+        .wp-list-table.buttons {
+            table-layout: auto;
+        }
+        .wp-list-table.buttons th.column-order,
+        .wp-list-table.buttons td.column-order {
+            width: 80px;
+            text-align: center;
+        }
+        .sfb-order-input {
+            width: 60px;
+            text-align: center;
+        }
+        .tablenav .actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        </style>
+        ';
+    }
 }
 
 // =========================
@@ -892,7 +984,7 @@ add_action('admin_init', 'sfb_handle_actions');
 function sfb_add_edit_form(){
     $buttons = get_option('sfb_buttons', []);
     $editing = false;
-    $current = ['id'=>'', 'icon'=>'', 'name'=>'', 'type'=>'url', 'url'=>'', 'icon_type'=>'class'];
+    $current = ['id'=>'', 'icon'=>'', 'name'=>'', 'type'=>'url', 'url'=>'', 'icon_type'=>'class', 'order'=>0];
 
     if(isset($_GET['action']) && $_GET['action']==='edit' && !empty($_GET['id'])){
         foreach($buttons as $b){ 
@@ -901,6 +993,10 @@ function sfb_add_edit_form(){
                 $editing = true; 
                 // Detect icon type
                 $current['icon_type'] = (strpos($current['icon'], '<') !== false) ? 'html' : 'class';
+                // Set default order if not exists
+                if(!isset($current['order'])) {
+                    $current['order'] = 0;
+                }
                 break; 
             } 
         }
@@ -909,6 +1005,7 @@ function sfb_add_edit_form(){
     if(isset($_POST['sfb_save_button'])){
         $icon_type = sanitize_text_field($_POST['sfb_icon_type']);
         $icon_content = $icon_type === 'html' ? wp_kses_post($_POST['sfb_icon_html']) : sanitize_text_field($_POST['sfb_icon_class']);
+        $order = isset($_POST['sfb_order']) ? intval($_POST['sfb_order']) : 0;
         
         if($editing){
             foreach($buttons as &$b){ 
@@ -918,17 +1015,26 @@ function sfb_add_edit_form(){
                     $b['type'] = sanitize_text_field($_POST['sfb_type']);
                     $b['url'] = sanitize_text_field($_POST['sfb_url']);
                     $b['icon_type'] = $icon_type;
+                    $b['order'] = $order;
                 }
             }
         } else {
             $id = uniqid('sfb_');
+            // Get max order for new item
+            $max_order = 0;
+            foreach($buttons as $b) {
+                if(isset($b['order']) && $b['order'] > $max_order) {
+                    $max_order = $b['order'];
+                }
+            }
             $buttons[] = [
                 'id' => $id,
                 'icon' => $icon_content,
                 'name' => sanitize_text_field($_POST['sfb_name']),
                 'type' => sanitize_text_field($_POST['sfb_type']),
                 'url' => sanitize_text_field($_POST['sfb_url']),
-                'icon_type' => $icon_type
+                'icon_type' => $icon_type,
+                'order' => $max_order + 1
             ];
         }
         update_option('sfb_buttons', $buttons);
@@ -941,6 +1047,14 @@ function sfb_add_edit_form(){
     <h2><?php echo $editing ? 'Edit Social Floating Button' : 'Add Social Floating Button'; ?></h2>
     <form method="post">
         <table class="form-table">
+            <tr>
+                <th>Order</th>
+                <td>
+                    <input type="number" name="sfb_order" value="<?php echo esc_attr($current['order']); ?>" min="0" step="1" class="small-text">
+                    <p class="description">Lower numbers appear first. Use this to control the display order.</p>
+                </td>
+            </tr>
+            
             <tr>
                 <th>Icon Type</th>
                 <td>
@@ -1009,6 +1123,7 @@ function sfb_add_edit_form(){
     <?php
 }
 
+
 // =========================
 // ENQUEUE CDN STYLES & SCRIPTS
 // =========================
@@ -1047,7 +1162,7 @@ add_action('wp_enqueue_scripts', 'sfb_enqueue_icon_cdns');
 add_action('admin_enqueue_scripts', 'sfb_enqueue_icon_cdns');
 
 // =========================
-// ENHANCED FRONTEND SHORTCODE - VARIANTĂ SIMPLIFICATĂ
+// ENHANCED FRONTEND SHORTCODE
 // =========================
 add_shortcode('sfb_floating', function($atts){
     $settings = get_option('sfb_settings', [
@@ -1057,7 +1172,8 @@ add_shortcode('sfb_floating', function($atts){
         'animation' => 'slide',
         'mobile_enabled' => 1,
         'show_names' => 1,
-        'transparent_icons' => 0
+        'transparent_icons' => 0,
+        'custom_message' => "Let's chat with US!"
     ]);
     
     $atts = shortcode_atts([
@@ -1070,6 +1186,13 @@ add_shortcode('sfb_floating', function($atts){
     $buttons = get_option('sfb_buttons', []);
     if(empty($buttons)) return '';
     
+    // Sort buttons by order
+    usort($buttons, function($a, $b) {
+        $order_a = isset($a['order']) ? intval($a['order']) : 0;
+        $order_b = isset($b['order']) ? intval($b['order']) : 0;
+        return $order_a - $order_b;
+    });
+    
     $position_class = 'sfb-position-' . $atts['position'];
     $animation_class = 'sfb-animation-' . $atts['animation'];
     $mobile_class = $atts['mobile'] === 'true' ? 'sfb-mobile-enabled' : 'sfb-mobile-disabled';
@@ -1080,19 +1203,24 @@ add_shortcode('sfb_floating', function($atts){
     
     <div class="sfb-container <?php echo esc_attr("$position_class $animation_class $mobile_class"); ?>  <?php echo $show_names ? 'sfb-show-names' : 'sfb-icons-only'; ?> <?php echo $transparent_icons ? 'sfb-transparent-icons' : ''; ?>">
         
-        <div class="sfb-cta" style="background-color: <?php echo esc_attr($settings['button_color']); ?>">
+        <div class="sfb-cta" style="background-color: <?php echo esc_attr($settings['button_color']); ?>" aria-label="Open social menu" role="button" tabindex="0">
             <span class="sfb-cta-icon"><?php echo $settings['button_icon']; ?></span>
         </div>
         
-        <div class="sfb-popup">
+        <!-- Custom Message Tooltip -->
+        <div class="sfb-custom-message" id="sfb-custom-message">
+            <?php echo esc_html($settings['custom_message']); ?>
+        </div>
+        
+        <div class="sfb-popup" role="menu" aria-label="Social media links">
             <?php foreach($buttons as $b): ?>
                 <?php 
                 $href = $b['type'] === 'tel' ? 'tel:' . $b['url'] : 
                        ($b['type'] === 'mailto' ? 'mailto:' . $b['url'] : $b['url']);
-                $icon_html = isset($b['icon_type']) && $b['icon_type'] === 'html' ? $b['icon'] : '<span class="' . esc_attr($b['icon']) . '"></span>';
+                $icon_html = isset($b['icon_type']) && $b['icon_type'] === 'html' ? $b['icon'] : '<span class="' . esc_attr($b['icon']) . '" aria-hidden="true"></span>';
                 ?>
                 
-                <a href="<?php echo esc_url($href); ?>" class="sfb-item" target="_blank">
+                <a href="<?php echo esc_url($href); ?>" class="sfb-item" target="_blank" rel="noopener" role="menuitem">
                     <?php echo $icon_html; ?>
                     <?php if($show_names): ?>
                         <span class="sfb-item-label"><?php echo esc_html($b['name']); ?></span>
@@ -1101,249 +1229,604 @@ add_shortcode('sfb_floating', function($atts){
             <?php endforeach; ?>
         </div>
     </div>
+
     
     <style>
-    .sfb-container {
-        position: fixed;
-        z-index: 9999;
-        font-family: Arial, sans-serif;
-    }
-    
-    /* Position classes */
-    .sfb-position-right { 
-        right: 20px; 
-        bottom: 20px; 
-    }
-    .sfb-position-left { 
-        left: 20px; 
-        bottom: 20px; 
-    }
-    .sfb-position-top-right { 
-        right: 20px; 
-        top: 20px; 
-    }
-    .sfb-position-top-left { 
-        left: 20px; 
-        top: 20px; 
-    }
-    
-    /* CTA Button */
-    .sfb-cta {
-        color: #fff;
-        padding: 15px;
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 50px;
-        height: 50px;
+/* Social Floating Buttons - CSS Final Modificat */
+.sfb-container {
+    position: fixed;
+    z-index: 9999;
+    font-family: Arial, sans-serif;
+}
+
+/* Position classes */
+.sfb-position-right { 
+    right: 20px; 
+    bottom: 20px; 
+}
+.sfb-position-left { 
+    left: 20px; 
+    bottom: 20px; 
+}
+.sfb-position-top-right { 
+    right: 20px; 
+    top: 20px; 
+}
+.sfb-position-top-left { 
+    left: 20px; 
+    top: 20px; 
+}
+
+/* CTA Button cu pulsatie cand mesajul nu este afisat */
+.sfb-cta {
+    color: #fff;
+    padding: 15px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 10000;
+    animation: buttonPulse 2s ease-in-out infinite;
+}
+.sfb-cta:hover {
+    transform: scale(1.1);
+    animation: none; /* Opreste pulsatia la hover */
+}
+
+@keyframes buttonPulse {
+    0%, 100% { 
+        transform: scale(1);
         box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        transition: all 0.3s ease;
-        position: relative;
-        z-index: 10000;
     }
-    .sfb-cta:hover {
-        transform: scale(1.1);
+    50% { 
+        transform: scale(1.05);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
-    
-    /* Popup */
-    .sfb-popup {
-        display: none;
-        flex-direction: column;
-        position: absolute;
-        z-index: 9998;
+}
+
+/* Opreste pulsatia cand mesajul este afisat */
+.sfb-cta.message-visible {
+    animation: none;
+    transform: scale(1);
+}
+
+/* Custom Message Tooltip - cu timeout */
+.sfb-custom-message {
+    position: absolute;
+    background: #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 10001;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* Poziționare mesaj */
+.sfb-position-right .sfb-custom-message {
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-right: 10px;
+}
+.sfb-position-left .sfb-custom-message {
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 10px;
+}
+.sfb-position-top-right .sfb-custom-message {
+    right: 100%;
+    bottom: 50%;
+    transform: translateY(50%);
+    margin-right: 10px;
+}
+.sfb-position-top-left .sfb-custom-message {
+    left: 100%;
+    bottom: 50%;
+    transform: translateY(50%);
+    margin-left: 10px;
+}
+
+/* Stil pentru mesaj vizibil */
+.sfb-custom-message.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Efect de transparenta la scroll pentru butonul principal */
+.sfb-container.scrolling .sfb-cta {
+    opacity: 0.7;
+    transform: scale(0.95);
+}
+
+/* Efect de transparenta la scroll pentru mesaj */
+.sfb-container.scrolling .sfb-custom-message {
+    opacity: 0.3 !important;
+    transform: translateY(-50%) scale(0.95) !important;
+}
+
+/* Popup */
+.sfb-popup {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    z-index: 9998;
+    max-height: 70vh;
+    overflow-y: auto;
+    padding: 5px 0;
+}
+
+/* Scrollbar styling for many buttons */
+.sfb-popup::-webkit-scrollbar {
+    width: 6px;
+}
+.sfb-popup::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+.sfb-popup::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+.sfb-popup::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Positionare popup */
+.sfb-position-right .sfb-popup,
+.sfb-position-left .sfb-popup {
+    bottom: 100%;
+    margin-bottom: 10px;
+}
+.sfb-position-right .sfb-popup { right: 0; }
+.sfb-position-left .sfb-popup { left: 0; }
+
+.sfb-position-top-right .sfb-popup,
+.sfb-position-top-left .sfb-popup {
+    top: 100%;
+    margin-top: 10px;
+}
+.sfb-position-top-right .sfb-popup { right: 0; }
+.sfb-position-top-left .sfb-popup { left: 0; }
+
+/* Items - STILURI DIFERITE ÎN FUNCȚIE DE SETĂRI */
+
+/* Stil pentru afișare cu nume */
+.sfb-show-names .sfb-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    margin: 5px 0;
+    border-radius: 8px;
+    text-decoration: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    color: #333;
+    transition: all 0.2s ease;
+    opacity: 0;
+    background: #ffffff;
+    border-left: 4px solid var(--sfb-main-color, #0073aa);
+    min-width: 200px;
+    white-space: nowrap;
+}
+
+/* Stil pentru afișare doar cu iconițe (cu background) */
+.sfb-icons-only:not(.sfb-transparent-icons) .sfb-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 8px;
+    text-decoration: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    color: #333;
+    transition: all 0.2s ease;
+    opacity: 0;
+    background: #ffffff;
+    border-left: 4px solid var(--sfb-main-color, #0073aa);
+    min-width: 50px;
+    min-height: 50px;
+}
+
+/* Stil pentru afișare doar cu iconițe (TRANSPARENT) */
+.sfb-transparent-icons .sfb-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 50%;
+    text-decoration: none;
+    color: var(--sfb-main-color, #0073aa);
+    transition: all 0.2s ease;
+    opacity: 0;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    min-width: 40px;
+    min-height: 40px;
+    font-size: 20px;
+}
+
+/* Hover effects pentru toate variantele */
+.sfb-item:hover {
+    transform: scale(1.1);
+}
+.sfb-show-names .sfb-item:hover,
+.sfb-icons-only:not(.sfb-transparent-icons) .sfb-item:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+.sfb-transparent-icons .sfb-item:hover {
+    background: var(--sfb-main-color, #0073aa) !important;
+    color: #fff !important;
+}
+
+.sfb-item-label {
+    margin-left: 10px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Animații */
+.sfb-position-right .sfb-item,
+.sfb-position-left .sfb-item {
+    transform: translateY(20px);
+}
+.sfb-position-top-right .sfb-item,
+.sfb-position-top-left .sfb-item {
+    transform: translateY(-20px);
+}
+
+/* Active state */
+.sfb-container.active .sfb-popup {
+    display: flex;
+}
+.sfb-container.active .sfb-item {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Delay pentru animații - optimizat pentru multe butoane */
+.sfb-container.active .sfb-item {
+    transition-delay: calc(0.05s * var(--item-index, 0));
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .sfb-mobile-enabled .sfb-cta {
+        width: 45px;
+        height: 45px;
+        font-size: 16px;
+        padding: 12px;
     }
-    
-    /* Positionare popup */
-    .sfb-position-right .sfb-popup,
-    .sfb-position-left .sfb-popup {
-        bottom: 100%;
-        margin-bottom: 10px;
-    }
-    .sfb-position-right .sfb-popup { right: 0; }
-    .sfb-position-left .sfb-popup { left: 0; }
-    
-    .sfb-position-top-right .sfb-popup,
-    .sfb-position-top-left .sfb-popup {
-        top: 100%;
-        margin-top: 10px;
-    }
-    .sfb-position-top-right .sfb-popup { right: 0; }
-    .sfb-position-top-left .sfb-popup { left: 0; }
-    
-    /* Items - STILURI DIFERITE ÎN FUNCȚIE DE SETĂRI */
-    
-    /* Stil pentru afișare cu nume */
-    .sfb-show-names .sfb-item {
-        display: flex;
-        align-items: center;
-        padding: 12px 15px;
-        margin: 5px 0;
-        border-radius: 8px;
-        text-decoration: none;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        color: #333;
-        transition: all 0.2s ease;
-        opacity: 0;
-        background: #ffffff;
-        border-left: 4px solid <?php echo esc_attr($settings['button_color']); ?>;
-        min-width: 200px;
-    }
-    
-    /* Stil pentru afișare doar cu iconițe (cu background) */
-    .sfb-icons-only:not(.sfb-transparent-icons) .sfb-item {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 10px;
-        margin: 5px 0;
-        border-radius: 8px;
-        text-decoration: none;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        color: #333;
-        transition: all 0.2s ease;
-        opacity: 0;
-        background: #ffffff;
-        border-left: 4px solid <?php echo esc_attr($settings['button_color']); ?>;
-        min-width: 50px;
-        min-height: 50px;
-    }
-    
-    /* Stil pentru afișare doar cu iconițe (TRANSPARENT) */
-    .sfb-transparent-icons .sfb-item {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 10px;
-        margin: 5px 0;
-        border-radius: 50%;
-        text-decoration: none;
-        color: <?php echo esc_attr($settings['button_color']); ?>;
-        transition: all 0.2s ease;
-        opacity: 0;
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        min-width: 40px;
-        min-height: 40px;
-        font-size: 20px;
-    }
-    
-    /* Hover effects pentru toate variantele */
-    .sfb-item:hover {
-        transform: scale(1.1);
-    }
-    .sfb-show-names .sfb-item:hover,
-    .sfb-icons-only:not(.sfb-transparent-icons) .sfb-item:hover {
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    }
-    .sfb-transparent-icons .sfb-item:hover {
-        background: <?php echo esc_attr($settings['button_color']); ?> !important;
-        color: #fff !important;
-    }
-    
-    .sfb-item-label {
-        margin-left: 10px;
+    .sfb-mobile-enabled .sfb-show-names .sfb-item {
+        padding: 10px 12px;
         font-size: 14px;
-        font-weight: 600;
+        min-width: 180px;
+    }
+    .sfb-mobile-enabled .sfb-icons-only .sfb-item {
+        padding: 8px;
+        min-width: 45px;
+        min-height: 45px;
+    }
+    .sfb-mobile-enabled .sfb-transparent-icons .sfb-item {
+        min-width: 35px;
+        min-height: 35px;
+        font-size: 18px;
+    }
+    .sfb-mobile-disabled {
+        display: none !important;
     }
     
-    /* Animații */
-    .sfb-position-right .sfb-item,
-    .sfb-position-left .sfb-item {
-        transform: translateY(20px);
+    .sfb-position-right,
+    .sfb-position-left {
+        right: 10px;
+        bottom: 10px;
     }
-    .sfb-position-top-right .sfb-item,
-    .sfb-position-top-left .sfb-item {
-        transform: translateY(-20px);
-    }
-    
-    /* Active state */
-    .sfb-container.active .sfb-popup {
-        display: flex;
-    }
-    .sfb-container.active .sfb-item {
-        opacity: 1;
-        transform: translateY(0);
+    .sfb-position-left {
+        left: 10px;
+        right: auto;
     }
     
-    /* Delay pentru animații */
-    .sfb-container.active .sfb-item:nth-child(1) { transition-delay: 0.1s; }
-    .sfb-container.active .sfb-item:nth-child(2) { transition-delay: 0.2s; }
-    .sfb-container.active .sfb-item:nth-child(3) { transition-delay: 0.3s; }
-    .sfb-container.active .sfb-item:nth-child(4) { transition-delay: 0.4s; }
-    
-    /* Mobile responsive */
-    @media (max-width: 768px) {
-        .sfb-mobile-enabled .sfb-cta {
-            width: 45px;
-            height: 45px;
-            font-size: 16px;
-            padding: 12px;
-        }
-        .sfb-mobile-enabled .sfb-show-names .sfb-item {
-            padding: 10px 12px;
-            font-size: 14px;
-            min-width: 180px;
-        }
-        .sfb-mobile-enabled .sfb-icons-only .sfb-item {
-            padding: 8px;
-            min-width: 45px;
-            min-height: 45px;
-        }
-        .sfb-mobile-enabled .sfb-transparent-icons .sfb-item {
-            min-width: 35px;
-            min-height: 35px;
-            font-size: 18px;
-        }
-        .sfb-mobile-disabled {
-            display: none !important;
-        }
-        
-        .sfb-position-right,
-        .sfb-position-left {
-            right: 10px;
-            bottom: 10px;
-        }
-        .sfb-position-left {
-            left: 10px;
-            right: auto;
-        }
+    /* Pe mobile, mesajul apare mai scurt */
+    .sfb-custom-message {
+        font-size: 11px;
+        padding: 6px 10px;
     }
+}
     </style>
     
     <script>
-    document.addEventListener("DOMContentLoaded", function(){
-        const containers = document.querySelectorAll('.sfb-container');
+document.addEventListener("DOMContentLoaded", function(){
+    const containers = document.querySelectorAll('.sfb-container');
+    let isScrolling = false;
+    let scrollTimer;
+    let messageTimer;
+    let pageLoadTime = Date.now();
+
+    containers.forEach(container => {
+        const cta = container.querySelector('.sfb-cta');
+        const message = container.querySelector('.sfb-custom-message');
+        const items = container.querySelectorAll('.sfb-item');
         
-        containers.forEach(container => {
-            const cta = container.querySelector('.sfb-cta');
-            if(cta){
-                cta.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    container.classList.toggle('active');
+        // Setează variabila CSS pentru culoarea principală
+        if (cta) {
+            const mainColor = getComputedStyle(cta).backgroundColor;
+            container.style.setProperty('--sfb-main-color', mainColor);
+        }
+        
+        // Set item indexes for staggered animation
+        items.forEach((item, index) => {
+            item.style.setProperty('--item-index', index);
+        });
+
+        // Funcție pentru afișarea mesajului cu timeout
+        function showMessageWithTimeout() {
+            if (message && !container.classList.contains('active')) {
+                message.classList.add('visible');
+                if (cta) {
+                    cta.classList.add('message-visible');
+                }
+                
+                // Ascunde mesajul după 30 de secunde
+                clearTimeout(messageTimer);
+                messageTimer = setTimeout(() => {
+                    if (message.classList.contains('visible')) {
+                        message.classList.remove('visible');
+                        if (cta) {
+                            cta.classList.remove('message-visible');
+                        }
+                    }
+                }, 30000); // 30 de secunde
+            }
+        }
+
+        // Afișează mesajul la 2 secunde după încărcarea paginii
+        setTimeout(() => {
+            if (!container.classList.contains('active')) {
+                showMessageWithTimeout();
+            }
+        }, 2000);
+
+        if(cta){
+            cta.addEventListener('click', (e) => {
+                e.stopPropagation();
+                container.classList.toggle('active');
+                
+                // Ascunde mesajul când se deschide meniul
+                if (message) {
+                    message.classList.remove('visible');
+                    cta.classList.remove('message-visible');
+                    clearTimeout(messageTimer);
+                }
+            });
+
+            // Re-afișează mesajul când se închide meniul (dacă nu s-a făcut scroll)
+            cta.addEventListener('blur', function() {
+                if (!container.classList.contains('active')) {
+                    setTimeout(() => {
+                        if (!container.matches(':hover') && !isScrolling) {
+                            showMessageWithTimeout();
+                        }
+                    }, 1000);
+                }
+            });
+
+            // Afișează mesajul la hover (opțional)
+            cta.addEventListener('mouseenter', function() {
+                if (!container.classList.contains('active')) {
+                    showMessageWithTimeout();
+                }
+            });
+        }
+
+        // Îmbunătățiri accessibility
+        if (message) {
+            message.setAttribute('role', 'tooltip');
+            message.setAttribute('aria-hidden', 'true');
+        }
+    });
+
+    // Gestionare scroll cu efect de transparență
+    function handleScroll() {
+        if (!isScrolling) {
+            containers.forEach(container => {
+                container.classList.add('scrolling');
+                const message = container.querySelector('.sfb-custom-message');
+                const cta = container.querySelector('.sfb-cta');
+                
+                // Ascunde mesajul în timpul scroll-ului activ
+                if (message) {
+                    message.style.opacity = '0.3';
+                }
+                if (cta) {
+                    cta.style.opacity = '0.7';
+                }
+            });
+            isScrolling = true;
+        }
+
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(function() {
+            containers.forEach(container => {
+                container.classList.remove('scrolling');
+                const message = container.querySelector('.sfb-custom-message');
+                const cta = container.querySelector('.sfb-cta');
+                
+                // Restabilește opacitatea după scroll
+                if (message && message.classList.contains('visible')) {
+                    message.style.opacity = '1';
+                }
+                if (cta) {
+                    cta.style.opacity = '1';
+                    cta.classList.remove('message-visible');
+                }
+            });
+            isScrolling = false;
+        }, 150);
+    }
+
+    // Optimizare pentru performanță la scroll
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    // Re-afișează mesajul după scroll (după 30 de secunde de la sfârșitul scroll-ului)
+    let scrollEndMessageTimer;
+    window.addEventListener('scroll', function() {
+        clearTimeout(scrollEndMessageTimer);
+        scrollEndMessageTimer = setTimeout(() => {
+            if (!isScrolling) {
+                containers.forEach(container => {
+                    if (!container.classList.contains('active')) {
+                        const message = container.querySelector('.sfb-custom-message');
+                        const cta = container.querySelector('.sfb-cta');
+                        if (message && !message.classList.contains('visible')) {
+                            message.classList.add('visible');
+                            if (cta) {
+                                cta.classList.add('message-visible');
+                            }
+                            
+                            // Ascunde din nou după 30 de secunde
+                            setTimeout(() => {
+                                if (message.classList.contains('visible')) {
+                                    message.classList.remove('visible');
+                                    if (cta) {
+                                        cta.classList.remove('message-visible');
+                                    }
+                                }
+                            }, 30000);
+                        }
+                    }
                 });
             }
+        }, 30000); // Re-afișează după 30 de secunde de la sfârșitul scroll-ului
+    }, { passive: true });
+
+    // Close on outside click
+    document.addEventListener('click', function(e){
+        let clickedInside = false;
+        containers.forEach(container => {
+            if (container.contains(e.target)) {
+                clickedInside = true;
+            } else {
+                container.classList.remove('active');
+            }
         });
-        
-        // Close on outside click
-        document.addEventListener('click', function(){
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
             containers.forEach(container => {
                 container.classList.remove('active');
             });
-        });
-        
-        // Prevent closing when clicking inside container
+        }
+    });
+
+    // Handle touch events for mobile
+    document.addEventListener('touchstart', function(e) {
+        let touchedInside = false;
         containers.forEach(container => {
-            container.addEventListener('click', (e) => {
-                e.stopPropagation();
-            });
+            if (container.contains(e.target)) {
+                touchedInside = true;
+            } else {
+                container.classList.remove('active');
+            }
+        });
+    }, { passive: true });
+
+    // Performance optimization
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (reduceMotion.matches) {
+        document.documentElement.style.setProperty('--sfb-transition-duration', '0.1s');
+        // Oprește animația de puls pentru utilizatorii care preferă mișcare redusă
+        containers.forEach(container => {
+            const cta = container.querySelector('.sfb-cta');
+            if (cta) {
+                cta.style.animation = 'none';
+            }
+        });
+    }
+
+    // Resize observer
+    const resizeObserver = new ResizeObserver(entries => {
+        containers.forEach(container => {
+            if (container.classList.contains('active')) {
+                container.style.transform = 'translateZ(0)';
+            }
         });
     });
+
+    containers.forEach(container => {
+        resizeObserver.observe(container);
+    });
+
+    // Reîncarcă mesajul la vizibilitatea paginii (dacă utilizatorul revine la tab)
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            // Pagina a devenit vizibilă din nou
+            containers.forEach(container => {
+                if (!container.classList.contains('active')) {
+                    const message = container.querySelector('.sfb-custom-message');
+                    const cta = container.querySelector('.sfb-cta');
+                    if (message && !message.classList.contains('visible')) {
+                        // Așteaptă 2 secunde după ce utilizatorul revine
+                        setTimeout(() => {
+                            message.classList.add('visible');
+                            if (cta) {
+                                cta.classList.add('message-visible');
+                            }
+                            
+                            setTimeout(() => {
+                                if (message.classList.contains('visible')) {
+                                    message.classList.remove('visible');
+                                    if (cta) {
+                                        cta.classList.remove('message-visible');
+                                    }
+                                }
+                            }, 30000);
+                        }, 2000);
+                    }
+                }
+            });
+        }
+    });
+});
+		
     </script>
     
     <?php
     return ob_get_clean();
 });
+
+// =========================
+// UPDATE EXISTING BUTTONS WITH ORDER FIELD
+// =========================
+function sfb_update_existing_buttons_with_order() {
+    $buttons = get_option('sfb_buttons', []);
+    $updated = false;
+    
+    foreach($buttons as &$button) {
+        if(!isset($button['order'])) {
+            $button['order'] = 0;
+            $updated = true;
+        }
+    }
+    
+    if($updated) {
+        update_option('sfb_buttons', $buttons);
+    }
+}
+add_action('admin_init', 'sfb_update_existing_buttons_with_order');
