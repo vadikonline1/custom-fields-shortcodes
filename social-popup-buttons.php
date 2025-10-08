@@ -2,13 +2,15 @@
 if (!defined('ABSPATH')) exit;
 
 // =========================
-// ADMIN PAGE - COMPLETĂ CU NONCE FIELD
+// ADMIN PAGE - MODIFICATĂ (FĂRĂ SECȚIUNEA DE SHORTCUT-URI)
 // =========================
 function sfb_admin_page(){
     $current_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'buttons';
     ?>
     <div class="wrap">
         <h1>Social Floating Buttons</h1>
+        
+        <!-- ELIMINAT: Secțiunea de shortcut-uri -->
         
         <!-- ADD BUTTONUL DE "ADD NEW" -->
         <?php if($current_tab === 'buttons' && !isset($_GET['action'])): ?>
@@ -53,9 +55,8 @@ function sfb_admin_page(){
     </div>
     <?php
 }
-
 // =========================
-// SETTINGS PAGE
+// SETTINGS PAGE - MODIFICATĂ CU TOATE CERINȚELE
 // =========================
 function sfb_settings_page(){
     if(isset($_POST['sfb_save_settings'])){
@@ -67,7 +68,9 @@ function sfb_settings_page(){
             'mobile_enabled' => isset($_POST['sfb_mobile_enabled']) ? 1 : 0,
             'show_names' => isset($_POST['sfb_show_names']) ? 1 : 0,
             'transparent_icons' => isset($_POST['sfb_transparent_icons']) ? 1 : 0,
-            'custom_message' => sanitize_text_field($_POST['sfb_custom_message'])
+            'custom_message' => sanitize_text_field($_POST['sfb_custom_message']),
+            'show_custom_message' => isset($_POST['sfb_show_custom_message']) ? 1 : 0, // ADAUGAT
+            'show_shortcut_names' => isset($_POST['sfb_show_shortcut_names']) ? 1 : 0
         ];
         update_option('sfb_settings', $settings);
         echo '<div class="updated"><p>Settings saved successfully!</p></div>';
@@ -81,7 +84,9 @@ function sfb_settings_page(){
         'mobile_enabled' => 1,
         'show_names' => 1,
         'transparent_icons' => 0,
-        'custom_message' => "Let's chat with US!"
+        'custom_message' => "Let's chat with US!",
+        'show_custom_message' => 1, // ADAUGAT - valoare default
+        'show_shortcut_names' => 1
     ]);
     ?>
     
@@ -95,6 +100,30 @@ function sfb_settings_page(){
                                value="<?php echo esc_attr($settings['custom_message']); ?>" 
                                class="regular-text" placeholder="Let's chat with US!">
                         <p class="description">This message will be displayed in the UI when hovering or interacting with the button</p>
+                    </td>
+                </tr>
+                
+                <!-- ADAUGAT: Checkbox pentru afișarea mesajului custom -->
+                <tr>
+                    <th scope="row"><label for="sfb_show_custom_message">Display Custom Message</label></th>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="sfb_show_custom_message" id="sfb_show_custom_message" value="1" <?php checked($settings['show_custom_message'], 1); ?>>
+                            Show custom message tooltip
+                        </label>
+                        <p class="description">Enable or disable the display of the custom message tooltip</p>
+                    </td>
+                </tr>
+                
+                <!-- MODIFICAT: Checkbox pentru afișarea numelor în shortcut-uri -->
+                <tr>
+                    <th scope="row"><label for="sfb_show_shortcut_names">Shortcut Display</label></th>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="sfb_show_shortcut_names" id="sfb_show_shortcut_names" value="1" <?php checked($settings['show_shortcut_names'], 1); ?>>
+                            Show button names in shortcuts
+                        </label>
+                        <p class="description">When enabled, shortcodes will display button names; when disabled, only icons will be shown</p>
                     </td>
                 </tr>
                 
@@ -183,9 +212,11 @@ function sfb_settings_page(){
                 <span class="sfb-preview-icon"><?php echo $settings['button_icon']; ?></span>
             </div>
             
+            <?php if($settings['show_custom_message']): ?>
             <div class="sfb-custom-message-preview">
                 <strong>Custom Message:</strong> "<?php echo esc_html($settings['custom_message']); ?>"
             </div>
+            <?php endif; ?>
             
             <div class="sfb-preview-items">
                 <?php if($settings['show_names']): ?>
@@ -198,10 +229,10 @@ function sfb_settings_page(){
                         <span class="sfb-preview-text">Mobile Only</span>
                     </div>
                 <?php else: ?>
-                    <div class="sfb-preview-item icons-only <?php echo $settings['transparent_icons'] ? 'transparent' : ''; ?>">
+                    <div class="sfb-preview-item icons-only <?php echo ($settings['transparent_icons'] && !$settings['show_names']) ? 'transparent' : ''; ?>">
                         <span class="sfb-preview-icon">🔗</span>
                     </div>
-                    <div class="sfb-preview-item icons-only <?php echo $settings['transparent_icons'] ? 'transparent' : ''; ?>">
+                    <div class="sfb-preview-item icons-only <?php echo ($settings['transparent_icons'] && !$settings['show_names']) ? 'transparent' : ''; ?>">
                         <span class="sfb-preview-icon">📱</span>
                     </div>
                 <?php endif; ?>
@@ -217,6 +248,8 @@ function sfb_settings_page(){
                         🔒 Showing icons only with background
                     <?php endif; ?>
                 <?php endif; ?>
+                <br>
+                <?php echo $settings['show_custom_message'] ? '✅ Custom message enabled' : '❌ Custom message disabled'; ?>
             </p>
         </div>
         
@@ -304,6 +337,7 @@ function sfb_settings_page(){
     </div>
     <?php
 }
+
 
 
 // =========================
@@ -1145,14 +1179,17 @@ add_shortcode('sfb_floating', function($atts){
         'mobile_enabled' => 1,
         'show_names' => 1,
         'transparent_icons' => 0,
-        'custom_message' => "Let's chat with US!"
+        'custom_message' => "Let's chat with US!",
+        'show_custom_message' => 1,
+        'show_shortcut_names' => 1
     ]);
     
     $atts = shortcode_atts([
         'position' => $settings['position'],
         'animation' => $settings['animation'],
         'mobile' => $settings['mobile_enabled'] ? 'true' : 'false',
-        'show_names' => $settings['show_names'] ? 'true' : 'false'
+        'show_names' => $settings['show_names'] ? 'true' : 'false',
+        'show_custom_message' => $settings['show_custom_message'] ? 'true' : 'false' // ADAUGAT
     ], $atts);
     
     $buttons = get_option('sfb_buttons', []);
@@ -1169,6 +1206,7 @@ add_shortcode('sfb_floating', function($atts){
     $animation_class = 'sfb-animation-' . $atts['animation'];
     $mobile_class = $atts['mobile'] === 'true' ? 'sfb-mobile-enabled' : 'sfb-mobile-disabled';
     $show_names = $atts['show_names'] === 'true';
+    $show_custom_message = $atts['show_custom_message'] === 'true'; // ADAUGAT
     $transparent_icons = !$show_names && $settings['transparent_icons'];
     
     ob_start(); ?>
@@ -1179,10 +1217,12 @@ add_shortcode('sfb_floating', function($atts){
             <span class="sfb-cta-icon"><?php echo $settings['button_icon']; ?></span>
         </div>
         
-        <!-- Custom Message Tooltip -->
-        <div class="sfb-custom-message" id="sfb-custom-message">
+        <!-- Custom Message Tooltip - AFIȘAT DOAR DACĂ ESTE ACTIVAT -->
+        <?php if($show_custom_message): ?>
+        <div class="sfb-custom-message" id="sfb_custom_message">
             <?php echo esc_html($settings['custom_message']); ?>
         </div>
+        <?php endif; ?>
         
         <div class="sfb-popup" role="menu" aria-label="Social media links">
             <?php foreach($buttons as $b): ?>
@@ -1202,9 +1242,8 @@ add_shortcode('sfb_floating', function($atts){
         </div>
     </div>
 
-    
     <style>
-/* Social Floating Buttons - CSS Final Modificat */
+/* Social Floating Buttons - CSS MODIFICAT */
 .sfb-container {
     position: fixed;
     z-index: 9999;
@@ -1229,7 +1268,7 @@ add_shortcode('sfb_floating', function($atts){
     top: 20px; 
 }
 
-/* CTA Button cu pulsatie cand mesajul nu este afisat */
+/* CTA Button cu pulsatie doar cand mesajul custom este afisat */
 .sfb-cta {
     color: #fff;
     padding: 15px;
@@ -1245,11 +1284,15 @@ add_shortcode('sfb_floating', function($atts){
     transition: all 0.3s ease;
     position: relative;
     z-index: 10000;
+    <?php if($show_custom_message): ?>
     animation: buttonPulse 2s ease-in-out infinite;
+    <?php endif; ?>
 }
 .sfb-cta:hover {
     transform: scale(1.1);
+    <?php if($show_custom_message): ?>
     animation: none; /* Opreste pulsatia la hover */
+    <?php endif; ?>
 }
 
 @keyframes buttonPulse {
@@ -1413,7 +1456,7 @@ add_shortcode('sfb_floating', function($atts){
     min-height: 50px;
 }
 
-/* Stil pentru afișare doar cu iconițe (TRANSPARENT) */
+/* Stil pentru afișare doar cu iconițe (TRANSPARENT) - DEPINDE DE SETĂRI */
 .sfb-transparent-icons .sfb-item {
     display: flex;
     align-items: center;
@@ -1545,7 +1588,7 @@ document.addEventListener("DOMContentLoaded", function(){
             item.style.setProperty('--item-index', index);
         });
 
-        // Funcție pentru afișarea mesajului cu timeout
+        // Funcție pentru afișarea mesajului cu timeout - DOAR DACĂ MESAJUL EXISTĂ
         function showMessageWithTimeout() {
             if (message && !container.classList.contains('active')) {
                 message.classList.add('visible');
@@ -1566,19 +1609,21 @@ document.addEventListener("DOMContentLoaded", function(){
             }
         }
 
-        // Afișează mesajul la 2 secunde după încărcarea paginii
+        // Afișează mesajul la 2 secunde după încărcarea paginii - DOAR DACĂ MESAJUL EXISTĂ
+        <?php if($show_custom_message): ?>
         setTimeout(() => {
             if (!container.classList.contains('active')) {
                 showMessageWithTimeout();
             }
         }, 2000);
+        <?php endif; ?>
 
         if(cta){
             cta.addEventListener('click', (e) => {
                 e.stopPropagation();
                 container.classList.toggle('active');
                 
-                // Ascunde mesajul când se deschide meniul
+                // Ascunde mesajul când se deschide meniul - DOAR DACĂ MESAJUL EXISTĂ
                 if (message) {
                     message.classList.remove('visible');
                     cta.classList.remove('message-visible');
@@ -1586,7 +1631,8 @@ document.addEventListener("DOMContentLoaded", function(){
                 }
             });
 
-            // Re-afișează mesajul când se închide meniul (dacă nu s-a făcut scroll)
+            // Re-afișează mesajul când se închide meniul (dacă nu s-a făcut scroll) - DOAR DACĂ MESAJUL EXISTĂ
+            <?php if($show_custom_message): ?>
             cta.addEventListener('blur', function() {
                 if (!container.classList.contains('active')) {
                     setTimeout(() => {
@@ -1597,12 +1643,13 @@ document.addEventListener("DOMContentLoaded", function(){
                 }
             });
 
-            // Afișează mesajul la hover (opțional)
+            // Afișează mesajul la hover (opțional) - DOAR DACĂ MESAJUL EXISTĂ
             cta.addEventListener('mouseenter', function() {
                 if (!container.classList.contains('active')) {
                     showMessageWithTimeout();
                 }
             });
+            <?php endif; ?>
         }
 
         // Îmbunătățiri accessibility
@@ -1802,3 +1849,203 @@ function sfb_update_existing_buttons_with_order() {
     }
 }
 add_action('admin_init', 'sfb_update_existing_buttons_with_order');
+
+// =========================
+// FUNCTION TO DISPLAY ALL SHORTCUTS ANYWHERE
+// =========================
+function sfb_display_all_shortcuts($args = array()) {
+    $defaults = array(
+        'show_names' => null, // null pentru a folosi setarea globală
+        'transparent' => null, // ADAUGAT parametru transparent
+        'container_class' => 'sfb-shortcuts-container',
+        'item_class' => 'sfb-shortcut-item'
+    );
+    
+    $args = wp_parse_args($args, $defaults);
+    
+    $buttons = get_option('sfb_buttons', []);
+    if(empty($buttons)) return '';
+    
+    // Folosește setarea globală dacă nu este specificat altceva
+    if ($args['show_names'] === null) {
+        $settings = get_option('sfb_settings', []);
+        $args['show_names'] = isset($settings['show_shortcut_names']) ? $settings['show_shortcut_names'] : true;
+    }
+    
+    // Folosește setarea globală pentru transparent dacă nu este specificat altceva
+    if ($args['transparent'] === null) {
+        $settings = get_option('sfb_settings', []);
+        $args['transparent'] = isset($settings['transparent_icons']) ? $settings['transparent_icons'] : false;
+    }
+    
+    ob_start();
+    ?>
+    <div class="<?php echo esc_attr($args['container_class']); ?>">
+        <?php foreach($buttons as $button): ?>
+            <div class="<?php echo esc_attr($args['item_class']); ?>">
+                <?php 
+                echo do_shortcode('[sfb_button id="' . $button['id'] . '" show_name="' . ($args['show_names'] ? 'true' : 'false') . '" transparent="' . ($args['transparent'] ? 'true' : 'false') . '"]');
+                ?>
+            </div>
+        <?php endforeach; ?>
+    </div>
+    
+    <style>
+    .sfb-shortcuts-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 15px 0;
+		align-items: center;
+    }
+    .sfb-shortcut-item .sfb-single-button {
+        display: inline-flex;
+        align-items: center;
+        padding: 10px 15px;
+        background: #0073aa;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    .sfb-shortcut-item .sfb-single-button:hover {
+        background: #005a87;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .sfb-shortcut-item .sfb-single-button span {
+        margin-right: 8px;
+        font-size: 16px;
+    }
+    
+    /* Stil pentru butoanele transparente */
+    .sfb-shortcut-item .sfb-single-button.sfb-transparent {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: #0073aa !important;
+        padding: 8px !important;
+    }
+    .sfb-shortcut-item .sfb-single-button.sfb-transparent:hover {
+        background: #0073aa !important;
+        color: white !important;
+    }
+    </style>
+    <?php
+    return ob_get_clean();
+}
+
+// Adăugare shortcode pentru a afișa toate butoanele - MODIFICAT
+add_shortcode('sfb_all_buttons', function($atts) {
+    $atts = shortcode_atts(array(
+        'show_names' => null,
+        'transparent' => null, // ADAUGAT
+        'container_class' => 'sfb-shortcuts-container',
+        'item_class' => 'sfb-shortcut-item'
+    ), $atts);
+    
+    // Convert string to boolean
+    if ($atts['show_names'] !== null) {
+        $atts['show_names'] = filter_var($atts['show_names'], FILTER_VALIDATE_BOOLEAN);
+    }
+    if ($atts['transparent'] !== null) {
+        $atts['transparent'] = filter_var($atts['transparent'], FILTER_VALIDATE_BOOLEAN);
+    }
+    
+    return sfb_display_all_shortcuts($atts);
+});
+
+
+// =========================
+// INDIVIDUAL BUTTON SHORTCODE - MODIFICAT
+// =========================
+add_shortcode('sfb_button', function($atts){
+    $atts = shortcode_atts([
+        'id' => '',
+        'class' => '',
+        'style' => '',
+        'show_name' => '', // Adăugat parametru opțional
+        'transparent' => '' // ADAUGAT parametru transparent
+    ], $atts);
+    
+    if(empty($atts['id'])) return '';
+    
+    $buttons = get_option('sfb_buttons', []);
+    $button = null;
+    
+    foreach($buttons as $b) {
+        if($b['id'] === $atts['id']) {
+            $button = $b;
+            break;
+        }
+    }
+    
+    if(!$button) return '';
+    
+    $href = $button['type'] === 'tel' ? 'tel:' . $button['url'] : 
+           ($button['type'] === 'mailto' ? 'mailto:' . $button['url'] : $button['url']);
+    
+    $icon_html = isset($button['icon_type']) && $button['icon_type'] === 'html' ? 
+                $button['icon'] : 
+                '<span class="' . esc_attr($button['icon']) . '" aria-hidden="true"></span>';
+    
+    $classes = ['sfb-single-button'];
+    if(!empty($atts['class'])) $classes[] = $atts['class'];
+    
+    // Determină dacă trebuie afișat numele
+    $show_name = true;
+    if ($atts['show_name'] !== '') {
+        $show_name = filter_var($atts['show_name'], FILTER_VALIDATE_BOOLEAN);
+    } else {
+        // Folosește setarea globală din options
+        $settings = get_option('sfb_settings', []);
+        $show_name = isset($settings['show_shortcut_names']) ? $settings['show_shortcut_names'] : true;
+    }
+    
+    // Determină dacă butonul este transparent
+    $is_transparent = false;
+    if ($atts['transparent'] !== '') {
+        $is_transparent = filter_var($atts['transparent'], FILTER_VALIDATE_BOOLEAN);
+    } else {
+        // Folosește setarea globală doar dacă numele nu sunt afișate
+        if (!$show_name) {
+            $settings = get_option('sfb_settings', []);
+            $is_transparent = isset($settings['transparent_icons']) ? $settings['transparent_icons'] : false;
+        }
+    }
+    
+    // Adaugă clasa transparent dacă este cazul
+    if ($is_transparent && !$show_name) {
+        $classes[] = 'sfb-transparent';
+    }
+    
+    $output = sprintf(
+        '<a href="%s" class="%s" style="%s" target="_blank" rel="noopener">%s%s</a>',
+        esc_url($href),
+        esc_attr(implode(' ', $classes)),
+        esc_attr($atts['style']),
+        $icon_html,
+        $show_name ? esc_html($button['name']) : ''
+    );
+    
+    // Adaugă CSS pentru butoanele transparente
+    if ($is_transparent && !$show_name) {
+        $output .= '
+        <style>
+        .sfb-single-button.sfb-transparent {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            color: #0073aa !important;
+            padding: 8px !important;
+        }
+        .sfb-single-button.sfb-transparent:hover {
+            background: #0073aa !important;
+            color: white !important;
+        }
+        </style>';
+    }
+    
+    return $output;
+});
