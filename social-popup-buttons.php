@@ -489,6 +489,7 @@ function sfb_enqueue_icon_cdns(){
 add_action('wp_enqueue_scripts', 'sfb_enqueue_icon_cdns');
 add_action('admin_enqueue_scripts', 'sfb_enqueue_icon_cdns');
 
+
 // =========================
 // ENQUEUE FRONTEND STYLES
 // =========================
@@ -560,12 +561,21 @@ add_shortcode('sfb_floating', function($atts){
         <div class="sfb-popup" role="menu" aria-label="Social media links">
             <?php foreach($buttons as $b): ?>
                 <?php 
-                $href = $b['type'] === 'tel' ? 'tel:' . $b['url'] : 
-                       ($b['type'] === 'mailto' ? 'mailto:' . $b['url'] : $b['url']);
+                // Modificare aici pentru a permite scheme custom
+                $href = '';
+                if($b['type'] === 'tel') {
+                    $href = 'tel:' . $b['url'];
+                } elseif($b['type'] === 'mailto') {
+                    $href = 'mailto:' . $b['url'];
+                } else {
+                    // Pentru URL-uri normale sau scheme custom (viber://, whatsapp://, etc.)
+                    $href = $b['url'];
+                }
+                
                 $icon_html = isset($b['icon_type']) && $b['icon_type'] === 'html' ? $b['icon'] : '<span class="' . esc_attr($b['icon']) . '" aria-hidden="true"></span>';
                 ?>
                 
-                <a href="<?php echo esc_url($href); ?>" class="sfb-item" target="_blank" rel="noopener" role="menuitem">
+                <a href="<?php echo esc_attr($href); ?>" class="sfb-item" <?php echo ($b['type'] === 'url') ? 'target="_blank" rel="noopener"' : ''; ?> role="menuitem">
                     <?php echo $icon_html; ?>
                     <?php if($show_names): ?>
                         <span class="sfb-item-label"><?php echo esc_html($b['name']); ?></span>
@@ -819,6 +829,94 @@ add_shortcode('sfb_floating', function($atts){
 });
 
 // =========================
+// INDIVIDUAL BUTTON SHORTCODE - MODIFICAT PENTRU SCHEME CUSTOM
+// =========================
+add_shortcode('sfb_button', function($atts){
+    $atts = shortcode_atts([
+        'id' => '',
+        'class' => '',
+        'style' => '',
+        'show_name' => '',
+        'transparent' => ''
+    ], $atts);
+    
+    if(empty($atts['id'])) return '';
+    
+    $buttons = get_option('sfb_buttons', []);
+    $button = null;
+    
+    foreach($buttons as $b) {
+        if($b['id'] === $atts['id']) {
+            $button = $b;
+            break;
+        }
+    }
+    
+    if(!$button) return '';
+    
+    // Modificare aici pentru a permite scheme custom
+    $href = '';
+    if($button['type'] === 'tel') {
+        $href = 'tel:' . $button['url'];
+    } elseif($button['type'] === 'mailto') {
+        $href = 'mailto:' . $button['url'];
+    } else {
+        // Pentru URL-uri normale sau scheme custom (viber://, whatsapp://, etc.)
+        $href = $button['url'];
+    }
+    
+    $icon_html = isset($button['icon_type']) && $button['icon_type'] === 'html' ? 
+                $button['icon'] : 
+                '<span class="' . esc_attr($button['icon']) . '" aria-hidden="true"></span>';
+    
+    $classes = ['sfb-single-button'];
+    if(!empty($atts['class'])) $classes[] = $atts['class'];
+    
+    $show_name = true;
+    if ($atts['show_name'] !== '') {
+        $show_name = filter_var($atts['show_name'], FILTER_VALIDATE_BOOLEAN);
+    } else {
+        $settings = get_option('sfb_settings', []);
+        $show_name = isset($settings['show_shortcut_names']) ? $settings['show_shortcut_names'] : true;
+    }
+    
+    $is_transparent = false;
+    if ($atts['transparent'] !== '') {
+        $is_transparent = filter_var($atts['transparent'], FILTER_VALIDATE_BOOLEAN);
+    } else {
+        if (!$show_name) {
+            $settings = get_option('sfb_settings', []);
+            $is_transparent = isset($settings['transparent_icons']) ? $settings['transparent_icons'] : false;
+        }
+    }
+    
+    if ($is_transparent && !$show_name) {
+        $classes[] = 'sfb-transparent';
+    }
+    
+    $target_attr = ($button['type'] === 'url') ? 'target="_blank" rel="noopener"' : '';
+    
+    $output = sprintf(
+        '<a href="%s" class="%s" style="%s" %s>%s%s</a>',
+        esc_attr($href), // Schimbat de la esc_url la esc_attr pentru scheme custom
+        esc_attr(implode(' ', $classes)),
+        esc_attr($atts['style']),
+        $target_attr,
+        $icon_html,
+        $show_name ? esc_html($button['name']) : ''
+    );
+    
+    return $output;
+});
+
+// Funcție opțională pentru validarea schemei
+function sfb_is_allowed_scheme($url) {
+    $allowed_schemes = ['http', 'https', 'tel', 'mailto', 'viber', 'whatsapp', 'skype', 'tg', 'fb-messenger'];
+    $scheme = parse_url($url, PHP_URL_SCHEME);
+    return in_array($scheme, $allowed_schemes);
+}
+
+// =========================
 // UPDATE EXISTING BUTTONS WITH ORDER FIELD
 // =========================
 function sfb_update_existing_buttons_with_order() {
@@ -902,72 +1000,4 @@ add_shortcode('sfb_all_buttons', function($atts) {
     return sfb_display_all_shortcuts($atts);
 });
 
-// =========================
-// INDIVIDUAL BUTTON SHORTCODE
-// =========================
-add_shortcode('sfb_button', function($atts){
-    $atts = shortcode_atts([
-        'id' => '',
-        'class' => '',
-        'style' => '',
-        'show_name' => '',
-        'transparent' => ''
-    ], $atts);
-    
-    if(empty($atts['id'])) return '';
-    
-    $buttons = get_option('sfb_buttons', []);
-    $button = null;
-    
-    foreach($buttons as $b) {
-        if($b['id'] === $atts['id']) {
-            $button = $b;
-            break;
-        }
-    }
-    
-    if(!$button) return '';
-    
-    $href = $button['type'] === 'tel' ? 'tel:' . $button['url'] : 
-           ($button['type'] === 'mailto' ? 'mailto:' . $button['url'] : $button['url']);
-    
-    $icon_html = isset($button['icon_type']) && $button['icon_type'] === 'html' ? 
-                $button['icon'] : 
-                '<span class="' . esc_attr($button['icon']) . '" aria-hidden="true"></span>';
-    
-    $classes = ['sfb-single-button'];
-    if(!empty($atts['class'])) $classes[] = $atts['class'];
-    
-    $show_name = true;
-    if ($atts['show_name'] !== '') {
-        $show_name = filter_var($atts['show_name'], FILTER_VALIDATE_BOOLEAN);
-    } else {
-        $settings = get_option('sfb_settings', []);
-        $show_name = isset($settings['show_shortcut_names']) ? $settings['show_shortcut_names'] : true;
-    }
-    
-    $is_transparent = false;
-    if ($atts['transparent'] !== '') {
-        $is_transparent = filter_var($atts['transparent'], FILTER_VALIDATE_BOOLEAN);
-    } else {
-        if (!$show_name) {
-            $settings = get_option('sfb_settings', []);
-            $is_transparent = isset($settings['transparent_icons']) ? $settings['transparent_icons'] : false;
-        }
-    }
-    
-    if ($is_transparent && !$show_name) {
-        $classes[] = 'sfb-transparent';
-    }
-    
-    $output = sprintf(
-        '<a href="%s" class="%s" style="%s" target="_blank" rel="noopener">%s%s</a>',
-        esc_url($href),
-        esc_attr(implode(' ', $classes)),
-        esc_attr($atts['style']),
-        $icon_html,
-        $show_name ? esc_html($button['name']) : ''
-    );
-    
-    return $output;
-});
+
