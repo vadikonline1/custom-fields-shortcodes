@@ -533,3 +533,28 @@ function scfs_activation_notice() {
     }
 }
 
+function register_page_taxonomy() {
+
+    if ( ! taxonomy_exists('page_tag') ) {
+
+        register_taxonomy(
+            'page_tag',
+            array('page'),
+            array(
+                'labels' => array(
+                    'name' => 'Page Tags',
+                    'singular_name' => 'Page Tag',
+                ),
+                'public' => true,
+                'hierarchical' => false,
+                'show_ui' => true,
+                'show_in_rest' => true,
+                'rewrite' => array(
+                    'slug' => 'page-tag',
+                ),
+            )
+        );
+
+    }
+}
+add_action('init', 'register_page_taxonomy');
