@@ -2,7 +2,7 @@
 /*
 Plugin Name: Social & Custom Fields Shortcodes
 Description: Manage custom fields and social floating buttons with shortcodes and modals.
-Version: 0.0.5
+Version: 0.0.6
 Author: Steel..xD
 Plugin URI: https://github.com/vadikonline1/custom-fields-shortcodes/
 Author URI: https://github.com/vadikonline1/custom-fields-shortcodes/
@@ -533,28 +533,3 @@ function scfs_activation_notice() {
     }
 }
 
-function register_page_taxonomy() {
-
-    if ( ! taxonomy_exists('page_tag') ) {
-
-        register_taxonomy(
-            'page_tag',
-            array('page'),
-            array(
-                'labels' => array(
-                    'name' => 'Page Tags',
-                    'singular_name' => 'Page Tag',
-                ),
-                'public' => true,
-                'hierarchical' => false,
-                'show_ui' => true,
-                'show_in_rest' => true,
-                'rewrite' => array(
-                    'slug' => 'page-tag',
-                ),
-            )
-        );
-
-    }
-}
-add_action('init', 'register_page_taxonomy');
