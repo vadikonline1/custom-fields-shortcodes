@@ -19,18 +19,17 @@ class CustomFields {
     private function __construct() {
         add_action('admin_menu', [$this, 'admin_menu'], 20);
         add_shortcode('scfs_field', [$this, 'shortcode']);
+        add_shortcode('cfs', [$this, 'legacy_shortcode']); // Shortcode pentru compatibilitate
         
         if (is_admin()) {
             add_action('admin_init', [$this, 'handle_form_submissions']);
             add_action('admin_init', [$this, 'handle_single_actions']);
         }
         
-        // Verifică dacă să folosească baza de date
         $this->use_database = AjaxHandler::is_migration_done();
     }
 
     public function admin_menu() {
-        // Submenu pentru Custom Fields
         add_submenu_page(
             'scfs-oop',
             'Custom Fields',
@@ -56,13 +55,10 @@ class CustomFields {
                 case 'save':
                     $label = sanitize_text_field($_POST['label']);
                     
-                    // Determină name-ul
                     if (empty($id)) {
-                        // ADĂUGARE NOUĂ - generează ID și apoi slug
                         $new_id = uniqid('field_');
                         $name = AjaxHandler::generate_slug_with_id($label, $new_id);
                     } else {
-                        // EDITARE - FORȚE folosirea slug-ului din baza de date
                         $existing_field = $this->get($id);
                         $name = $existing_field['name'] ?? '';
                     }
@@ -76,7 +72,6 @@ class CustomFields {
                     $fields = $this->get_all(true);
                     $existing_field = null;
                     
-                    // Găsește field-ul existent
                     foreach ($fields as $key => $field) {
                         if (isset($field['id']) && $field['id'] === $id) {
                             $existing_field = $field;
@@ -85,12 +80,10 @@ class CustomFields {
                     }
                     
                     if ($existing_field) {
-                        // Update - păstrează toate datele existente
                         $updated_data = array_merge($existing_field, $data);
                         $this->update($id, $updated_data);
                         $message = 'Field updated successfully!';
                     } else {
-                        // Crează field-ul cu ID-ul generat
                         $data['id'] = $new_id;
                         $this->create_with_id($data);
                         $message = 'Field created successfully!';
@@ -162,13 +155,11 @@ class CustomFields {
         
         echo '<div class="wrap scfs-admin">';
         
-        // Adaugă breadcrumb
         echo '<nav class="scfs-breadcrumb">';
         echo '<a href="' . admin_url('admin.php?page=scfs-oop') . '">Dashboard</a> &raquo; ';
         echo '<span>Custom Fields</span>';
         echo '</nav>';
         
-        // Show messages
         if ($message) {
             echo '<div class="notice notice-success is-dismissible"><p>' . esc_html(urldecode($message)) . '</p></div>';
         }
@@ -223,7 +214,6 @@ class CustomFields {
             <input type="hidden" name="scfs_action" value="save">
             <?php if ($is_edit): ?>
                 <input type="hidden" name="id" value="<?php echo esc_attr($id); ?>">
-                <!-- Slug-ul este FORȚAT în PHP, nu în formular -->
                 <input type="hidden" name="name" id="name_hidden" value="<?php echo esc_attr($field['name'] ?? ''); ?>">
             <?php endif; ?>
             
@@ -247,7 +237,9 @@ class CustomFields {
                         </div>
                         <p class="description">
                             <strong>Auto-generated from Label with ID suffix. Cannot be changed.</strong><br>
-                            Use in shortcode: <code>[scfs_field name="<?php echo esc_attr($field['name']); ?>"]</code>
+                            Use in shortcodes: <br>
+                            <code>[scfs_field name="<?php echo esc_attr($field['name']); ?>"]</code><br>
+                            <code>[cfs field="<?php echo esc_attr($field['name']); ?>"]</code> (legacy support)
                         </p>
                     </td>
                 </tr>
@@ -306,17 +298,14 @@ class CustomFields {
     // CRUD Methods
     public function get_all($include_trash = false) {
         if ($this->use_database) {
-            // Folosește baza de date pentru valori
             $items = AjaxHandler::get_all_items_from_database('custom_field', $include_trash);
             
-            // Dacă nu există date în baza de date, verifică backup-urile
             if (empty($items)) {
                 return $this->get_from_backup($include_trash);
             }
             
             return $this->format_database_items($items);
         } else {
-            // Folosește wp_options pentru compatibilitate backward
             return $this->get_from_wp_options($include_trash);
         }
     }
@@ -324,12 +313,10 @@ class CustomFields {
     private function get_from_wp_options($include_trash = false) {
         $fields_data = get_option($this->option_name, []);
         
-        // Dacă nu există date, verifică backup-ul
         if (empty($fields_data)) {
             $fields_data = get_option($this->backup_name, []);
         }
         
-        // Transformă datele vechi în formatul nou
         $formatted_data = $this->format_legacy_data($fields_data);
         
         if (!$include_trash) {
@@ -367,7 +354,6 @@ class CustomFields {
                 continue;
             }
             
-            // Asigură-te că toate câmpurile necesare există
             $defaults = [
                 'name' => '',
                 'label' => '',
@@ -381,7 +367,6 @@ class CustomFields {
             $formatted[] = array_merge($defaults, $item);
         }
         
-        // Sortează după order
         usort($formatted, function($a, $b) {
             $order_a = $a['order'] ?? 9999;
             $order_b = $b['order'] ?? 9999;
@@ -394,9 +379,7 @@ class CustomFields {
     private function format_legacy_data($data) {
         $formatted = [];
         
-        // Dacă datele sunt în format vechi (cheie => valoare)
         if (isset($data[0]) && is_array($data[0])) {
-            // Format nou (deja structurat)
             foreach ($data as $item) {
                 if (!is_array($item)) continue;
                 
@@ -417,9 +400,7 @@ class CustomFields {
             return $formatted;
         }
         
-        // Format vechi - convertește
         foreach ($data as $name => $value) {
-            // Skip dacă nu este un field valid
             if (empty($name) || !is_string($name)) {
                 continue;
             }
@@ -441,14 +422,12 @@ class CustomFields {
     
     public function get($id) {
         if ($this->use_database) {
-            // Caută în baza de date
             $item = AjaxHandler::get_item_from_database($id, 'custom_field');
             if ($item) {
                 return $this->format_single_item($item);
             }
         }
         
-        // Fallback la wp_options sau backup
         $fields = $this->get_all(true);
         
         foreach ($fields as $field) {
@@ -481,25 +460,21 @@ class CustomFields {
     public function create($data) {
         $id = uniqid('field_');
         
-        // Generează slug-ul cu ID
         if (!isset($data['name']) || empty($data['name'])) {
             $data['name'] = AjaxHandler::generate_slug_with_id($data['label'] ?? '', $id);
         }
         
-        // Adaugă metadate
         $data['id'] = $id;
         $data['created'] = current_time('mysql');
         $data['trashed'] = false;
         $data['is_legacy'] = false;
         
-        // Setează order-ul
         if (!isset($data['order']) || empty($data['order'])) {
             $all_fields = $this->get_all();
             $data['order'] = count($all_fields) + 1;
         }
         
         if ($this->use_database) {
-            // Salvează în baza de date
             $success = AjaxHandler::save_item_to_database_static(
                 $id,
                 'custom_field',
@@ -510,7 +485,6 @@ class CustomFields {
             
             return $success ? $id : false;
         } else {
-            // Salvează în wp_options
             $fields = $this->get_all(true);
             $fields[] = $data;
             update_option($this->option_name, $fields);
@@ -519,29 +493,24 @@ class CustomFields {
     }
     
     public function create_with_id($data) {
-        // Asigură-te că ID-ul există
         if (!isset($data['id']) || empty($data['id'])) {
             $data['id'] = uniqid('field_');
         }
         
-        // Generează slug-ul cu ID
         if (!isset($data['name']) || empty($data['name'])) {
             $data['name'] = AjaxHandler::generate_slug_with_id($data['label'] ?? '', $data['id']);
         }
         
-        // Adaugă metadate
         $data['created'] = current_time('mysql');
         $data['trashed'] = false;
         $data['is_legacy'] = false;
         
-        // Setează order-ul
         if (!isset($data['order']) || empty($data['order'])) {
             $all_fields = $this->get_all();
             $data['order'] = count($all_fields) + 1;
         }
         
         if ($this->use_database) {
-            // Salvează în baza de date
             $success = AjaxHandler::save_item_to_database_static(
                 $data['id'],
                 'custom_field',
@@ -552,7 +521,6 @@ class CustomFields {
             
             return $success ? $data['id'] : false;
         } else {
-            // Salvează în wp_options
             $fields = $this->get_all(true);
             $fields[] = $data;
             update_option($this->option_name, $fields);
@@ -562,16 +530,13 @@ class CustomFields {
     
     public function update($id, $data) {
         if ($this->use_database) {
-            // Obține item-ul existent
             $existing_item = $this->get($id);
             if (!$existing_item) {
                 return false;
             }
             
-            // Merge datele
             $updated_data = array_merge($existing_item, $data);
             
-            // Salvează în baza de date
             return AjaxHandler::save_item_to_database_static(
                 $id,
                 'custom_field',
@@ -580,13 +545,11 @@ class CustomFields {
                 isset($updated_data['trashed']) && !empty($updated_data['trashed']) ? $updated_data['trashed'] : null
             );
         } else {
-            // Update în wp_options
             $fields = $this->get_all(true);
             $updated = false;
             
             foreach ($fields as &$field) {
                 if (isset($field['id']) && $field['id'] === $id) {
-                    // Păstrează slug-ul original, nu-l suprascrie
                     if (isset($field['name']) && isset($data['name']) && $field['name'] !== $data['name']) {
                         unset($data['name']);
                     }
@@ -663,7 +626,6 @@ class CustomFields {
                 if (!isset($field['id']) || $field['id'] !== $id) {
                     $new_fields[] = $field;
                 } else {
-                    // Dacă este field legacy, îl păstrăm dar îl marcam ca trashed
                     if (isset($field['is_legacy']) && $field['is_legacy']) {
                         $field['trashed'] = current_time('mysql');
                         $new_fields[] = $field;
@@ -691,13 +653,13 @@ class CustomFields {
         return $count;
     }
     
+    // Shortcode pentru formatul nou
     public function shortcode($atts) {
         $atts = shortcode_atts([
             'name' => '',
             'default' => ''
         ], $atts);
         
-        // Caută field-ul
         $fields = $this->get_all();
         
         foreach ($fields as $field) {
@@ -706,12 +668,27 @@ class CustomFields {
             }
         }
         
-        // Fallback direct la datele vechi din backup
+        // Fallback la backup-uri pentru compatibilitate
         $old_fields = get_option($this->backup_name, []);
         if (is_array($old_fields) && isset($old_fields[$atts['name']])) {
             return stripslashes($old_fields[$atts['name']]);
         }
         
         return $atts['default'];
+    }
+    
+    // Shortcode pentru compatibilitate cu versiunea veche [cfs field="nume"]
+    public function legacy_shortcode($atts) {
+        $atts = shortcode_atts([
+            'field' => '',
+            'default' => ''
+        ], $atts);
+        
+        if (empty($atts['field'])) {
+            return $atts['default'];
+        }
+        
+        // Folosește funcția principală de shortcode cu parametrul 'name'
+        return $this->shortcode(['name' => $atts['field'], 'default' => $atts['default']]);
     }
 }

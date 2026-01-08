@@ -39,10 +39,8 @@ class CustomFieldsTable extends \WP_List_Table {
     }
     
     public function prepare_items() {
-        // Obține toate câmpurile (inclusiv cele din trash)
         $all_fields = $this->custom_fields->get_all(true);
         
-        // Filtrează câmpurile: doar cele din trash sau doar cele active
         $fields = [];
         foreach ($all_fields as $field) {
             $is_trashed = !empty($field['trashed']);
@@ -64,7 +62,6 @@ class CustomFieldsTable extends \WP_List_Table {
         $this->_column_headers = [$this->get_columns(), [], $this->get_sortable_columns()];
         $this->items = $data;
         
-        // Procesează bulk actions doar dacă sunt trimise
         if ($this->current_action() && isset($_POST['id'])) {
             $this->process_bulk_action();
         }
@@ -106,7 +103,9 @@ class CustomFieldsTable extends \WP_List_Table {
             case 'label':
                 return esc_html($item['label'] ?? '');
             case 'shortcode':
-                return '<code>[scfs_field name="' . esc_attr($item['name'] ?? '') . '"]</code>';
+                $new_shortcode = '<code>[scfs_field name="' . esc_attr($item['name'] ?? '') . '"]</code>';
+                $legacy_shortcode = '<br><small style="color: #666;">Legacy: <code>[cfs field="' . esc_attr($item['name'] ?? '') . '"]</code></small>';
+                return $new_shortcode . $legacy_shortcode;
             case 'trashed':
                 return isset($item['trashed']) && !empty($item['trashed']) 
                     ? date_i18n('Y-m-d H:i', strtotime($item['trashed'])) 
@@ -165,7 +164,6 @@ class CustomFieldsTable extends \WP_List_Table {
     public function process_bulk_action() {
         if (empty($this->current_action())) return;
         
-        // Verifică nonce pentru bulk actions
         if (!isset($_REQUEST['_wpnonce']) || !wp_verify_nonce($_REQUEST['_wpnonce'], 'bulk-' . $this->_args['plural'])) {
             return;
         }
@@ -197,7 +195,6 @@ class CustomFieldsTable extends \WP_List_Table {
                 break;
         }
         
-        // Redirect după bulk action
         $redirect_url = admin_url('admin.php?page=scfs-custom-fields');
         if ($this->is_trash) {
             $redirect_url .= '&action=trash';

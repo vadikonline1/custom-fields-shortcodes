@@ -7,6 +7,24 @@ class AjaxHandler {
     private static $backup_prefix = 'bpk_';
     private static $table_created_key = 'scfs_table_created_v3';
     
+    // Lista opțiunilor care trebuie MIGRATE în tabela separată
+    private static $options_to_migrate = [
+        'sfb_buttons',
+        'scfs_social_buttons',
+        'cfs_fields',
+        'scfs_custom_fields',
+    ];
+    
+    // Lista opțiunilor de SETĂRI care rămân în wp_options
+    private static $settings_options = [
+        'sfb_auto_display',
+        'scfs_social_settings',
+        'sfb_icon_cdns',
+        'sfb_custom_cdns',
+        'scfs_cdn_settings_custom',
+        'scfs_cdn_settings_predefined',
+    ];
+    
     public static function get_instance() {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -15,31 +33,18 @@ class AjaxHandler {
     }
     
     private function __construct() {
-        // Add CDN via AJAX
         add_action('wp_ajax_scfs_add_cdn_ajax', [$this, 'add_cdn_ajax']);
-        
-        // Toggle CDN status via AJAX
         add_action('wp_ajax_scfs_toggle_cdn_status', [$this, 'toggle_cdn_status']);
-        
-        // Update order via AJAX
         add_action('wp_ajax_scfs_update_order', [$this, 'update_order']);
-        
-        // Încărcarea CDN-urilor vechi
         add_action('wp_enqueue_scripts', [$this, 'enqueue_legacy_cdns']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_legacy_cdns']);
-        
-        // Adaugă hook pentru crearea tabelei
         add_action('admin_init', [$this, 'maybe_create_table']);
-        
-        // Adaugă hook pentru migrare
         add_action('admin_init', [$this, 'check_and_migrate_data']);
-        
-        // Adaugă AJAX pentru migrare
         add_action('wp_ajax_scfs_migrate_data', [$this, 'migrate_data_ajax']);
     }
     
     // =========================
-    // TABLE CREATION - Static Method for Activation
+    // TABLE CREATION
     // =========================
     
     public static function create_database_table_on_activation() {
@@ -47,7 +52,6 @@ class AjaxHandler {
     }
     
     public function maybe_create_table() {
-        // Verifică dacă tabela a fost deja creată
         if (get_option(self::$table_created_key)) {
             return;
         }
@@ -63,7 +67,6 @@ class AjaxHandler {
         $table_name = $wpdb->prefix . 'scfs';
         $charset_collate = $wpdb->get_charset_collate();
         
-        // Verifică dacă tabela există deja
         $table_exists = $wpdb->get_var($wpdb->prepare(
             "SHOW TABLES LIKE %s", 
             $table_name
@@ -92,7 +95,6 @@ class AjaxHandler {
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         $result = dbDelta($sql);
         
-        // Verifică dacă tabela a fost creată cu succes
         $table_exists = $wpdb->get_var($wpdb->prepare(
             "SHOW TABLES LIKE %s", 
             $table_name
@@ -100,7 +102,6 @@ class AjaxHandler {
         
         if (!$table_exists) {
             error_log('SCFS: Failed to create database table: ' . $table_name);
-            error_log('SCFS: SQL Error: ' . print_r($result, true));
             return false;
         }
         
@@ -116,38 +117,40 @@ class AjaxHandler {
     }
     
     public function check_and_migrate_data() {
-        // Verifică dacă suntem în admin și dacă migrarea nu a fost făcută
         if (!is_admin() || self::is_migration_done()) {
             return;
         }
         
-        // Asigură-te că tabela există înainte de a verifica datele
         $this->maybe_create_table();
         
-        // Verifică dacă există date de migrat
-        $has_old_data = $this->has_old_wp_options_data();
+        $has_old_data = $this->has_data_to_migrate();
         
         if ($has_old_data) {
-            // Adaugă notificare pentru administrator
             add_action('admin_notices', [$this, 'show_migration_notice']);
+        } else {
+            update_option(self::$migration_done_key, current_time('mysql'));
         }
     }
     
-    public function has_old_wp_options_data() {
-        $old_options = [
-            'scfs_custom_fields',
-            'cfs_fields',
-            'scfs_social_buttons',
-            'sfb_buttons'
-        ];
-        
-        foreach ($old_options as $option) {
-            if (get_option($option, false) !== false) {
+    public function has_data_to_migrate() {
+        foreach (self::$options_to_migrate as $option) {
+            $raw_data = $this->get_raw_option_data($option);
+            if ($raw_data !== false) {
                 return true;
             }
         }
-        
         return false;
+    }
+    
+    private function get_raw_option_data($option_name) {
+        global $wpdb;
+        
+        $raw_value = $wpdb->get_var($wpdb->prepare(
+            "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+            $option_name
+        ));
+        
+        return $raw_value ? $raw_value : false;
     }
     
     public function show_migration_notice() {
@@ -158,9 +161,10 @@ class AjaxHandler {
         ?>
         <div class="notice notice-warning is-dismissible">
             <p>
-                <strong>Social & Custom Fields Shortcodes:</strong> 
-                Există date vechi în wp_options care trebuie migrate într-o tabelă separată pentru performanță îmbunătățită.
-                <a href="#" id="scfs-start-migration" class="button button-primary" style="margin-left: 10px;">
+                <strong>Social & Custom Fields Shortcodes - Migrare date:</strong><br>
+                Am detectat date vechi care trebuie migrate într-o tabelă separată pentru performanță îmbunătățită.<br>
+                <small>Setările vor rămâne în wp_options, doar datele de conținut vor fi migrate.</small>
+                <a href="#" id="scfs-start-migration" class="button button-primary" style="margin-left: 10px; margin-top: 10px;">
                     Migrează datele acum
                 </a>
                 <span id="scfs-migration-status" style="margin-left: 10px; display: none;">
@@ -181,6 +185,7 @@ class AjaxHandler {
                 
                 $button.hide();
                 $status.show();
+                $text.text('Se migrează datele...');
                 
                 $.ajax({
                     url: ajaxurl,
@@ -199,7 +204,6 @@ class AjaxHandler {
                                 $button.removeClass('button-primary').addClass('button-secondary');
                             }, 2000);
                             
-                            // Reîncarcă pagina după 3 secunde
                             setTimeout(function() {
                                 location.reload();
                             }, 3000);
@@ -228,148 +232,332 @@ class AjaxHandler {
             wp_die('Unauthorized');
         }
         
-        // Asigură-te că tabela există înainte de migrare
         if (!self::create_database_table()) {
             wp_send_json_error('Failed to create database table. Please check server error logs.');
         }
         
-        $result = $this->migrate_all_data();
+        $result = $this->migrate_all_data_simple();
         
         if ($result['success']) {
-            // Marchează migrarea ca fiind completă
             update_option(self::$migration_done_key, current_time('mysql'));
             
             wp_send_json_success([
                 'message' => 'Migrarea a fost completată cu succes!',
-                'stats' => $result['stats']
+                'stats' => $result['stats'],
+                'migrated_options' => $result['migrated_options']
             ]);
         } else {
             wp_send_json_error($result['message']);
         }
     }
     
-    private function migrate_all_data() {
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'scfs';
-        
-        // Verifică dacă tabela există
-        $table_exists = $wpdb->get_var($wpdb->prepare(
-            "SHOW TABLES LIKE %s", 
-            $table_name
-        )) === $table_name;
-        
-        if (!$table_exists) {
-            return [
-                'success' => false,
-                'message' => 'Database table does not exist'
-            ];
-        }
-        
+    private function migrate_all_data_simple() {
         $stats = [
-            'custom_fields_migrated' => 0,
             'social_buttons_migrated' => 0,
+            'custom_fields_migrated' => 0,
             'failed' => 0
         ];
         
-        // 1. Migrare Custom Fields
-        $custom_fields_old = get_option('scfs_custom_fields', []);
-        $cfs_fields_old = get_option('cfs_fields', []);
+        $migrated_options = [];
         
-        $all_custom_fields = array_merge(
-            is_array($custom_fields_old) ? $custom_fields_old : [],
-            is_array($cfs_fields_old) ? $cfs_fields_old : []
-        );
+        error_log('SCFS: ===== STARTING SIMPLE MIGRATION PROCESS =====');
         
-        if (!empty($all_custom_fields)) {
-            foreach ($all_custom_fields as $index => $field) {
-                if (is_array($field) && isset($field['id'])) {
-                    $result = $this->save_item_to_database(
-                        $field['id'],
-                        'custom_field',
-                        $field,
-                        isset($field['order']) ? intval($field['order']) : ($index + 1),
-                        isset($field['trashed']) ? $field['trashed'] : null
-                    );
-                    
-                    if ($result) {
-                        $stats['custom_fields_migrated']++;
-                    } else {
-                        $stats['failed']++;
-                    }
-                }
+        // 1. MIGRARE BUTOANE SOCIALE
+        $sfb_buttons_data = $this->extract_and_rebuild_data('sfb_buttons');
+        if ($sfb_buttons_data !== false) {
+            error_log('SCFS: Migrating sfb_buttons...');
+            $migrated = $this->migrate_social_buttons_simple($sfb_buttons_data, 'sfb_buttons');
+            $stats['social_buttons_migrated'] += $migrated['migrated'];
+            $stats['failed'] += $migrated['failed'];
+            
+            if ($migrated['migrated'] > 0) {
+                $migrated_options[] = 'sfb_buttons';
+                $this->create_backup('sfb_buttons', $sfb_buttons_data);
             }
         }
         
-        // 2. Migrare Social Buttons
-        $social_buttons_old = get_option('scfs_social_buttons', []);
-        $sfb_buttons_old = get_option('sfb_buttons', []);
-        
-        $all_social_buttons = array_merge(
-            is_array($social_buttons_old) ? $social_buttons_old : [],
-            is_array($sfb_buttons_old) ? $sfb_buttons_old : []
-        );
-        
-        if (!empty($all_social_buttons)) {
-            foreach ($all_social_buttons as $index => $button) {
-                if (is_array($button) && isset($button['id'])) {
-                    $result = $this->save_item_to_database(
-                        $button['id'],
-                        'social_button',
-                        $button,
-                        isset($button['order']) ? intval($button['order']) : ($index + 1),
-                        isset($button['trashed']) ? $button['trashed'] : null
-                    );
-                    
-                    if ($result) {
-                        $stats['social_buttons_migrated']++;
-                    } else {
-                        $stats['failed']++;
-                    }
-                }
+        $scfs_social_buttons_data = $this->extract_and_rebuild_data('scfs_social_buttons');
+        if ($scfs_social_buttons_data !== false) {
+            error_log('SCFS: Migrating scfs_social_buttons...');
+            $migrated = $this->migrate_social_buttons_simple($scfs_social_buttons_data, 'scfs_social_buttons');
+            $stats['social_buttons_migrated'] += $migrated['migrated'];
+            $stats['failed'] += $migrated['failed'];
+            
+            if ($migrated['migrated'] > 0) {
+                $migrated_options[] = 'scfs_social_buttons';
+                $this->create_backup('scfs_social_buttons', $scfs_social_buttons_data);
             }
         }
         
-        // Șterge datele vechi DOAR dacă migrarea a fost completă
-        if ($stats['custom_fields_migrated'] > 0 || $stats['social_buttons_migrated'] > 0) {
-            // Creează backup-uri
-            if (!empty($custom_fields_old)) {
-                update_option('bpk_scfs_custom_fields', $custom_fields_old);
-                delete_option('scfs_custom_fields');
-            }
+        // 2. MIGRARE CÂMPURI CUSTOM
+        $cfs_fields_data = $this->extract_and_rebuild_data('cfs_fields');
+        if ($cfs_fields_data !== false) {
+            error_log('SCFS: Migrating cfs_fields...');
+            $migrated = $this->migrate_cfs_fields_simple($cfs_fields_data);
+            $stats['custom_fields_migrated'] += $migrated['migrated'];
+            $stats['failed'] += $migrated['failed'];
             
-            if (!empty($cfs_fields_old)) {
-                update_option('bpk_cfs_fields', $cfs_fields_old);
-                delete_option('cfs_fields');
+            if ($migrated['migrated'] > 0) {
+                $migrated_options[] = 'cfs_fields';
+                $this->create_backup('cfs_fields', $cfs_fields_data);
             }
+        }
+        
+        $scfs_custom_fields_data = $this->extract_and_rebuild_data('scfs_custom_fields');
+        if ($scfs_custom_fields_data !== false) {
+            error_log('SCFS: Migrating scfs_custom_fields...');
+            $migrated = $this->migrate_scfs_custom_fields_simple($scfs_custom_fields_data);
+            $stats['custom_fields_migrated'] += $migrated['migrated'];
+            $stats['failed'] += $migrated['failed'];
             
-            if (!empty($social_buttons_old)) {
-                update_option('bpk_scfs_social_buttons', $social_buttons_old);
-                delete_option('scfs_social_buttons');
+            if ($migrated['migrated'] > 0) {
+                $migrated_options[] = 'scfs_custom_fields';
+                $this->create_backup('scfs_custom_fields', $scfs_custom_fields_data);
             }
+        }
+        
+        $total_migrated = $stats['social_buttons_migrated'] + $stats['custom_fields_migrated'];
+        
+        if ($total_migrated > 0) {
+            error_log('SCFS: ===== MIGRATION COMPLETED SUCCESSFULLY =====');
+            error_log('SCFS: Total migrated: ' . $total_migrated);
+            error_log('SCFS: Migrated options: ' . implode(', ', $migrated_options));
             
-            if (!empty($sfb_buttons_old)) {
-                update_option('bpk_sfb_buttons', $sfb_buttons_old);
-                delete_option('sfb_buttons');
+            foreach ($migrated_options as $option) {
+                delete_option($option);
+                error_log('SCFS: Deleted old option: ' . $option);
             }
+        } else {
+            error_log('SCFS: ===== NO DATA WAS MIGRATED =====');
         }
         
         return [
             'success' => true,
             'stats' => $stats,
+            'migrated_options' => $migrated_options,
             'message' => sprintf(
-                'Migrat: %d câmpuri custom, %d butoane sociale, Eșuat: %d',
-                $stats['custom_fields_migrated'],
+                'Migrarea completă: %d butoane sociale, %d câmpuri custom',
                 $stats['social_buttons_migrated'],
-                $stats['failed']
+                $stats['custom_fields_migrated']
             )
         ];
+    }
+    
+    private function extract_and_rebuild_data($option_name) {
+        global $wpdb;
+        
+        $raw_value = $wpdb->get_var($wpdb->prepare(
+            "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+            $option_name
+        ));
+        
+        if (!$raw_value) {
+            error_log('SCFS: No data found for option: ' . $option_name);
+            return false;
+        }
+        
+        error_log('SCFS: Processing option: ' . $option_name . ' (length: ' . strlen($raw_value) . ')');
+        
+        $decoded_data = maybe_unserialize($raw_value);
+        
+        if ($decoded_data !== false && $decoded_data !== $raw_value) {
+            error_log('SCFS: WordPress unserialize worked for ' . $option_name);
+            return $decoded_data;
+        }
+        
+        $decoded_data = @unserialize($raw_value);
+        if ($decoded_data !== false) {
+            error_log('SCFS: Direct unserialize worked for ' . $option_name);
+            return $decoded_data;
+        }
+        
+        if ($option_name === 'cfs_fields') {
+            error_log('SCFS: Using manual extraction for cfs_fields');
+            return $this->manual_extract_cfs_fields($raw_value);
+        }
+        
+        if (is_string($raw_value) && !empty(trim($raw_value))) {
+            error_log('SCFS: Treating as simple string for ' . $option_name);
+            return $raw_value;
+        }
+        
+        error_log('SCFS: Could not extract data for ' . $option_name);
+        return false;
+    }
+    
+    private function manual_extract_cfs_fields($serialized_string) {
+        $result = [];
+        
+        $pattern = '/s:(\d+):"([^"]*)";s:(\d+):"((?:[^"]|\\\\")*)"/';
+        
+        preg_match_all($pattern, $serialized_string, $matches, PREG_SET_ORDER);
+        
+        foreach ($matches as $match) {
+            $key = $match[2];
+            $value = $match[4];
+            
+            $value = str_replace('\"', '"', $value);
+            $value = str_replace("\\'", "'", $value);
+            
+            $result[$key] = $value;
+        }
+        
+        if (!empty($result)) {
+            error_log('SCFS: Manual extraction successful, got ' . count($result) . ' items');
+            return $result;
+        }
+        
+        return $this->simple_string_extraction($serialized_string);
+    }
+    
+    private function simple_string_extraction($string) {
+        $result = [];
+        
+        $clean_string = preg_replace('/^a:\d+:{/', '', $string);
+        $clean_string = preg_replace('/}$/', '', $clean_string);
+        
+        $parts = explode(';', $clean_string);
+        $temp_key = null;
+        
+        foreach ($parts as $part) {
+            $part = trim($part);
+            if (empty($part)) continue;
+            
+            if (preg_match('/^s:(\d+):"([^"]*)"$/', $part, $matches)) {
+                if ($temp_key === null) {
+                    $temp_key = $matches[2];
+                } else {
+                    $result[$temp_key] = $matches[2];
+                    $temp_key = null;
+                }
+            }
+        }
+        
+        if (!empty($result)) {
+            error_log('SCFS: Simple extraction successful, got ' . count($result) . ' items');
+        }
+        
+        return $result;
+    }
+    
+    private function migrate_social_buttons_simple($buttons_data, $source) {
+        $migrated = 0;
+        $failed = 0;
+        
+        if (!is_array($buttons_data) || empty($buttons_data)) {
+            error_log('SCFS: No social buttons data to migrate from ' . $source);
+            return ['migrated' => 0, 'failed' => 0];
+        }
+        
+        error_log('SCFS: Processing ' . count($buttons_data) . ' social buttons from ' . $source);
+        
+        foreach ($buttons_data as $index => $button) {
+            if (is_array($button) && isset($button['id'])) {
+                $result = $this->save_item_to_database(
+                    $button['id'],
+                    'social_button',
+                    $button,
+                    isset($button['order']) ? intval($button['order']) : ($index + 1),
+                    isset($button['trashed']) ? $button['trashed'] : null
+                );
+                
+                if ($result) {
+                    $migrated++;
+                } else {
+                    $failed++;
+                }
+            }
+        }
+        
+        error_log('SCFS: Migrated ' . $migrated . ' social buttons from ' . $source);
+        return ['migrated' => $migrated, 'failed' => $failed];
+    }
+    
+    private function migrate_cfs_fields_simple($fields_data) {
+        $migrated = 0;
+        $failed = 0;
+        
+        if (!is_array($fields_data) || empty($fields_data)) {
+            error_log('SCFS: No cfs_fields data to migrate');
+            return ['migrated' => 0, 'failed' => 0];
+        }
+        
+        error_log('SCFS: Processing ' . count($fields_data) . ' cfs fields');
+        $order_counter = 1;
+        
+        foreach ($fields_data as $key => $value) {
+            if (!is_string($key) || empty(trim($key))) {
+                $failed++;
+                continue;
+            }
+            
+            $field_data = [
+                'id' => $key,
+                'name' => $this->convert_key_to_name($key),
+                'value' => $value,
+                'type' => 'text',
+                'label' => $this->convert_key_to_label($key),
+                'created_at' => current_time('mysql'),
+                'updated_at' => current_time('mysql')
+            ];
+            
+            $result = $this->save_item_to_database(
+                $key,
+                'custom_field',
+                $field_data,
+                $order_counter,
+                null
+            );
+            
+            if ($result) {
+                $migrated++;
+                $order_counter++;
+            } else {
+                $failed++;
+            }
+        }
+        
+        error_log('SCFS: Migrated ' . $migrated . ' cfs fields');
+        return ['migrated' => $migrated, 'failed' => $failed];
+    }
+    
+    private function migrate_scfs_custom_fields_simple($fields_data) {
+        $migrated = 0;
+        $failed = 0;
+        
+        if (!is_array($fields_data) || empty($fields_data)) {
+            error_log('SCFS: No scfs_custom_fields data to migrate');
+            return ['migrated' => 0, 'failed' => 0];
+        }
+        
+        error_log('SCFS: Processing ' . count($fields_data) . ' scfs custom fields');
+        
+        foreach ($fields_data as $index => $field) {
+            if (is_array($field) && isset($field['id'])) {
+                $result = $this->save_item_to_database(
+                    $field['id'],
+                    'custom_field',
+                    $field,
+                    isset($field['order']) ? intval($field['order']) : ($index + 1),
+                    isset($field['trashed']) ? $field['trashed'] : null
+                );
+                
+                if ($result) {
+                    $migrated++;
+                } else {
+                    $failed++;
+                }
+            }
+        }
+        
+        error_log('SCFS: Migrated ' . $migrated . ' scfs custom fields');
+        return ['migrated' => $migrated, 'failed' => $failed];
     }
     
     private function save_item_to_database($item_id, $item_type, $data, $order = 0, $trashed = null) {
         global $wpdb;
         $table_name = $wpdb->prefix . 'scfs';
         
-        // Verifică dacă există deja
         $existing = $wpdb->get_var($wpdb->prepare(
             "SELECT id FROM $table_name WHERE item_id = %s AND item_type = %s",
             $item_id,
@@ -379,7 +567,6 @@ class AjaxHandler {
         $serialized_data = maybe_serialize($data);
         
         if ($existing) {
-            // Update existent
             $result = $wpdb->update(
                 $table_name,
                 [
@@ -393,7 +580,6 @@ class AjaxHandler {
                 ]
             );
         } else {
-            // Insert nou
             $result = $wpdb->insert(
                 $table_name,
                 [
@@ -407,12 +593,26 @@ class AjaxHandler {
             );
         }
         
-        if ($result === false) {
-            error_log('SCFS Database Error for ' . $item_id . ': ' . $wpdb->last_error);
-            return false;
+        return $result !== false;
+    }
+    
+    private function convert_key_to_name($key) {
+        return $key;
+    }
+    
+    private function convert_key_to_label($key) {
+        $label = str_replace(['_', '-'], ' ', $key);
+        $label = ucwords($label);
+        return $label;
+    }
+    
+    private function create_backup($option_name, $data) {
+        if (!empty($data)) {
+            $backup_name = self::$backup_prefix . $option_name;
+            $serialized_data = maybe_serialize($data);
+            update_option($backup_name, $serialized_data);
+            error_log('SCFS: Created backup: ' . $backup_name);
         }
-        
-        return true;
     }
     
     // =========================
@@ -423,14 +623,12 @@ class AjaxHandler {
         global $wpdb;
         $table_name = $wpdb->prefix . 'scfs';
         
-        // Verifică dacă tabela există
         $table_exists = $wpdb->get_var($wpdb->prepare(
             "SHOW TABLES LIKE %s", 
             $table_name
         )) === $table_name;
         
         if (!$table_exists) {
-            // Tabela nu există, returnează null
             return null;
         }
         
@@ -444,7 +642,6 @@ class AjaxHandler {
         if ($result) {
             $data = maybe_unserialize($result['item_data']);
             if (is_array($data)) {
-                // Adaugă metadatele din baza de date
                 $data['_db_id'] = $result['id'];
                 $data['_db_created'] = $result['created_at'];
                 $data['_db_updated'] = $result['updated_at'];
@@ -459,7 +656,6 @@ class AjaxHandler {
         global $wpdb;
         $table_name = $wpdb->prefix . 'scfs';
         
-        // Verifică dacă tabela există
         $table_exists = $wpdb->get_var($wpdb->prepare(
             "SHOW TABLES LIKE %s", 
             $table_name
@@ -489,10 +685,7 @@ class AjaxHandler {
             $data = maybe_unserialize($row['item_data']);
             
             if (is_array($data)) {
-                // Asigură-te că ID-ul item-ului este setat corect
                 $data['id'] = $row['item_id'];
-                
-                // Adaugă metadatele din baza de date
                 $data['_db_id'] = $row['id'];
                 $data['_db_order'] = $row['item_order'];
                 $data['_db_created'] = $row['created_at'];
@@ -513,18 +706,16 @@ class AjaxHandler {
         global $wpdb;
         $table_name = $wpdb->prefix . 'scfs';
         
-        // Verifică dacă tabela există
         $table_exists = $wpdb->get_var($wpdb->prepare(
             "SHOW TABLES LIKE %s", 
             $table_name
         )) === $table_name;
         
         if (!$table_exists) {
-            error_log('SCFS: Cannot save to database, table does not exist: ' . $table_name);
+            error_log('SCFS: Cannot save to database, table does not exist');
             return false;
         }
         
-        // Verifică dacă există deja
         $existing = $wpdb->get_var($wpdb->prepare(
             "SELECT id FROM $table_name WHERE item_id = %s AND item_type = %s",
             $item_id,
@@ -534,7 +725,6 @@ class AjaxHandler {
         $serialized_data = maybe_serialize($data);
         
         if ($existing) {
-            // Update
             $result = $wpdb->update(
                 $table_name,
                 [
@@ -548,7 +738,6 @@ class AjaxHandler {
                 ]
             );
         } else {
-            // Insert
             $result = $wpdb->insert(
                 $table_name,
                 [
@@ -562,10 +751,6 @@ class AjaxHandler {
             );
         }
         
-        if ($result === false) {
-            error_log('SCFS Database Error: ' . $wpdb->last_error);
-        }
-        
         return $result !== false;
     }
     
@@ -573,7 +758,6 @@ class AjaxHandler {
         global $wpdb;
         $table_name = $wpdb->prefix . 'scfs';
         
-        // Verifică dacă tabela există
         $table_exists = $wpdb->get_var($wpdb->prepare(
             "SHOW TABLES LIKE %s", 
             $table_name
@@ -596,7 +780,6 @@ class AjaxHandler {
         global $wpdb;
         $table_name = $wpdb->prefix . 'scfs';
         
-        // Verifică dacă tabela există
         $table_exists = $wpdb->get_var($wpdb->prepare(
             "SHOW TABLES LIKE %s", 
             $table_name
@@ -623,7 +806,6 @@ class AjaxHandler {
         global $wpdb;
         $table_name = $wpdb->prefix . 'scfs';
         
-        // Verifică dacă tabela există
         $table_exists = $wpdb->get_var($wpdb->prepare(
             "SHOW TABLES LIKE %s", 
             $table_name
@@ -647,7 +829,7 @@ class AjaxHandler {
     }
     
     // =========================
-    // HELPER FUNCTIONS (rămân la fel)
+    // HELPER FUNCTIONS
     // =========================
     
     public static function slugify($string) {
@@ -655,71 +837,38 @@ class AjaxHandler {
             return '';
         }
         
-        // Trim whitespace
         $string = trim($string);
-        
-        // Păstrează dash-urile existente (înlocuiește-le temporar)
         $string = str_replace('-', '--DASH--', $string);
-        
-        // Înlocuiește spațiile cu underscore
         $string = str_replace(' ', '_', $string);
-        
-        // Restaurează dash-urile
         $string = str_replace('--DASH--', '-', $string);
-        
-        // Convert to lowercase
         $string = strtolower($string);
-        
-        // Înlocuiește multiple underscores/dashes cu single ones
         $string = preg_replace('/_+/', '_', $string);
         $string = preg_replace('/-+/', '-', $string);
-        
-        // Remove all non-alphanumeric characters except underscore and dash
         $string = preg_replace('/[^a-z0-9_-]/', '', $string);
-        
-        // Remove leading/trailing underscores/dashes
         $string = trim($string, '_-');
         
         return $string;
     }
     
     public static function generate_slug_with_id($label, $id) {
-        // Generează slug-ul de bază din label
         $base_slug = self::slugify($label);
         
-        // Dacă slug-ul este gol, folosește un default
         if (empty($base_slug)) {
             $base_slug = 'item';
         }
         
-        // Extrage numărul din ID (dacă există)
-        $id_number = self::extract_id_number($id);
-        
-        // Dacă avem număr din ID, folosește-l
-        if ($id_number !== null) {
-            return $base_slug . '_' . $id_number;
+        if (preg_match('/[a-zA-Z_]+(\d+)/', $id, $matches)) {
+            return $base_slug . '_' . $matches[1];
         }
         
-        // Altfel, generează un număr unic
+        if (preg_match('/(\d+)/', $id, $matches)) {
+            return $base_slug . '_' . $matches[1];
+        }
+        
         return $base_slug . '_' . substr(md5($id), 0, 6);
     }
     
-    private static function extract_id_number($id) {
-        // Încearcă să extragă numărul din ID
-        if (preg_match('/[a-zA-Z_]+(\d+)/', $id, $matches)) {
-            return $matches[1];
-        }
-        
-        // Încearcă să găsească un număr în ID
-        if (preg_match('/(\d+)/', $id, $matches)) {
-            return $matches[1];
-        }
-        
-        return null;
-    }
-    
     public static function is_allowed_scheme($url) {
-        // Verifică dacă URL-ul nu este null sau gol
         if (empty($url) || !is_string($url)) {
             return false;
         }
@@ -730,7 +879,6 @@ class AjaxHandler {
     }
     
     public static function get_correct_url($type, $url) {
-        // Verifică dacă URL-ul este gol
         if (empty($url)) {
             return '#';
         }
@@ -808,7 +956,7 @@ class AjaxHandler {
     }
     
     // =========================
-    // AJAX HANDLERS (rămân la fel)
+    // AJAX HANDLERS
     // =========================
     
     public function add_cdn_ajax() {
@@ -879,13 +1027,11 @@ class AjaxHandler {
         $id = sanitize_text_field($_POST['id']);
         $order = intval($_POST['order']);
         
-        // Try social buttons first
         $social_buttons = SocialButtons::get_instance();
         if ($social_buttons->update($id, ['order' => $order])) {
             wp_send_json_success();
         }
         
-        // Try custom fields if not found in social buttons
         $custom_fields = CustomFields::get_instance();
         $field = $custom_fields->get($id);
         if ($field) {
@@ -894,129 +1040,5 @@ class AjaxHandler {
         }
         
         wp_send_json_error('Item not found');
-    }
-    
-    // =========================
-    // DEBUG FUNCTIONS
-    // =========================
-    
-    public static function debug_database_state() {
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'scfs';
-        
-        // Verifică dacă tabela există
-        $table_exists = $wpdb->get_var($wpdb->prepare(
-            "SHOW TABLES LIKE %s", 
-            $table_name
-        )) === $table_name;
-        
-        if (!$table_exists) {
-            return '<div class="notice notice-error"><p>Table does not exist: ' . $table_name . '</p></div>';
-        }
-        
-        // Obține toate înregistrările
-        $results = $wpdb->get_results(
-            "SELECT id, item_id, item_type, item_order, LENGTH(item_data) as size, 
-                    created_at, updated_at, trashed 
-             FROM $table_name 
-             ORDER BY item_type, item_order, created_at",
-            ARRAY_A
-        );
-        
-        $output = '<h3>Database Table State</h3>';
-        $output .= '<table class="widefat fixed striped">';
-        $output .= '<thead><tr>
-                    <th>DB ID</th>
-                    <th>Item ID</th>
-                    <th>Type</th>
-                    <th>Order</th>
-                    <th>Size (bytes)</th>
-                    <th>Created</th>
-                    <th>Updated</th>
-                    <th>Trashed</th>
-                   </tr></thead>';
-        $output .= '<tbody>';
-        
-        if (empty($results)) {
-            $output .= '<tr><td colspan="8" style="text-align: center;">No records found</td></tr>';
-        } else {
-            foreach ($results as $row) {
-                $output .= '<tr>';
-                $output .= '<td>' . esc_html($row['id']) . '</td>';
-                $output .= '<td>' . esc_html($row['item_id']) . '</td>';
-                $output .= '<td>' . esc_html($row['item_type']) . '</td>';
-                $output .= '<td>' . esc_html($row['item_order']) . '</td>';
-                $output .= '<td>' . esc_html($row['size']) . '</td>';
-                $output .= '<td>' . esc_html($row['created_at']) . '</td>';
-                $output .= '<td>' . esc_html($row['updated_at']) . '</td>';
-                $output .= '<td>' . ($row['trashed'] ? 'Yes' : 'No') . '</td>';
-                $output .= '</tr>';
-            }
-        }
-        
-        $output .= '</tbody></table>';
-        
-        // Adaugă și statistici
-        $stats = $wpdb->get_row(
-            "SELECT 
-                COUNT(*) as total,
-                SUM(CASE WHEN trashed IS NULL THEN 1 ELSE 0 END) as active,
-                SUM(CASE WHEN trashed IS NOT NULL THEN 1 ELSE 0 END) as trashed,
-                GROUP_CONCAT(DISTINCT item_type) as types
-             FROM $table_name",
-            ARRAY_A
-        );
-        
-        $output .= '<div class="notice notice-info">';
-        $output .= '<p><strong>Statistics:</strong> ' . 
-                   'Total: ' . $stats['total'] . ' | ' .
-                   'Active: ' . $stats['active'] . ' | ' .
-                   'Trashed: ' . $stats['trashed'] . ' | ' .
-                   'Types: ' . $stats['types'] . '</p>';
-        $output .= '</div>';
-        
-        return $output;
-    }
-    
-    public static function debug_old_data() {
-        $old_options = [
-            'scfs_custom_fields',
-            'scfs_social_buttons',
-            'scfs_social_settings',
-            'scfs_cdn_settings_custom',
-            'scfs_cdn_settings_predefined',
-            'cfs_fields',
-            'sfb_buttons',
-            'sfb_settings',
-            'sfb_icon_cdns',
-            'sfb_custom_cdns'
-        ];
-        
-        $output = '<h3>Old wp_options Data</h3>';
-        
-        foreach ($old_options as $option) {
-            $data = get_option($option, null);
-            $output .= '<div class="debug-section">';
-            $output .= '<h4>' . esc_html($option) . '</h4>';
-            
-            if ($data === null) {
-                $output .= '<p>Option does not exist</p>';
-            } else if ($data === false) {
-                $output .= '<p>Option is false</p>';
-            } else if (is_array($data)) {
-                $output .= '<p>Array with ' . count($data) . ' elements</p>';
-                if (count($data) <= 10) {
-                    $output .= '<pre>' . esc_html(print_r($data, true)) . '</pre>';
-                } else {
-                    $output .= '<p>Data too large to display (' . count($data) . ' elements)</p>';
-                }
-            } else {
-                $output .= '<p>String: ' . esc_html($data) . '</p>';
-            }
-            
-            $output .= '</div>';
-        }
-        
-        return $output;
     }
 }

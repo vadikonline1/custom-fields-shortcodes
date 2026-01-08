@@ -8,6 +8,7 @@ class Main {
     private $social_buttons;
     private $social_settings;
     private $ajax_handler;
+    private $legacy_support;
     
     public static function get_instance($plugin_file = null) {
         if (null === self::$instance) {
@@ -24,6 +25,7 @@ class Main {
         $this->social_buttons = SocialButtons::get_instance();
         $this->social_settings = SocialSettings::get_instance();
         $this->ajax_handler = AjaxHandler::get_instance();
+        $this->legacy_support = LegacySupport::get_instance();
         
         // Hook-uri admin
         add_action('admin_menu', [$this, 'admin_menu'], 10);
@@ -38,13 +40,13 @@ class Main {
     public function admin_menu() {
         // Meniul principal
         add_menu_page(
-            'S&C Fields Shortcodes', // Titlul paginii
-            'S&C Fields', // Numele meniului
-            'manage_options', // Permisiuni necesare
-            'scfs-oop', // Slug-ul meniului
-            [$this, 'admin_page'], // Callback pentru pagina admin
-            'dashicons-admin-generic', // Iconița meniului
-            30 // Poziția meniului
+            'S&C Fields Shortcodes',
+            'S&C Fields',
+            'manage_options',
+            'scfs-oop',
+            [$this, 'admin_page'],
+            'dashicons-admin-generic',
+            30
         );
     }
     
@@ -55,7 +57,7 @@ class Main {
         <div class="wrap scfs-admin">
             <h1 class="scfs-title">Social & Custom Fields Shortcodes</h1>
             
-            <?php if (!$migration_done && $this->ajax_handler->has_old_wp_options_data()): ?>
+            <?php if (!$migration_done && $this->ajax_handler->has_data_to_migrate()): ?>
             <div class="notice notice-warning">
                 <p>
                     <strong>⚠️ Migrare necesară:</strong> Există date vechi în wp_options care trebuie migrate pentru performanță îmbunătățită.
@@ -98,12 +100,11 @@ class Main {
                                     $button.removeClass('button-primary').addClass('button-secondary');
                                 }, 2000);
                                 
-                                // Reîncarcă pagina după 3 secunde
                                 setTimeout(function() {
                                     location.reload();
                                 }, 3000);
                             } else {
-                                $text.text('Eroare la migrare: ' + response.data);
+                                $text.text('Eroare la migrare: ' . response.data);
                                 $status.find('.spinner').remove();
                                 $button.text('Încearcă din nou').show();
                             }
@@ -201,6 +202,18 @@ class Main {
                 <a href="<?php echo remove_query_arg('debug'); ?>" class="button button-secondary">
                     Hide Debug
                 </a>
+            </div>
+            
+            <div class="scfs-tools" style="margin-top: 30px; padding: 20px; background: #f5f5f5; border-radius: 5px;">
+                <h3>Legacy Support Tools</h3>
+                <p style="margin-bottom: 15px;">
+                    <strong>Compatibilitate:</strong> Sistemul suportă automat ambele formate de shortcode:<br>
+                    • <code>[scfs_field name="nume"]</code> (format nou)<br>
+                    • <code>[cfs field="nume"]</code> (format vechi - compatibilitate full)
+                </p>
+                <p style="color: #666; font-size: 13px;">
+                    <em>Toate shortcode-urile vechi vor continua să funcționeze fără modificări.</em>
+                </p>
             </div>
             <?php endif; ?>
         </div>
