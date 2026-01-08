@@ -104,8 +104,7 @@ class CustomFieldsTable extends \WP_List_Table {
                 return esc_html($item['label'] ?? '');
             case 'shortcode':
                 $new_shortcode = '<code>[scfs_field name="' . esc_attr($item['name'] ?? '') . '"]</code>';
-                $legacy_shortcode = '<br><small style="color: #666;">Legacy: <code>[cfs field="' . esc_attr($item['name'] ?? '') . '"]</code></small>';
-                return $new_shortcode . $legacy_shortcode;
+                return $new_shortcode;
             case 'trashed':
                 return isset($item['trashed']) && !empty($item['trashed']) 
                     ? date_i18n('Y-m-d H:i', strtotime($item['trashed'])) 
