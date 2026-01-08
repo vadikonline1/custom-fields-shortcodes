@@ -239,7 +239,6 @@ class CustomFields {
                             <strong>Auto-generated from Label with ID suffix. Cannot be changed.</strong><br>
                             Use in shortcodes: <br>
                             <code>[scfs_field name="<?php echo esc_attr($field['name']); ?>"]</code><br>
-                            <code>[cfs field="<?php echo esc_attr($field['name']); ?>"]</code> (legacy support)
                         </p>
                     </td>
                 </tr>
