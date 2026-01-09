@@ -232,7 +232,7 @@ class CustomFields {
                 <tr>
                     <th scope="row"><label>Name (Slug)</label></th>
                     <td>
-                        <div style="padding: 8px 10px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;">
+                        <div style="padding: 8px 10px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;cursor: no-drop;">
                             <?php echo esc_html($field['name']); ?>
                         </div>
                         <p class="description">
@@ -691,3 +691,4 @@ class CustomFields {
         return $this->shortcode(['name' => $atts['field'], 'default' => $atts['default']]);
     }
 }
+
