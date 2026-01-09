@@ -1,8 +1,4 @@
 /* Admin Styles */
-.scfs-admin {
-    max-width: 1200px;
-}
-
 .scfs-breadcrumb {
     margin: 20px 0;
     padding: 10px 15px;
@@ -501,4 +497,5 @@
     .sfb-cdn-flex {
         grid-template-columns: 1fr;
     }
+
 }
