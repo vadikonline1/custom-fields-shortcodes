@@ -2,7 +2,7 @@
 /*
 Plugin Name: Social & Custom Fields Shortcodes
 Description: Manage custom fields and social floating buttons with shortcodes.
-Version: 1.1.0
+Version: 1.1.1
 Author: Steel..xD
 Text Domain: scfs-oop
 */
