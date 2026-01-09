@@ -8,7 +8,10 @@
  * License: GPL v2 or later
  * Text Domain: scfs-oop
  * Domain Path: /languages
+ * Requires at least: 5.8
+ * Requires PHP: 7.2
  */
+
 
 if (!defined('ABSPATH')) exit;
 
