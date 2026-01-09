@@ -1,10 +1,12 @@
 <?php
 /*
-Plugin Name: Social & Custom Fields Shortcodes
-Description: Manage custom fields and social floating buttons with shortcodes.
-Version: 1.1.1
-Author: Steel..xD
-Text Domain: scfs-oop
+ * Plugin Name: Social & Custom Fields Shortcodes
+ * Plugin URI: https://github.com/vadikonline1/custom-fields-shortcodes
+ * Description: Manage custom fields and social floating buttons with shortcodes.
+ * Version: 1.1.1
+ * Author: Steel..xD
+ * License: GPL v2 or later
+ * Text Domain: scfs-oop
 */
 
 if (!defined('ABSPATH')) exit;
