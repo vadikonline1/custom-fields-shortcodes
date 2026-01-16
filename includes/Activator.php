@@ -16,6 +16,16 @@ class Activator {
         // Adaugă opțiuni default dacă nu există
         self::add_default_options();
     }
+
+    public static function deactivate() {
+        error_log('SCFS: Plugin deactivated');
+        update_option('scfs_plugin_status', 'deactivated');
+    }
+    
+    public static function uninstall() {
+        error_log('SCFS: Plugin uninstall');
+        update_option('scfs_plugin_status', 'uninstall');
+    }
     
     private static function add_default_options() {
         // Adaugă opțiuni pentru settings dacă nu există
