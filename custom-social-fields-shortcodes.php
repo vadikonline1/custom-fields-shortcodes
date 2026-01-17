@@ -3,7 +3,7 @@
  * Plugin Name: Social & Custom Fields Shortcodes
  * Plugin URI: https://github.com/vadikonline1/custom-fields-shortcodes
  * Description: Manage custom fields and social floating buttons with shortcodes.
- * Version: 1.3.1
+ * Version: 1.3.2
  * Author: Steel..xD
  * License: GPL v2 or later
  * Text Domain: scfs-oop
@@ -14,7 +14,7 @@
 if (!defined('ABSPATH')) exit;
 
 add_filter('plugin_action_links_' . plugin_basename(__FILE__), function($actions) {
-    $settings_link = '<a href="' . admin_url('options-general.php?page=popup-banner-settings') . '">⚙️ Settings</a>';
+    $settings_link = '<a href="' . admin_url('admin.php?page=scfs-oop') . '">⚙️ Settings</a>';
     array_unshift($actions, $settings_link);
     $required_plugin = 'github-plugin-manager-main/github-plugin-manager.php';
     if (!function_exists('is_plugin_active')) {
