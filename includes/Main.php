@@ -30,11 +30,6 @@ class Main {
         // Hook-uri admin
         add_action('admin_menu', [$this, 'admin_menu'], 10);
         add_action('admin_enqueue_scripts', [$this, 'admin_assets']);
-        
-        // Plugin action link
-        if ($this->plugin_file) {
-            add_filter('plugin_action_links_' . plugin_basename($this->plugin_file), [$this, 'settings_link']);
-        }
     }
     
     public function admin_menu() {
@@ -230,11 +225,5 @@ class Main {
                 'nonce' => wp_create_nonce('scfs_admin_nonce')
             ]);
         }
-    }
-    
-    public function settings_link($links) {
-        $settings_link = '<a href="' . admin_url('admin.php?page=scfs-oop') . '">Settings</a>';
-        array_unshift($links, $settings_link);
-        return $links;
     }
 }
