@@ -66,7 +66,7 @@ class CustomFields {
                     $data = [
                         'name' => $name,
                         'label' => $label,
-                        'value' => wp_kses_post($_POST['value'])
+                        'value' => wp_unslash($_POST['value'])
                     ];
                     
                     $fields = $this->get_all(true);
@@ -691,4 +691,5 @@ class CustomFields {
         return $this->shortcode(['name' => $atts['field'], 'default' => $atts['default']]);
     }
 }
+
 
