@@ -9,17 +9,17 @@ class Activator {
         // Verifică dacă există date de migrat
         $ajax_handler = AjaxHandler::get_instance();
         if ($ajax_handler->has_data_to_migrate()) {
-            // Nu migrăm automat la activare - utilizatorul va primi notificare în admin
             error_log('SCFS: Data migration needed on activation');
         }
         
         // Adaugă opțiuni default dacă nu există
         self::add_default_options();
+        update_option('scfs_plugin_status', 1);
     }
 
     public static function deactivate() {
         error_log('SCFS: Plugin deactivated');
-        update_option('scfs_plugin_status', 'deactivated');
+        update_option('scfs_plugin_status', 0);
     }
     
     public static function uninstall() {
