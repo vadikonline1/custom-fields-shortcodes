@@ -303,7 +303,7 @@ private function get_button_icon($button) {
     }
     
     public function auto_display() {
-        $auto_display = get_option('sfb_auto_display', 0);
+        $auto_display = get_option('scfs_plugin_status', 0);
         
         if (!$auto_display) {
             return;
