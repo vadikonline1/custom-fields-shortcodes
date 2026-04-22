@@ -1,4 +1,4 @@
-/* Floating Social Buttons */
+/* Floating Social Buttons v3.0 */
 .sfb-container {
     position: fixed;
     z-index: 999999;
@@ -28,22 +28,22 @@
 
 /* CTA Button */
 .sfb-cta {
-    width: 60px;
-    height: 60px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    transition: all 0.3s ease;
+    box-shadow: none;
+    transition: transform 0.2s ease;
     position: relative;
     z-index: 100;
+    background: var(--e-global-color-secondary, #0073aa);
 }
 
 .sfb-cta:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    transform: scale(1.05);
 }
 
 .sfb-cta-icon {
@@ -57,55 +57,51 @@
     height: 100%;
 }
 
-/* CUSTOM MESSAGE - VIZIBIL MEREU CU TRANSPARENȚĂ LA SCROLL */
+/* Custom Message */
 .sfb-custom-message {
     position: absolute;
-    background: #333;
-    color: white;
-    padding: 10px 15px;
+    background: #1e1e1e;
+    color: #ffffff;
+    padding: 8px 14px;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 13px;
+    font-weight: 500;
     white-space: nowrap;
     pointer-events: none;
     z-index: 99;
     text-align: center;
-    /* VIZIBIL MEREU inițial */
     opacity: 1;
     visibility: visible;
-    transition: opacity 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    font-weight: 500;
-    /* Poziție deasupra butonului */
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    box-shadow: none;
     bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
-    margin-bottom: 15px;
+    margin-bottom: 12px;
+    line-height: 1.4;
 }
 
-/* CUSTOM MESSAGE - STARE INVISIBIL */
 .sfb-custom-message-hidden {
     opacity: 0 !important;
     visibility: hidden !important;
 }
 
-/* CUSTOM MESSAGE - TRANSPARENT LA SCROLL */
 .sfb-custom-message-scroll {
-    opacity: 0.3 !important;
+    opacity: 0.2 !important;
 }
 
-/* Săgeată în jos */
 .sfb-custom-message:after {
     content: '';
     position: absolute;
     top: 100%;
     left: 50%;
     transform: translateX(-50%);
-    border-width: 8px;
+    border-width: 6px;
     border-style: solid;
-    border-color: #333 transparent transparent transparent;
+    border-color: #1e1e1e transparent transparent transparent;
 }
 
-/* Pentru poziții din dreapta - custom message în stânga */
+/* Right position */
 .sfb-position-right .sfb-custom-message,
 .sfb-position-top-right .sfb-custom-message {
     left: auto;
@@ -113,20 +109,19 @@
     bottom: 50%;
     transform: translateY(50%);
     margin-bottom: 0;
-    margin-right: 15px;
+    margin-right: 12px;
 }
 
-/* Săgeată pentru dreapta */
 .sfb-position-right .sfb-custom-message:after,
 .sfb-position-top-right .sfb-custom-message:after {
     left: auto;
-    right: -16px;
+    right: -12px;
     top: 50%;
     transform: translateY(-50%);
-    border-color: transparent transparent transparent #333;
+    border-color: transparent transparent transparent #1e1e1e;
 }
 
-/* Pentru poziții din stânga - custom message în dreapta */
+/* Left position */
 .sfb-position-left .sfb-custom-message,
 .sfb-position-top-left .sfb-custom-message {
     left: 100%;
@@ -134,23 +129,22 @@
     bottom: 50%;
     transform: translateY(50%);
     margin-bottom: 0;
-    margin-left: 15px;
+    margin-left: 12px;
 }
 
-/* Săgeată pentru stânga */
 .sfb-position-left .sfb-custom-message:after,
 .sfb-position-top-left .sfb-custom-message:after {
-    left: -16px;
+    left: -12px;
     right: auto;
     top: 50%;
     transform: translateY(-50%);
-    border-color: transparent #333 transparent transparent;
+    border-color: transparent #1e1e1e transparent transparent;
 }
 
-/* Când containerul este activ, asigură vizibilitatea */
+/* Active state */
 .sfb-container.active .sfb-custom-message {
-    opacity: 1 !important;
-    visibility: visible !important;
+    opacity: 1;
+    visibility: visible;
 }
 
 /* Popup */
@@ -163,14 +157,13 @@
     visibility: hidden;
     pointer-events: none;
     z-index: 98;
-    max-height: 300px;
+    max-height: 320px;
     overflow-y: auto;
-    padding: 5px;
+    padding: 4px;
 }
 
-/* Scrollbar styling */
 .sfb-popup::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
 }
 
 .sfb-popup::-webkit-scrollbar-track {
@@ -178,88 +171,85 @@
 }
 
 .sfb-popup::-webkit-scrollbar-thumb {
-    background: rgba(0,0,0,0.2);
-    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
 }
 
-/* Poziționare popup */
+/* Popup positioning */
 .sfb-position-right .sfb-popup {
     right: 0;
-    bottom: 70px;
+    bottom: 68px;
 }
 
 .sfb-position-left .sfb-popup {
     left: 0;
-    bottom: 70px;
+    bottom: 68px;
 }
 
 .sfb-position-top-right .sfb-popup {
     right: 0;
-    top: 70px;
+    top: 68px;
+    flex-direction: column;
 }
 
 .sfb-position-top-left .sfb-popup {
     left: 0;
-    top: 70px;
+    top: 68px;
+    flex-direction: column;
 }
 
-/* Items */
+/* Items - Clean Design */
 .sfb-item {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
-    gap: 10px;
-    padding: 12px 20px;
-    background: white;
-    border-radius: 8px;
+    gap: 12px;
+    padding: 10px 18px;
+    background: #ffffff;
+    border-radius: 10px;
     text-decoration: none;
-    color: #333;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    transition: all 0.3s ease;
+    color: var(--e-global-color-primary, #2c3e50);
+    box-shadow: none;
+    transition: all 0.2s ease;
     opacity: 0;
-    position: relative;
-    overflow: hidden;
     min-width: 180px;
-    transform: translateY(10px);
+    transform: translateY(8px);
+    border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-/* Elementul before */
+/* Hover state for items */
+.sfb-item:hover {
+    color: var(--e-global-color-secondary, #0073aa);
+}
+
+/* No pseudo-element */
 .sfb-item-before {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 4px;
-    height: 100%;
-    opacity: 0.3;
-}
-
-/* Ascunde before când sunt nume */
-.sfb-show-names .sfb-item-before {
     display: none;
 }
 
-/* Iconițe */
+/* Icons */
 .sfb-item i {
     font-size: 20px;
-    min-width: 24px;
+    width: 24px;
     text-align: center;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    z-index: 1;
+    color: inherit;
+    transition: color 0.2s ease;
 }
 
 .sfb-item-label {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     white-space: nowrap;
-    flex-grow: 1;
+    flex: 1;
+    letter-spacing: 0.2px;
 }
 
 /* Icons Only Mode */
 .sfb-icons-only .sfb-item {
-    width: 50px;
-    height: 50px;
+    width: 48px;
+    height: 48px;
     padding: 0;
     justify-content: center;
     border-radius: 50%;
@@ -270,22 +260,23 @@
     display: none;
 }
 
-/* Transparent Icons */
+.sfb-icons-only .sfb-item i {
+    width: auto;
+    font-size: 22px;
+}
+
+/* Transparent Icons Mode - Fără background gri */
 .sfb-transparent-icons .sfb-item {
     background: transparent;
-    border: 2px solid currentColor;
+    border: 1px solid var(--e-global-color-primary);
     box-shadow: none;
 }
 
-.sfb-transparent-icons .sfb-item:hover {
-    background: rgba(0,0,0,0.05);
-}
-
-/* Stare activă */
+/* Active container */
 .sfb-container.active .sfb-popup {
     opacity: 1;
     visibility: visible;
-    pointer-events: all;
+    pointer-events: auto;
 }
 
 .sfb-container.active .sfb-item {
@@ -293,87 +284,155 @@
     transform: translateY(0);
 }
 
-/* Buton activ */
+/* Stagger animation */
+.sfb-item {
+    transition-delay: calc(var(--item-index, 0) * 0.02s);
+}
+
+/* Active CTA */
 .sfb-cta.active {
     transform: rotate(45deg);
-    background: #005a87;
+    background: var(--e-global-color-secondary, #005a87);
 }
 
-/* Animații */
-.sfb-item {
-    transition: all 0.3s ease;
-    transition-delay: calc(var(--item-index) * 0.05s);
+/* ============================================ */
+/* Hover Effects - Clean & Professional */
+/* ============================================ */
+
+/* Normal items hover */
+.sfb-item:hover {
+    transform: translateY(-2px) !important;
+    background: #ffffff !important;
+    border-color: var(--e-global-color-secondary, #0073aa) !important;
 }
 
-/* Mobile */
-.sfb-mobile-disabled {
-    display: none;
+/* Transparent icons hover - FĂRĂ BACKGROUND GRI */
+.sfb-transparent-icons .sfb-item:hover {
+    transform: translateY(-2px) scale(1.02) !important;
+    background: transparent !important;
+    border-color: var(--e-global-color-secondary, #0073aa) !important;
 }
+
+/* Icons only hover */
+.sfb-icons-only .sfb-item:hover {
+    transform: translateY(-2px) scale(1.05) !important;
+}
+
+/* Show names hover */
+.sfb-show-names .sfb-item:hover {
+    transform: translateX(4px) translateY(-2px) !important;
+}
+
+/* Icon hover effect */
+.sfb-item:hover i {
+    transform: scale(1.05);
+    transition: transform 0.2s ease;
+}
+
+/* Click effect */
+.sfb-item:active {
+    transform: scale(0.98) !important;
+    transition: transform 0.05s ease !important;
+}
+
+/* Pulsation animation - subtle */
+@keyframes sfbPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+    100% { transform: scale(1); }
+}
+
+.sfb-item:hover {
+    animation: sfbPulse 0.3s ease-out !important;
+}
+
+.sfb-transparent-icons .sfb-item:hover {
+    animation: sfbPulse 0.3s ease-out !important;
+}
+
+/* ============================================ */
+/* Link hover states */
+/* ============================================ */
+
+a:hover {
+    color: var(--e-global-color-secondary, #0073aa);
+}
+
+/* ============================================ */
+/* Mobile Responsive */
+/* ============================================ */
 
 @media (max-width: 768px) {
-    .sfb-mobile-disabled {
-        display: none;
-    }
-    
     .sfb-container {
         bottom: 20px;
         right: 20px;
     }
     
     .sfb-cta {
-        width: 50px;
-        height: 50px;
+        width: 48px;
+        height: 48px;
     }
     
     .sfb-cta-icon {
         font-size: 20px;
     }
     
-    /* Custom message pe mobile */
     .sfb-custom-message {
-        font-size: 12px;
-        padding: 8px 12px;
+        font-size: 11px;
+        padding: 6px 12px;
         white-space: normal;
-        max-width: 150px;
-        bottom: 100%;
-        left: 50%;
-        transform: translateX(-50%);
-        margin-bottom: 10px;
+        max-width: 140px;
     }
     
-    /* Reset poziție custom message pe mobile */
     .sfb-position-right .sfb-custom-message,
-    .sfb-position-top-right .sfb-custom-message,
-    .sfb-position-left .sfb-custom-message,
-    .sfb-position-top-left .sfb-custom-message {
+    .sfb-position-left .sfb-custom-message {
         bottom: 100%;
         left: 50%;
+        right: auto;
         transform: translateX(-50%);
         margin-bottom: 10px;
+        margin-left: 0;
+        margin-right: 0;
     }
     
-    /* Ascunde săgețile pe mobile */
     .sfb-custom-message:after {
         display: none;
     }
     
     .sfb-popup {
         bottom: 60px;
-        max-height: 250px;
+        max-height: 260px;
+        gap: 8px;
     }
     
     .sfb-item {
-        padding: 10px 15px;
-        min-width: 160px;
+        padding: 8px 14px;
+        min-width: 150px;
+    }
+    
+    .sfb-item i {
+        font-size: 18px;
+        width: 20px;
+    }
+    
+    .sfb-item-label {
+        font-size: 12px;
     }
     
     .sfb-icons-only .sfb-item {
-        width: 45px;
-        height: 45px;
+        width: 44px;
+        height: 44px;
+    }
+    
+    .sfb-icons-only .sfb-item i {
+        font-size: 20px;
     }
 }
 
-/* Inline Buttons */
+/* ============================================ */
+/* Inline & Single Buttons */
+/* ============================================ */
+
 .scfs-inline-buttons {
     display: flex;
     flex-wrap: wrap;
@@ -381,69 +440,143 @@
     margin: 20px 0;
 }
 
-.scfs-inline-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px 15px;
-    background: #0073aa;
-    color: white;
-    text-decoration: none;
-    border-radius: 4px;
-    transition: all 0.3s ease;
-    min-height: 44px;
-}
-
-.scfs-inline-button:hover {
-    background: #005a87;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-}
-
-.scfs-inline-button.scfs-transparent {
-    background: transparent;
-    color: #0073aa;
-    border: 1px solid #0073aa;
-}
-
-.scfs-inline-button.scfs-transparent:hover {
-    background: #0073aa;
-    color: white;
-}
-
-/* Single Button */
+.scfs-inline-button,
 .scfs-single-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 10px 15px;
-    background: #0073aa;
-    color: white;
+    padding: 10px 18px;
+    background: var(--e-global-color-secondary, #0073aa);
+    color: #ffffff;
     text-decoration: none;
-    border-radius: 4px;
-    transition: all 0.3s ease;
-    min-height: 44px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    min-height: 42px;
+    font-weight: 500;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
 }
 
+.scfs-inline-button:hover,
+.scfs-single-button:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+}
+
+.scfs-inline-button:active,
+.scfs-single-button:active {
+    transform: translateY(0);
+}
+
+.scfs-inline-button.scfs-transparent,
 .scfs-single-button.scfs-transparent {
     background: transparent;
-    color: #0073aa;
-    border: 1px solid #0073aa;
+    color: var(--e-global-color-secondary, #0073aa);
+    border: 1.5px solid var(--e-global-color-secondary, #0073aa);
 }
 
+.scfs-inline-button.scfs-transparent:hover,
 .scfs-single-button.scfs-transparent:hover {
-    background: #0073aa;
-    color: white;
+    background: var(--e-global-color-secondary, #0073aa);
+    color: #ffffff;
 }
 
-/* Font Awesome import */
+/* Accessibility */
+.sfb-cta:focus-visible,
+.sfb-item:focus-visible {
+    outline: 2px solid var(--e-global-color-secondary, #0073aa);
+    outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .sfb-item,
+    .sfb-cta,
+    .sfb-custom-message {
+        transition: none !important;
+        animation: none !important;
+    }
+}
+
+/* Font Awesome */
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 
-/* Asigură vizibilitatea iconițelor */
 i[class*="fa-"] {
     opacity: 1;
     visibility: visible;
     display: inline-block;
+}
+
+/* ============================================ */
+/* SCROLL TRANSPARENT EFFECT - VIZIBIL ȘI GRADUAL */
+/* ============================================ */
+
+.sfb-container {
+    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity, transform;
+}
+
+/* Stare de scroll activă */
+.sfb-container.sfb-scrolling {
+    transition: opacity 0.1s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Efect de fade la începutul scroll-ului */
+.sfb-container.sfb-scroll-start {
+    animation: sfbScrollStart 0.2s ease-out;
+}
+
+@keyframes sfbScrollStart {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0.7;
+        transform: scale(0.97);
+    }
+}
+
+/* Custom message efect mai vizibil la scroll */
+.sfb-custom-message.sfb-custom-message-scroll {
+    opacity: 0.1 !important;
+    transform: translateX(-50%) scale(0.92);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+/* Hover restaurare completă */
+.sfb-container.sfb-transparent-icons:hover {
+    opacity: 1 !important;
+    transform: scale(1) !important;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+/* Efect de blur subtil la scroll rapid */
+.sfb-container.sfb-scrolling.sfb-transparent-icons {
+    filter: blur(0.5px);
+    transition: filter 0.1s ease;
+}
+
+.sfb-container.sfb-transparent-icons {
+    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                filter 0.1s ease;
+}
+
+/* Restaurare completă după scroll */
+.sfb-container.sfb-transparent-icons {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sfb-custom-message.sfb-custom-message-scroll {
+        opacity: 0.05 !important;
+    }
 }
