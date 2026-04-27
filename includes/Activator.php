@@ -59,8 +59,8 @@ class Activator {
                 'custom_message' => "Let`s chat with US!",
                 'show_custom_message' => 1,
                 'show_shortcut_names' => 1,
-                'button_primary_color' => 'var(--e-global-color-primary)',
-                'button_secondary_color' => 'var(--e-global-color-secondary)',
+                'button_primary_color' => 'var(--primary)',
+                'button_secondary_color' => 'var(--secondary)',
                 'use_theme_colors' => 1
             ]);
         }
