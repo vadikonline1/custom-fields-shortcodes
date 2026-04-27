@@ -113,8 +113,27 @@ class Frontend {
         
         return $this->render_inline($inline_buttons, $settings);
     }
+
+private function get_button_colors($settings) {
+    if ($settings['use_theme_colors']) {
+        return [
+            'primary' => 'var(--e-global-color-primary, #0073aa)',
+            'secondary' => 'var(--e-global-color-secondary, #005a87)'
+        ];
+    }
     
+    return [
+        'primary' => $settings['button_primary_color'],
+        'secondary' => $settings['button_secondary_color']
+    ];
+}
+
 private function render_floating($buttons, $settings) {
+    // Verifică dacă plugin-ul este activ
+    if (!Activator::is_active()) {
+        return '';
+    }
+    
     $floating_buttons = array_filter($buttons, function($btn) {
         return isset($btn['floating']) && $btn['floating'];
     });
@@ -133,35 +152,38 @@ private function render_floating($buttons, $settings) {
     $show_names = $settings['show_names'];
     $show_custom_message = $settings['show_custom_message'];
     $transparent_icons = !$show_names && $settings['transparent_icons'];
-    $button_color = $settings['button_color'];
+	// Setări border
+	$container_border_class = $settings['container_border'] ? 'sfb-has-border' : '';
+	$border_color = $settings['container_border_color'];
+	$border_bg = $settings['container_border_bg'];
     
-    // Determine custom message position - opposite of button position
-    $custom_message_class = '';
-    switch ($settings['position']) {
-        case 'right':
-        case 'top-right':
-            $custom_message_class = 'sfb-custom-message-left';
-            break;
-        case 'left':
-        case 'top-left':
-            $custom_message_class = 'sfb-custom-message-right';
-            break;
+    // Setări culori
+    if ($settings['use_theme_colors']) {
+        $primary_color = 'var(--e-global-color-primary, #0073aa)';
+        $secondary_color = 'var(--e-global-color-secondary, #005a87)';
+    } else {
+        $primary_color = $settings['primary_color'];
+        $secondary_color = $settings['secondary_color'];
     }
     
     ob_start(); ?>
     
-    <div class="sfb-container <?php echo esc_attr("$position_class $animation_class $mobile_class"); ?> <?php echo $show_names ? 'sfb-show-names' : 'sfb-icons-only'; ?> <?php echo $transparent_icons ? 'sfb-transparent-icons' : ''; ?>">
+    <div class="sfb-container <?php echo esc_attr("$position_class $animation_class $mobile_class $container_border_class"); ?> <?php echo $show_names ? 'sfb-show-names' : 'sfb-icons-only'; ?> <?php echo $transparent_icons ? 'sfb-transparent-icons' : ''; ?>"
+     style="--e-global-color-primary: <?php echo esc_attr($primary_color); ?>; 
+            --e-global-color-secondary: <?php echo esc_attr($secondary_color); ?>;
+            --sfb-container-border-color: <?php echo esc_attr($border_color); ?>;
+            --sfb-container-border-bg: <?php echo esc_attr($border_bg); ?>;">
         
         <?php if($show_custom_message): ?>
-        <!-- Custom message - VIZIBIL MEREU inițial -->
-        <div class="sfb-custom-message <?php echo $custom_message_class; ?>" 
+        <div class="sfb-custom-message" 
              id="sfb_custom_message"
              style="opacity: 1; visibility: visible;">
             <?php echo esc_html($settings['custom_message']); ?>
         </div>
         <?php endif; ?>
         
-        <div class="sfb-cta" style="background-color: <?php echo esc_attr($button_color); ?>" aria-label="Open social menu" role="button" tabindex="0">
+        <!-- CTA Button folosește primary color -->
+        <div class="sfb-cta" style="background-color: <?php echo esc_attr($primary_color); ?>;" aria-label="Open social menu" role="button" tabindex="0">
             <span class="sfb-cta-icon"><?php echo $settings['button_icon']; ?></span>
         </div>
         
@@ -170,18 +192,13 @@ private function render_floating($buttons, $settings) {
                 <?php 
                 $href = $this->get_button_url($button);
                 $icon = $this->get_button_icon($button);
-                // DETERMINE BACKGROUND COLOR FOR BEFORE ELEMENT
-                $before_style = !$show_names ? 'style="background-color: ' . esc_attr($button_color) . ';"' : '';
                 ?>
                 
+                <!-- Floating buttons folosesc secondary color -->
                 <a href="<?php echo esc_attr($href); ?>" class="sfb-item" 
                    <?php echo $this->get_button_target($button); ?> 
                    role="menuitem"
-                   style="--item-index: <?php echo $index; ?>">
-                    <?php if(!$show_names): ?>
-                        <!-- Afișăm elementul before doar dacă nu sunt nume -->
-                        <span class="sfb-item-before" <?php echo $before_style; ?>></span>
-                    <?php endif; ?>
+                   style="--item-index: <?php echo $index; ?>; <?php echo !$transparent_icons ? 'background-color: ' . esc_attr($secondary_color) . ';' : ''; ?> <?php echo $transparent_icons ? 'border-color: ' . esc_attr($secondary_color) . ';' : ''; ?> color: <?php echo $transparent_icons ? esc_attr($secondary_color) : '#ffffff'; ?>;">
                     <?php echo $icon; ?>
                     <?php if($show_names): ?>
                         <span class="sfb-item-label"><?php echo esc_html($button['label'] ?? 'Button'); ?></span>
@@ -196,9 +213,6 @@ private function render_floating($buttons, $settings) {
 }
 
 private function get_button_icon($button) {
-    // DEBUG: Afișează structura butonului pentru debugging
-    // error_log('Button data: ' . print_r($button, true));
-    
     // Verificăm icon_type din baza de date
     if (isset($button['icon_type'])) {
         switch ($button['icon_type']) {
