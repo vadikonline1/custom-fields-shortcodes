@@ -515,14 +515,14 @@ class SocialSettings {
                             <td>
                                 <label>
                                     <input type="checkbox" name="use_theme_colors" id="use_theme_colors" value="1" <?php checked($settings['use_theme_colors'], 1); ?>>
-                                    Use theme colors (--e-global-color-primary and --e-global-color-secondary)
+                                    Use theme colors (--primary and --secondary)
                                 </label>
                                 <p class="description">When enabled, buttons will use your theme's colors</p>
                              </td>
                          </tr>
                         
                         <tr class="color-row primary-row" style="<?php echo $settings['use_theme_colors'] ? 'display: none;' : ''; ?>">
-                            <th scope="row"><label for="primary_color">Main Button Color (--e-global-color-primary)</label></th>
+                            <th scope="row"><label for="primary_color">Main Button Color (--primary)</label></th>
                             <td>
                                 <input type="color" name="primary_color" id="primary_color" value="<?php echo esc_attr($settings['primary_color']); ?>">
                                 <p class="description">This color will be used for the main CTA button background</p>
@@ -530,7 +530,7 @@ class SocialSettings {
                         </tr>
                         
                         <tr class="color-row secondary-row" style="<?php echo $settings['use_theme_colors'] ? 'display: none;' : ''; ?>">
-                            <th scope="row"><label for="secondary_color">Floating Buttons Color (--e-global-color-secondary)</label></th>
+                            <th scope="row"><label for="secondary_color">Floating Buttons Color (--secondary)</label></th>
                             <td>
                                 <input type="color" name="secondary_color" id="secondary_color" value="<?php echo esc_attr($settings['secondary_color']); ?>">
                                 <p class="description">This color will be used for the floating button items</p>
@@ -574,78 +574,78 @@ class SocialSettings {
                         </tr>
                     </table>
                 </div>
-<!-- Container Border Section -->
-<div class="sfb-settings-section">
-    <h3>🖼️ Container Appearance</h3>
-    <table class="form-table">
-        <tr>
-            <th scope="row"><label for="container_border">Container Border</label></th>
-            <td>
-                <label>
-                    <input type="checkbox" name="container_border" id="container_border" value="1" <?php checked($settings['container_border'], 1); ?>>
-                    Add white border and border-radius to container
-                </label>
-                <p class="description">When enabled, the container will have a circular border</p>
-            </td>
-        </tr>
-        
-        <tr class="border-row" style="<?php echo $settings['container_border'] ? '' : 'display: none;'; ?>">
-            <th scope="row"><label for="container_border_color">Border Color</label></th>
-            <td>
-                <input type="color" name="container_border_color" id="container_border_color" value="<?php echo esc_attr($settings['container_border_color']); ?>">
-                <p class="description">Color of the container border</p>
-            </td>
-        </tr>
-        
-        <tr class="border-row" style="<?php echo $settings['container_border'] ? '' : 'display: none;'; ?>">
-            <th scope="row"><label for="container_border_bg">Background Color</label></th>
-            <td>
-                <input type="color" name="container_border_bg" id="container_border_bg" value="<?php echo esc_attr($settings['container_border_bg']); ?>">
-                <p class="description">Background color behind the button (with opacity)</p>
-                <p class="description">Tip: Use colors like #ffffff with opacity or rgba values</p>
-            <td>
-        </tr>
-    </table>
-</div>
-
-<script>
-jQuery(document).ready(function($) {
-    // Show/hide border color rows
-    $('#container_border').change(function() {
-        if ($(this).is(':checked')) {
-            $('.border-row').show();
-        } else {
-            $('.border-row').hide();
-        }
-    });
-    
-    // Live preview for container border
-    $('#container_border, #container_border_color, #container_border_bg').on('change input', function() {
-        var hasBorder = $('#container_border').is(':checked');
-        var borderColor = $('#container_border_color').val();
-        var borderBg = $('#container_border_bg').val();
-        
-        if (hasBorder) {
-            $('.sfb-preview-main').parent().css({
-                'border': '2px solid ' + borderColor,
-                'border-radius': '50%',
-                'background': borderBg,
-                'padding': '6px',
-                'backdrop-filter': 'blur(4px)',
-                'display': 'inline-block'
-            });
-        } else {
-            $('.sfb-preview-main').parent().css({
-                'border': 'none',
-                'background': 'transparent',
-                'padding': '0',
-                'backdrop-filter': 'none',
-                'display': 'block'
-            });
-        }
-    });
-});
-</script>
+				<!-- Container Border Section -->
+				<div class="sfb-settings-section">
+				    <h3>🖼️ Container Appearance</h3>
+				    <table class="form-table">
+				        <tr>
+				            <th scope="row"><label for="container_border">Container Border</label></th>
+				            <td>
+				                <label>
+				                    <input type="checkbox" name="container_border" id="container_border" value="1" <?php checked($settings['container_border'], 1); ?>>
+				                    Add white border and border-radius to container
+				                </label>
+				                <p class="description">When enabled, the container will have a circular border</p>
+				            </td>
+				        </tr>
+				        
+				        <tr class="border-row" style="<?php echo $settings['container_border'] ? '' : 'display: none;'; ?>">
+				            <th scope="row"><label for="container_border_color">Border Color</label></th>
+				            <td>
+				                <input type="color" name="container_border_color" id="container_border_color" value="<?php echo esc_attr($settings['container_border_color']); ?>">
+				                <p class="description">Color of the container border</p>
+				            </td>
+				        </tr>
+				        
+				        <tr class="border-row" style="<?php echo $settings['container_border'] ? '' : 'display: none;'; ?>">
+				            <th scope="row"><label for="container_border_bg">Background Color</label></th>
+				            <td>
+				                <input type="color" name="container_border_bg" id="container_border_bg" value="<?php echo esc_attr($settings['container_border_bg']); ?>">
+				                <p class="description">Background color behind the button (with opacity)</p>
+				                <p class="description">Tip: Use colors like #ffffff with opacity or rgba values</p>
+				            <td>
+				        </tr>
+				    </table>
+				</div>
+				
+				<script>
+				jQuery(document).ready(function($) {
+				    // Show/hide border color rows
+				    $('#container_border').change(function() {
+				        if ($(this).is(':checked')) {
+				            $('.border-row').show();
+				        } else {
+				            $('.border-row').hide();
+				        }
+				    });
+				    
+				    // Live preview for container border
+				    $('#container_border, #container_border_color, #container_border_bg').on('change input', function() {
+				        var hasBorder = $('#container_border').is(':checked');
+				        var borderColor = $('#container_border_color').val();
+				        var borderBg = $('#container_border_bg').val();
+				        
+				        if (hasBorder) {
+				            $('.sfb-preview-main').parent().css({
+				                'border': '2px solid ' + borderColor,
+				                'border-radius': '50%',
+				                'background': borderBg,
+				                'padding': '6px',
+				                'backdrop-filter': 'blur(4px)',
+				                'display': 'inline-block'
+				            });
+				        } else {
+				            $('.sfb-preview-main').parent().css({
+				                'border': 'none',
+				                'background': 'transparent',
+				                'padding': '0',
+				                'backdrop-filter': 'none',
+				                'display': 'block'
+				            });
+				        }
+				    });
+				});
+				</script>
                 <!-- Position & Appearance Section -->
                 <div class="sfb-settings-section">
                     <h3>📍 Position & Appearance</h3>
@@ -722,8 +722,8 @@ jQuery(document).ready(function($) {
                 
                 <?php 
                 if ($settings['use_theme_colors']) {
-                    $primary_color_display = 'var(--e-global-color-primary, #0073aa)';
-                    $secondary_color_display = 'var(--e-global-color-secondary, #005a87)';
+                    $primary_color_display = 'var(--primary, #0073aa)';
+                    $secondary_color_display = 'var(--secondary, #005a87)';
                 } else {
                     $primary_color_display = $settings['primary_color'];
                     $secondary_color_display = $settings['secondary_color'];
@@ -733,7 +733,7 @@ jQuery(document).ready(function($) {
                 <div class="sfb-preview-main" style="background-color: <?php echo esc_attr($primary_color_display); ?>;">
                     <span class="sfb-preview-icon"><?php echo $settings['button_icon']; ?></span>
                 </div>
-                <p class="preview-label">Main Button (--e-global-color-primary)</p>
+                <p class="preview-label">Main Button (--primary)</p>
                 
                 <?php if($settings['show_custom_message']): ?>
                 <div class="sfb-custom-message-preview">
@@ -747,13 +747,13 @@ jQuery(document).ready(function($) {
                             <span class="sfb-preview-icon">🔗</span>
                             <span class="sfb-preview-text">Example Button</span>
                         </div>
-                        <p class="preview-label" style="margin-top: 5px;">Floating Button (--e-global-color-secondary)</p>
+                        <p class="preview-label" style="margin-top: 5px;">Floating Button (--secondary)</p>
                     <?php else: ?>
                         <div class="sfb-preview-item icons-only <?php echo ($settings['transparent_icons'] && !$settings['show_names']) ? 'transparent' : ''; ?>" 
                              style="background-color: <?php echo $settings['transparent_icons'] ? 'transparent' : esc_attr($secondary_color_display); ?>; <?php echo $settings['transparent_icons'] ? 'border-color: ' . esc_attr($secondary_color_display) . ';' : ''; ?>">
                             <span class="sfb-preview-icon">🔗</span>
                         </div>
-                        <p class="preview-label" style="margin-top: 5px;">Floating Button (--e-global-color-secondary)</p>
+                        <p class="preview-label" style="margin-top: 5px;">Floating Button (--secondary)</p>
                     <?php endif; ?>
                 </div>
                 
@@ -898,8 +898,8 @@ jQuery(document).ready(function($) {
             // Live preview update for colors
             $('#primary_color, #secondary_color, #use_theme_colors, #transparent_icons').on('change input', function() {
                 var useTheme = $('#use_theme_colors').is(':checked');
-                var primaryColor = useTheme ? 'var(--e-global-color-primary, #0073aa)' : $('#primary_color').val();
-                var secondaryColor = useTheme ? 'var(--e-global-color-secondary, #005a87)' : $('#secondary_color').val();
+                var primaryColor = useTheme ? 'var(--primary, #0073aa)' : $('#primary_color').val();
+                var secondaryColor = useTheme ? 'var(--secondary, #005a87)' : $('#secondary_color').val();
                 var transparentIcons = $('#transparent_icons').is(':checked');
                 var showNames = $('#show_names').is(':checked');
                 
