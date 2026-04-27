@@ -1,10 +1,30 @@
-/* Floating Social Buttons v3.0 */
+/* Floating Social Buttons v4.0 - Corectat switch device */
 .sfb-container {
     position: fixed;
     z-index: 999999;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    border: 2px solid #ffffff !important;
-    border-radius: 50%;
+    /* Eliminăm border-ul și border-radius de pe container */
+    border: none !important;
+    border-radius: 0 !important;
+	transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity, transform;
+}
+
+.sfb-container.sfb-scrolling {
+    transition: opacity 0.1s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sfb-custom-message.sfb-custom-message-scroll {
+    opacity: 0.1 !important;
+    transform: translateX(-50%) scale(0.92);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.sfb-container.sfb-transparent-icons:hover {
+    opacity: 1 !important;
+    transform: scale(1) !important;
 }
 
 /* Positions */
@@ -28,7 +48,7 @@
     left: 30px;
 }
 
-/* CTA Button */
+/* CTA Button - doar aici avem border-radius 50% */
 .sfb-cta {
     width: 56px;
     height: 56px;
@@ -41,11 +61,19 @@
     transition: transform 0.2s ease;
     position: relative;
     z-index: 100;
-    background: var(--e-global-color-secondary, #0073aa);
+    /* Folosește primary color cu fallback */
+    background: var(--e-global-color-primary, #0073aa) !important;
+    /* Asigură că rămâne cerc */
+    overflow: hidden;
+    flex-shrink: 0;
 }
 
 .sfb-cta:hover {
     transform: scale(1.05);
+}
+
+.sfb-cta:active {
+    transform: scale(0.98);
 }
 
 .sfb-cta-icon {
@@ -206,21 +234,22 @@
     align-items: center;
     gap: 12px;
     padding: 10px 18px;
-    background: #ffffff;
     border-radius: 10px;
     text-decoration: none;
-    color: var(--e-global-color-primary, #2c3e50);
     box-shadow: none;
     transition: all 0.2s ease;
     opacity: 0;
     min-width: 180px;
     transform: translateY(8px);
     border: 1px solid rgba(0, 0, 0, 0.06);
+    /* Folosește secondary color cu fallback */
+    background: var(--e-global-color-secondary, #005a87) !important;
+    color: #ffffff !important;
 }
 
 /* Hover state for items */
 .sfb-item:hover {
-    color: var(--e-global-color-secondary, #0073aa);
+    filter: brightness(1.05);
 }
 
 /* No pseudo-element */
@@ -246,6 +275,7 @@
     white-space: nowrap;
     flex: 1;
     letter-spacing: 0.2px;
+    color: inherit;
 }
 
 /* Icons Only Mode */
@@ -269,9 +299,27 @@
 
 /* Transparent Icons Mode - Fără background gri */
 .sfb-transparent-icons .sfb-item {
-    background: transparent;
-    border: 1px solid var(--e-global-color-primary);
-    box-shadow: none;
+    background: transparent !important;
+    border: 1px solid var(--e-global-color-secondary, #005a87) !important;
+    color: var(--e-global-color-secondary, #005a87) !important;
+}
+
+.sfb-transparent-icons .sfb-item i {
+    color: inherit;
+}
+
+.sfb-transparent-icons .sfb-item:hover {
+    background: transparent !important;
+    border-color: var(--e-global-color-secondary, #005a87) !important;
+    color: var(--e-global-color-secondary, #005a87) !important;
+    filter: brightness(1.1);
+}
+
+/* Container transparent - fără efecte nedorite */
+.sfb-container.sfb-transparent-icons {
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
 }
 
 /* Active container */
@@ -294,7 +342,6 @@
 /* Active CTA */
 .sfb-cta.active {
     transform: rotate(45deg);
-    background: var(--e-global-color-secondary, #005a87);
 }
 
 /* ============================================ */
@@ -304,15 +351,7 @@
 /* Normal items hover */
 .sfb-item:hover {
     transform: translateY(-2px) !important;
-    background: #ffffff !important;
-    border-color: var(--e-global-color-secondary, #0073aa) !important;
-}
-
-/* Transparent icons hover - FĂRĂ BACKGROUND GRI */
-.sfb-transparent-icons .sfb-item:hover {
-    transform: translateY(-2px) scale(1.02) !important;
-    background: transparent !important;
-    border-color: var(--e-global-color-secondary, #0073aa) !important;
+    filter: brightness(1.05) !important;
 }
 
 /* Icons only hover */
@@ -348,10 +387,6 @@
     animation: sfbPulse 0.3s ease-out !important;
 }
 
-.sfb-transparent-icons .sfb-item:hover {
-    animation: sfbPulse 0.3s ease-out !important;
-}
-
 /* ============================================ */
 /* Link hover states */
 /* ============================================ */
@@ -368,6 +403,16 @@ a:hover {
     .sfb-container {
         bottom: 20px;
         right: 20px;
+    }
+    
+    .sfb-position-left {
+        left: 20px !important;
+        right: auto !important;
+    }
+    
+    .sfb-position-right {
+        right: 20px !important;
+        left: auto !important;
     }
     
     .sfb-cta {
@@ -512,7 +557,7 @@ i[class*="fa-"] {
 }
 
 /* ============================================ */
-/* SCROLL TRANSPARENT EFFECT - VIZIBIL ȘI GRADUAL */
+/* SCROLL TRANSPARENT EFFECT */
 /* ============================================ */
 
 .sfb-container {
@@ -521,64 +566,744 @@ i[class*="fa-"] {
     will-change: opacity, transform;
 }
 
-/* Stare de scroll activă */
 .sfb-container.sfb-scrolling {
     transition: opacity 0.1s cubic-bezier(0.4, 0, 0.2, 1),
                 transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Efect de fade la începutul scroll-ului */
-.sfb-container.sfb-scroll-start {
-    animation: sfbScrollStart 0.2s ease-out;
-}
-
-@keyframes sfbScrollStart {
-    0% {
-        opacity: 1;
-        transform: scale(1);
-    }
-    100% {
-        opacity: 0.7;
-        transform: scale(0.97);
-    }
-}
-
-/* Custom message efect mai vizibil la scroll */
 .sfb-custom-message.sfb-custom-message-scroll {
     opacity: 0.1 !important;
     transform: translateX(-50%) scale(0.92);
     transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
-/* Hover restaurare completă */
 .sfb-container.sfb-transparent-icons:hover {
     opacity: 1 !important;
     transform: scale(1) !important;
-    transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
-/* Efect de blur subtil la scroll rapid */
-.sfb-container.sfb-scrolling.sfb-transparent-icons {
-    filter: blur(0.5px);
-    transition: filter 0.1s ease;
+/* ============================================ */
+/* FIX PENTRU SWITCH DEVICE */
+/* ============================================ */
+
+/* Elimină orice border-radius nedorit pe container */
+.sfb-container,
+.sfb-container * {
+    box-sizing: border-box;
 }
 
+/* Asigură că doar .sfb-cta are border-radius 50% */
+.sfb-cta,
+.sfb-icons-only .sfb-item {
+    border-radius: 50% !important;
+}
+
+/* Orice alt element nu trebuie să aibă border-radius 50% */
+.sfb-container:not(.sfb-icons-only) .sfb-item {
+    border-radius: 10px !important;
+}
+
+/* Previne aplicarea greșită a clasei transparent */
 .sfb-container.sfb-transparent-icons {
-    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-                transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-                filter 0.1s ease;
+    background: transparent !important;
 }
 
-/* Restaurare completă după scroll */
-.sfb-container.sfb-transparent-icons {
-    opacity: 1;
-    transform: scale(1);
-    filter: blur(0);
+/* Reset pentru orice stiluri nedorite la switch device */
+@media (max-width: 768px) and (min-width: 769px) {
+    .sfb-container {
+        transition: all 0.3s ease;
+    }
 }
 
-/* Responsive */
+/* ============================================ */
+/* CONTAINER BORDER SETTINGS - Opțional */
+/* ============================================ */
+
+/* Container border - activat din admin */
+.sfb-container.sfb-has-border {
+    border: 2px solid #ffffff !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(2px);
+    padding: 5px;
+}
+
+/* Adjust CTA when container has border */
+.sfb-container.sfb-has-border .sfb-cta {
+    width: 52px;
+    height: 52px;
+}
+
+/* Adjust popup position when container has border */
+.sfb-container.sfb-has-border .sfb-popup {
+    bottom: 72px;
+}
+
+
+/* ============================================ */
+/* RESPONSIVE DIMENSIONS - Asemanator cu scrollToTop */
+/* ============================================ */
+
+/* Desktop default */
+.sfb-cta {
+    width: 56px;
+    height: 56px;
+}
+
+.sfb-cta-icon {
+    font-size: 24px;
+}
+
+/* Tablet (max 1024px) */
+@media (max-width: 1024px) {
+    .sfb-container.sfb-position-right,
+    .sfb-container.sfb-position-left {
+        bottom: 20px;
+    }
+    
+    .sfb-position-right {
+        right: 20px;
+    }
+    
+    .sfb-position-left {
+        left: 20px;
+    }
+    
+    .sfb-cta {
+        width: 48px !important;
+        height: 48px !important;
+    }
+    
+    .sfb-cta-icon {
+        font-size: 20px !important;
+    }
+    
+    /* Popup adjustment */
+    .sfb-position-right .sfb-popup,
+    .sfb-position-left .sfb-popup {
+        bottom: 60px;
+    }
+    
+    .sfb-position-top-right .sfb-popup,
+    .sfb-position-top-left .sfb-popup {
+        top: 60px;
+    }
+}
+
+/* Mobile (max 768px) */
 @media (max-width: 768px) {
-    .sfb-custom-message.sfb-custom-message-scroll {
-        opacity: 0.05 !important;
+    .sfb-container.sfb-position-right,
+    .sfb-container.sfb-position-left {
+        bottom: 12px;
+    }
+    
+    .sfb-position-right {
+        right: 12px;
+    }
+    
+    .sfb-position-left {
+        left: 12px;
+    }
+    
+    .sfb-cta {
+        width: 44px !important;
+        height: 44px !important;
+    }
+    
+    .sfb-cta-icon {
+        font-size: 18px !important;
+    }
+    
+    /* Popup adjustment */
+    .sfb-position-right .sfb-popup,
+    .sfb-position-left .sfb-popup {
+        bottom: 56px;
+    }
+    
+    .sfb-position-top-right .sfb-popup,
+    .sfb-position-top-left .sfb-popup {
+        top: 56px;
+    }
+    
+    /* Items adjustment */
+    .sfb-item {
+        padding: 8px 12px !important;
+        min-width: 140px !important;
+    }
+    
+    .sfb-item i {
+        font-size: 16px !important;
+        width: 20px !important;
+    }
+    
+    .sfb-item-label {
+        font-size: 11px !important;
+    }
+    
+    .sfb-icons-only .sfb-item {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    
+    .sfb-icons-only .sfb-item i {
+        font-size: 18px !important;
+    }
+}
+
+/* Small mobile (max 480px) */
+@media (max-width: 480px) {
+    .sfb-cta {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    
+    .sfb-cta-icon {
+        font-size: 16px !important;
+    }
+    
+    .sfb-position-right .sfb-popup,
+    .sfb-position-left .sfb-popup {
+        bottom: 52px;
+    }
+    
+    .sfb-item {
+        padding: 6px 10px !important;
+        min-width: 120px !important;
+    }
+    
+    .sfb-item i {
+        font-size: 14px !important;
+    }
+    
+    .sfb-item-label {
+        font-size: 10px !important;
+    }
+    
+    .sfb-icons-only .sfb-item {
+        width: 36px !important;
+        height: 36px !important;
+    }
+    
+    .sfb-icons-only .sfb-item i {
+        font-size: 16px !important;
+    }
+}
+
+/* ============================================ */
+/* CONTAINER BORDER SETTINGS - Cu culoare personalizată */
+/* ============================================ */
+
+/* Container border - activat din admin */
+.sfb-container.sfb-has-border {
+    border: 2px solid var(--sfb-container-border-color, #ffffff) !important;
+    border-radius: 50% !important;
+    background: var(--sfb-container-border-bg, rgba(255, 255, 255, 0.1)) !important;
+    backdrop-filter: blur(4px);
+    padding: 6px;
+    transition: all 0.3s ease;
+}
+
+/* Adjust CTA when container has border */
+.sfb-container.sfb-has-border .sfb-cta {
+    width: 52px;
+    height: 52px;
+}
+
+/* Adjust popup position when container has border */
+.sfb-container.sfb-has-border .sfb-popup {
+    bottom: 72px;
+}
+
+/* Tablet adjustment for border */
+@media (max-width: 1024px) {
+    .sfb-container.sfb-has-border .sfb-cta {
+        width: 44px !important;
+        height: 44px !important;
+    }
+    
+    .sfb-container.sfb-has-border .sfb-popup {
+        bottom: 64px;
+    }
+}
+
+/* Mobile adjustment for border */
+@media (max-width: 768px) {
+    .sfb-container.sfb-has-border {
+        padding: 4px;
+    }
+    
+    .sfb-container.sfb-has-border .sfb-cta {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    
+    .sfb-container.sfb-has-border .sfb-popup {
+        bottom: 56px;
+    }
+}
+
+/* Hover effect for bordered container */
+.sfb-container.sfb-has-border:hover {
+    background: var(--sfb-container-border-bg-hover, rgba(255, 255, 255, 0.2)) !important;
+    transform: scale(1.02);
+}
+
+
+/* ============================================ */
+/* DIMENSIUNI RESPONSIVE COMPLETE */
+/* ============================================ */
+
+/* Desktop Large (1200px+) */
+@media (min-width: 1200px) {
+    .sfb-cta {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .sfb-cta-icon {
+        font-size: 26px;
+    }
+    
+    .sfb-popup {
+        max-height: 360px;
+    }
+    
+    .sfb-item {
+        min-width: 200px;
+        padding: 12px 20px;
+    }
+}
+
+/* Desktop (1025px - 1199px) */
+@media (min-width: 1025px) and (max-width: 1199px) {
+    .sfb-cta {
+        width: 56px;
+        height: 56px;
+    }
+    
+    .sfb-cta-icon {
+        font-size: 24px;
+    }
+}
+
+/* Tablet Landscape (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .sfb-container.sfb-position-right,
+    .sfb-container.sfb-position-left {
+        bottom: 16px;
+    }
+    
+    .sfb-position-right {
+        right: 16px;
+    }
+    
+    .sfb-position-left {
+        left: 16px;
+    }
+    
+    .sfb-cta {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .sfb-cta-icon {
+        font-size: 20px;
+    }
+    
+    .sfb-popup {
+        bottom: 60px;
+        max-height: 280px;
+    }
+    
+    .sfb-item {
+        padding: 8px 16px;
+        min-width: 160px;
+    }
+    
+    .sfb-icons-only .sfb-item {
+        width: 44px;
+        height: 44px;
+    }
+}
+
+/* Mobile Portrait (max 767px) - deja existent */
+@media (max-width: 767px) {
+    .sfb-container.sfb-position-right,
+    .sfb-container.sfb-position-left {
+        bottom: 12px;
+    }
+    
+    .sfb-position-right {
+        right: 12px;
+    }
+    
+    .sfb-position-left {
+        left: 12px;
+    }
+    
+    .sfb-cta {
+        width: 44px;
+        height: 44px;
+    }
+    
+    .sfb-cta-icon {
+        font-size: 18px;
+    }
+    
+    .sfb-popup {
+        bottom: 56px;
+        max-height: 260px;
+    }
+}
+
+/* Small Mobile (max 480px) */
+@media (max-width: 480px) {
+    .sfb-cta {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .sfb-cta-icon {
+        font-size: 16px;
+    }
+    
+    .sfb-popup {
+        bottom: 52px;
+        max-height: 240px;
+    }
+    
+    .sfb-item {
+        padding: 6px 12px;
+        min-width: 130px;
+    }
+    
+    .sfb-item i {
+        font-size: 14px;
+    }
+    
+    .sfb-item-label {
+        font-size: 11px;
+    }
+    
+    .sfb-icons-only .sfb-item {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .sfb-icons-only .sfb-item i {
+        font-size: 16px;
+    }
+}
+
+/* Container border responsive adjustments */
+@media (max-width: 1024px) {
+    .sfb-container.sfb-has-border .sfb-cta {
+        width: 44px !important;
+        height: 44px !important;
+    }
+    
+    .sfb-container.sfb-has-border .sfb-popup {
+        bottom: 64px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sfb-container.sfb-has-border {
+        padding: 4px;
+    }
+    
+    .sfb-container.sfb-has-border .sfb-cta {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    
+    .sfb-container.sfb-has-border .sfb-popup {
+        bottom: 56px;
+    }
+}
+
+@media (max-width: 480px) {
+    .sfb-container.sfb-has-border .sfb-cta {
+        width: 36px !important;
+        height: 36px !important;
+    }
+    
+    .sfb-container.sfb-has-border .sfb-popup {
+        bottom: 52px;
+    }
+}
+
+
+/* ============================================ */
+/* DIMENSIUNI RESPONSIVE COMPLETE */
+/* ============================================ */
+
+/* Desktop Large (1200px+) */
+@media (min-width: 1200px) {
+    .sfb-cta {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .sfb-cta-icon {
+        font-size: 26px;
+    }
+    
+    .sfb-popup {
+        max-height: 360px;
+    }
+    
+    .sfb-item {
+        min-width: 200px;
+        padding: 12px 20px;
+    }
+}
+
+/* Desktop (1025px - 1199px) */
+@media (min-width: 1025px) and (max-width: 1199px) {
+    .sfb-cta {
+        width: 56px;
+        height: 56px;
+    }
+    
+    .sfb-cta-icon {
+        font-size: 24px;
+    }
+}
+
+/* Tablet Landscape (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .sfb-container.sfb-position-right,
+    .sfb-container.sfb-position-left {
+        bottom: 16px;
+    }
+    
+    .sfb-position-right {
+        right: 16px;
+    }
+    
+    .sfb-position-left {
+        left: 16px;
+    }
+    
+    .sfb-cta {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .sfb-cta-icon {
+        font-size: 20px;
+    }
+    
+    .sfb-popup {
+        bottom: 60px;
+        max-height: 280px;
+    }
+    
+    .sfb-item {
+        padding: 8px 16px;
+        min-width: 160px;
+    }
+    
+    .sfb-icons-only .sfb-item {
+        width: 44px;
+        height: 44px;
+    }
+}
+
+/* Mobile Portrait (max 767px) - deja existent */
+@media (max-width: 767px) {
+    .sfb-container.sfb-position-right,
+    .sfb-container.sfb-position-left {
+        bottom: 12px;
+    }
+    
+    .sfb-position-right {
+        right: 12px;
+    }
+    
+    .sfb-position-left {
+        left: 12px;
+    }
+    
+    .sfb-cta {
+        width: 44px;
+        height: 44px;
+    }
+    
+    .sfb-cta-icon {
+        font-size: 18px;
+    }
+    
+    .sfb-popup {
+        bottom: 56px;
+        max-height: 260px;
+    }
+}
+
+/* Small Mobile (max 480px) */
+@media (max-width: 480px) {
+    .sfb-cta {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .sfb-cta-icon {
+        font-size: 16px;
+    }
+    
+    .sfb-popup {
+        bottom: 52px;
+        max-height: 240px;
+    }
+    
+    .sfb-item {
+        padding: 6px 12px;
+        min-width: 130px;
+    }
+    
+    .sfb-item i {
+        font-size: 14px;
+    }
+    
+    .sfb-item-label {
+        font-size: 11px;
+    }
+    
+    .sfb-icons-only .sfb-item {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .sfb-icons-only .sfb-item i {
+        font-size: 16px;
+    }
+}
+
+/* Container border responsive adjustments */
+@media (max-width: 1024px) {
+    .sfb-container.sfb-has-border .sfb-cta {
+        width: 44px !important;
+        height: 44px !important;
+    }
+    
+    .sfb-container.sfb-has-border .sfb-popup {
+        bottom: 64px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sfb-container.sfb-has-border {
+        padding: 4px;
+    }
+    
+    .sfb-container.sfb-has-border .sfb-cta {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    
+    .sfb-container.sfb-has-border .sfb-popup {
+        bottom: 56px;
+    }
+}
+
+@media (max-width: 480px) {
+    .sfb-container.sfb-has-border .sfb-cta {
+        width: 36px !important;
+        height: 36px !important;
+    }
+    
+    .sfb-container.sfb-has-border .sfb-popup {
+        bottom: 52px;
+    }
+}
+
+
+/* ============================================ */
+/* DIMENSIUNI CONSISTENTE PENTRU sfb-item CA sfb-cta */
+/* ============================================ */
+
+/* Desktop default - sfb-item cu aceleași dimensiuni ca sfb-cta în modul icons-only */
+.sfb-icons-only .sfb-item {
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px !important;
+    min-height: 56px !important;
+    max-width: 56px !important;
+    max-height: 56px !important;
+}
+
+/* Desktop Large (1200px+) */
+@media (min-width: 1200px) {
+    .sfb-icons-only .sfb-item {
+        width: 60px !important;
+        height: 60px !important;
+        min-width: 60px !important;
+        min-height: 60px !important;
+    }
+}
+
+/* Tablet (max 1024px) */
+@media (max-width: 1024px) {
+    .sfb-icons-only .sfb-item {
+        width: 48px !important;
+        height: 48px !important;
+        min-width: 48px !important;
+        min-height: 48px !important;
+    }
+}
+
+/* Mobile (max 768px) */
+@media (max-width: 768px) {
+    .sfb-icons-only .sfb-item {
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+    }
+}
+
+/* Small mobile (max 480px) */
+@media (max-width: 480px) {
+    .sfb-icons-only .sfb-item {
+        width: 40px !important;
+        height: 40px !important;
+        min-width: 40px !important;
+        min-height: 40px !important;
+    }
+}
+
+/* Când containerul are border, ajustează sfb-item */
+.sfb-container.sfb-has-border .sfb-icons-only .sfb-item {
+    width: 52px !important;
+    height: 52px !important;
+    min-width: 52px !important;
+    min-height: 52px !important;
+}
+
+@media (max-width: 1024px) {
+    .sfb-container.sfb-has-border .sfb-icons-only .sfb-item {
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .sfb-container.sfb-has-border .sfb-icons-only .sfb-item {
+        width: 40px !important;
+        height: 40px !important;
+        min-width: 40px !important;
+        min-height: 40px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .sfb-container.sfb-has-border .sfb-icons-only .sfb-item {
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
     }
 }
