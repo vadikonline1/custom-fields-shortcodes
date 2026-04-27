@@ -3,7 +3,7 @@
  * Plugin Name: Social & Custom Fields Shortcodes
  * Plugin URI: https://github.com/vadikonline1/custom-fields-shortcodes
  * Description: Manage custom fields and social floating buttons with shortcodes.
- * Version: 1.3.4
+ * Version: 1.4.0
  * Author: Steel..xD
  * License: GPL v2 or later
  * Text Domain: scfs-oop
