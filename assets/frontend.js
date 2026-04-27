@@ -5,7 +5,7 @@
         // Variabile globale
         lastScrollTop: 0,
         scrollTimeout: null,
-        scrollAnimationFrame: null, // ACEASTA LIPSEA!
+        scrollAnimationFrame: null,
         scrollStartTime: 0,
         scrollPositions: [],
         
