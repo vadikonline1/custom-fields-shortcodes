@@ -1,25 +1,20 @@
-/* Floating Social Buttons v4.0 - Corectat switch device */
+/* Floating Social Buttons v5.0 - Optimized */
+/* ============================================ */
+/* BASE CONTAINER */
+/* ============================================ */
+
 .sfb-container {
     position: fixed;
     z-index: 999999;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    /* Eliminăm border-ul și border-radius de pe container */
     border: none !important;
     border-radius: 0 !important;
-	transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-                transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: opacity, transform;
 }
 
 .sfb-container.sfb-scrolling {
-    transition: opacity 0.1s cubic-bezier(0.4, 0, 0.2, 1),
-                transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.sfb-custom-message.sfb-custom-message-scroll {
-    opacity: 0.1 !important;
-    transform: translateX(-50%) scale(0.92);
-    transition: opacity 0.15s ease, transform 0.15s ease;
+    transition: opacity 0.1s cubic-bezier(0.4, 0, 0.2, 1), transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sfb-container.sfb-transparent-icons:hover {
@@ -27,28 +22,19 @@
     transform: scale(1) !important;
 }
 
-/* Positions */
-.sfb-position-right {
-    bottom: 30px;
-    right: 30px;
-}
+/* ============================================ */
+/* POSITIONS */
+/* ============================================ */
 
-.sfb-position-left {
-    bottom: 30px;
-    left: 30px;
-}
+.sfb-position-right { bottom: 30px; right: 30px; }
+.sfb-position-left { bottom: 30px; left: 30px; }
+.sfb-position-top-right { top: 30px; right: 30px; }
+.sfb-position-top-left { top: 30px; left: 30px; }
 
-.sfb-position-top-right {
-    top: 30px;
-    right: 30px;
-}
+/* ============================================ */
+/* CTA BUTTON - folosește --primary */
+/* ============================================ */
 
-.sfb-position-top-left {
-    top: 30px;
-    left: 30px;
-}
-
-/* CTA Button - doar aici avem border-radius 50% */
 .sfb-cta {
     width: 56px;
     height: 56px;
@@ -61,20 +47,18 @@
     transition: transform 0.2s ease;
     position: relative;
     z-index: 100;
-    /* Folosește primary color cu fallback */
-    background: var(--e-global-color-primary, #0073aa) !important;
-    /* Asigură că rămâne cerc */
+    background: var(--primary, #0b1e3c) !important;
     overflow: hidden;
     flex-shrink: 0;
 }
 
 .sfb-cta:hover {
     transform: scale(1.05);
+    background: var(--primary-hover, #0b1e3c) !important;
 }
 
-.sfb-cta:active {
-    transform: scale(0.98);
-}
+.sfb-cta:active { transform: scale(0.98); }
+.sfb-cta.active { transform: rotate(45deg); }
 
 .sfb-cta-icon {
     color: white;
@@ -87,7 +71,10 @@
     height: 100%;
 }
 
-/* Custom Message */
+/* ============================================ */
+/* CUSTOM MESSAGE */
+/* ============================================ */
+
 .sfb-custom-message {
     position: absolute;
     background: #1e1e1e;
@@ -100,8 +87,6 @@
     pointer-events: none;
     z-index: 99;
     text-align: center;
-    opacity: 1;
-    visibility: visible;
     transition: opacity 0.2s ease, visibility 0.2s ease;
     box-shadow: none;
     bottom: 100%;
@@ -111,14 +96,8 @@
     line-height: 1.4;
 }
 
-.sfb-custom-message-hidden {
-    opacity: 0 !important;
-    visibility: hidden !important;
-}
-
-.sfb-custom-message-scroll {
-    opacity: 0.2 !important;
-}
+.sfb-custom-message-hidden { opacity: 0 !important; visibility: hidden !important; }
+.sfb-custom-message-scroll { opacity: 0.2 !important; }
 
 .sfb-custom-message:after {
     content: '';
@@ -131,7 +110,7 @@
     border-color: #1e1e1e transparent transparent transparent;
 }
 
-/* Right position */
+/* Custom message positions */
 .sfb-position-right .sfb-custom-message,
 .sfb-position-top-right .sfb-custom-message {
     left: auto;
@@ -151,7 +130,6 @@
     border-color: transparent transparent transparent #1e1e1e;
 }
 
-/* Left position */
 .sfb-position-left .sfb-custom-message,
 .sfb-position-top-left .sfb-custom-message {
     left: 100%;
@@ -171,13 +149,12 @@
     border-color: transparent #1e1e1e transparent transparent;
 }
 
-/* Active state */
-.sfb-container.active .sfb-custom-message {
-    opacity: 1;
-    visibility: visible;
-}
+.sfb-container.active .sfb-custom-message { opacity: 1; visibility: visible; }
 
-/* Popup */
+/* ============================================ */
+/* POPUP */
+/* ============================================ */
+
 .sfb-popup {
     position: absolute;
     display: flex;
@@ -192,43 +169,26 @@
     padding: 4px;
 }
 
-.sfb-popup::-webkit-scrollbar {
-    width: 4px;
-}
-
-.sfb-popup::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.sfb-popup::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.15);
-    border-radius: 4px;
-}
+.sfb-popup::-webkit-scrollbar { width: 4px; }
+.sfb-popup::-webkit-scrollbar-track { background: transparent; }
+.sfb-popup::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border-radius: 4px; }
 
 /* Popup positioning */
-.sfb-position-right .sfb-popup {
-    right: 0;
-    bottom: 68px;
+.sfb-position-right .sfb-popup { right: 0; bottom: 68px; }
+.sfb-position-left .sfb-popup { left: 0; bottom: 68px; }
+.sfb-position-top-right .sfb-popup { right: 0; top: 68px; flex-direction: column; }
+.sfb-position-top-left .sfb-popup { left: 0; top: 68px; flex-direction: column; }
+
+.sfb-container.active .sfb-popup {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
 }
 
-.sfb-position-left .sfb-popup {
-    left: 0;
-    bottom: 68px;
-}
+/* ============================================ */
+/* ITEMS - folosește --secondary */
+/* ============================================ */
 
-.sfb-position-top-right .sfb-popup {
-    right: 0;
-    top: 68px;
-    flex-direction: column;
-}
-
-.sfb-position-top-left .sfb-popup {
-    left: 0;
-    top: 68px;
-    flex-direction: column;
-}
-
-/* Items - Clean Design */
 .sfb-item {
     display: flex;
     align-items: center;
@@ -239,25 +199,24 @@
     box-shadow: none;
     transition: all 0.2s ease;
     opacity: 0;
-    min-width: 180px;
+    min-width: auto;
     transform: translateY(8px);
     border: 1px solid rgba(0, 0, 0, 0.06);
-    /* Folosește secondary color cu fallback */
-    background: var(--e-global-color-secondary, #005a87) !important;
+    background: var(--secondary, #c89d6e) !important;
     color: #ffffff !important;
 }
 
-/* Hover state for items */
 .sfb-item:hover {
     filter: brightness(1.05);
+    transform: translateY(-2px) !important;
+    animation: sfbPulse 0.3s ease-out !important;
+    background: var(--secondary-hover, #c89d6e) !important;
 }
 
-/* No pseudo-element */
-.sfb-item-before {
-    display: none;
-}
+.sfb-item:active { transform: scale(0.98) !important; transition: transform 0.05s ease !important; }
 
-/* Icons */
+.sfb-item-before { display: none; }
+
 .sfb-item i {
     font-size: 20px;
     width: 24px;
@@ -266,8 +225,10 @@
     align-items: center;
     justify-content: center;
     color: inherit;
-    transition: color 0.2s ease;
+    transition: transform 0.2s ease;
 }
+
+.sfb-item:hover i { transform: scale(1.05); }
 
 .sfb-item-label {
     font-size: 13px;
@@ -278,206 +239,99 @@
     color: inherit;
 }
 
-/* Icons Only Mode */
+.sfb-container.active .sfb-item {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.sfb-item { transition-delay: calc(var(--item-index, 0) * 0.02s); }
+
+/* ============================================ */
+/* ICONS ONLY MODE */
+/* ============================================ */
+
 .sfb-icons-only .sfb-item {
-    width: 48px;
-    height: 48px;
+    width: 56px;
+    height: 56px;
     padding: 0;
     justify-content: center;
     border-radius: 50%;
     min-width: auto;
 }
 
-.sfb-icons-only .sfb-item-label {
-    display: none;
-}
+.sfb-icons-only .sfb-item-label { display: none; }
+.sfb-icons-only .sfb-item i { width: auto; font-size: 22px; }
+.sfb-icons-only .sfb-item:hover { transform: translateY(-2px) scale(1.05) !important; }
 
-.sfb-icons-only .sfb-item i {
-    width: auto;
-    font-size: 22px;
-}
+/* ============================================ */
+/* TRANSPARENT ICONS MODE - folosește --secondary */
+/* ============================================ */
 
-/* Transparent Icons Mode - Fără background gri */
 .sfb-transparent-icons .sfb-item {
     background: transparent !important;
-    border: 1px solid var(--e-global-color-secondary, #005a87) !important;
-    color: var(--e-global-color-secondary, #005a87) !important;
+    border: 1px solid var(--secondary, #c89d6e) !important;
+    color: var(--secondary, #c89d6e) !important;
 }
 
-.sfb-transparent-icons .sfb-item i {
-    color: inherit;
-}
-
+.sfb-transparent-icons .sfb-item i { color: inherit; }
 .sfb-transparent-icons .sfb-item:hover {
     background: transparent !important;
-    border-color: var(--e-global-color-secondary, #005a87) !important;
-    color: var(--e-global-color-secondary, #005a87) !important;
+    border-color: var(--secondary-hover, #c89d6e) !important;
+    color: var(--secondary-hover, #c89d6e) !important;
     filter: brightness(1.1);
+    transform: translateY(-2px) scale(1.02) !important;
 }
 
-/* Container transparent - fără efecte nedorite */
-.sfb-container.sfb-transparent-icons {
+.sfb-transparent-icons .sfb-container {
     border: none !important;
     border-radius: 0 !important;
     background: transparent !important;
 }
 
-/* Active container */
-.sfb-container.active .sfb-popup {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-}
-
-.sfb-container.active .sfb-item {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-/* Stagger animation */
-.sfb-item {
-    transition-delay: calc(var(--item-index, 0) * 0.02s);
-}
-
-/* Active CTA */
-.sfb-cta.active {
-    transform: rotate(45deg);
-}
-
 /* ============================================ */
-/* Hover Effects - Clean & Professional */
+/* SHOW NAMES MODE */
 /* ============================================ */
 
-/* Normal items hover */
-.sfb-item:hover {
-    transform: translateY(-2px) !important;
-    filter: brightness(1.05) !important;
-}
+.sfb-show-names .sfb-item:hover { transform: translateX(4px) translateY(-2px) !important; }
 
-/* Icons only hover */
-.sfb-icons-only .sfb-item:hover {
-    transform: translateY(-2px) scale(1.05) !important;
-}
+/* ============================================ */
+/* PULSE ANIMATION */
+/* ============================================ */
 
-/* Show names hover */
-.sfb-show-names .sfb-item:hover {
-    transform: translateX(4px) translateY(-2px) !important;
-}
-
-/* Icon hover effect */
-.sfb-item:hover i {
-    transform: scale(1.05);
-    transition: transform 0.2s ease;
-}
-
-/* Click effect */
-.sfb-item:active {
-    transform: scale(0.98) !important;
-    transition: transform 0.05s ease !important;
-}
-
-/* Pulsation animation - subtle */
 @keyframes sfbPulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.03); }
     100% { transform: scale(1); }
 }
 
-.sfb-item:hover {
-    animation: sfbPulse 0.3s ease-out !important;
+/* ============================================ */
+/* LINK HOVER */
+/* ============================================ */
+
+a:hover { color: var(--secondary, #c89d6e); }
+
+/* ============================================ */
+/* CONTAINER BORDER */
+/* ============================================ */
+
+.sfb-container.sfb-has-border {
+    border: 2px solid var(--sfb-container-border-color, #ffffff) !important;
+    border-radius: 50% !important;
+    background: var(--sfb-container-border-bg, rgba(255, 255, 255, 0.1)) !important;
+    backdrop-filter: blur(4px);
+    padding: 6px;
+    transition: all 0.3s ease;
+}
+
+.sfb-container.sfb-has-border .sfb-cta { width: 52px; height: 52px; }
+.sfb-container.sfb-has-border .sfb-popup { bottom: 72px; }
+.sfb-container.sfb-has-border:hover {
+    background: var(--sfb-container-border-bg-hover, rgba(255, 255, 255, 0.2)) !important;
+    transform: scale(1.02);
 }
 
 /* ============================================ */
-/* Link hover states */
-/* ============================================ */
-
-a:hover {
-    color: var(--e-global-color-secondary, #0073aa);
-}
-
-/* ============================================ */
-/* Mobile Responsive */
-/* ============================================ */
-
-@media (max-width: 768px) {
-    .sfb-container {
-        bottom: 20px;
-        right: 20px;
-    }
-    
-    .sfb-position-left {
-        left: 20px !important;
-        right: auto !important;
-    }
-    
-    .sfb-position-right {
-        right: 20px !important;
-        left: auto !important;
-    }
-    
-    .sfb-cta {
-        width: 48px;
-        height: 48px;
-    }
-    
-    .sfb-cta-icon {
-        font-size: 20px;
-    }
-    
-    .sfb-custom-message {
-        font-size: 11px;
-        padding: 6px 12px;
-        white-space: normal;
-        max-width: 140px;
-    }
-    
-    .sfb-position-right .sfb-custom-message,
-    .sfb-position-left .sfb-custom-message {
-        bottom: 100%;
-        left: 50%;
-        right: auto;
-        transform: translateX(-50%);
-        margin-bottom: 10px;
-        margin-left: 0;
-        margin-right: 0;
-    }
-    
-    .sfb-custom-message:after {
-        display: none;
-    }
-    
-    .sfb-popup {
-        bottom: 60px;
-        max-height: 260px;
-        gap: 8px;
-    }
-    
-    .sfb-item {
-        padding: 8px 14px;
-        min-width: 150px;
-    }
-    
-    .sfb-item i {
-        font-size: 18px;
-        width: 20px;
-    }
-    
-    .sfb-item-label {
-        font-size: 12px;
-    }
-    
-    .sfb-icons-only .sfb-item {
-        width: 44px;
-        height: 44px;
-    }
-    
-    .sfb-icons-only .sfb-item i {
-        font-size: 20px;
-    }
-}
-
-/* ============================================ */
-/* Inline & Single Buttons */
+/* INLINE & SINGLE BUTTONS - folosește --secondary */
 /* ============================================ */
 
 .scfs-inline-buttons {
@@ -494,7 +348,7 @@ a:hover {
     justify-content: center;
     gap: 8px;
     padding: 10px 18px;
-    background: var(--e-global-color-secondary, #0073aa);
+    background: var(--secondary, #c89d6e);
     color: #ffffff;
     text-decoration: none;
     border-radius: 8px;
@@ -509,801 +363,135 @@ a:hover {
 .scfs-inline-button:hover,
 .scfs-single-button:hover {
     transform: translateY(-2px);
+    background: var(--secondary-hover, #c89d6e);
     filter: brightness(1.05);
-}
-
-.scfs-inline-button:active,
-.scfs-single-button:active {
-    transform: translateY(0);
 }
 
 .scfs-inline-button.scfs-transparent,
 .scfs-single-button.scfs-transparent {
     background: transparent;
-    color: var(--e-global-color-secondary, #0073aa);
-    border: 1.5px solid var(--e-global-color-secondary, #0073aa);
+    color: var(--secondary, #c89d6e);
+    border: 1.5px solid var(--secondary, #c89d6e);
 }
 
 .scfs-inline-button.scfs-transparent:hover,
 .scfs-single-button.scfs-transparent:hover {
-    background: var(--e-global-color-secondary, #0073aa);
+    background: var(--secondary, #c89d6e);
     color: #ffffff;
 }
 
-/* Accessibility */
+/* ============================================ */
+/* RESPONSIVE - BREAKPOINTS UNIFORME */
+/* ============================================ */
+
+/* Desktop Large (1200px+) */
+@media (min-width: 1200px) {
+    .sfb-cta { width: 60px; height: 60px; }
+    .sfb-cta-icon { font-size: 26px; }
+    .sfb-popup { max-height: 360px; }
+    .sfb-item { min-width: auto; padding: 12px 20px; }
+    .sfb-icons-only .sfb-item { width: 60px; height: 60px; }
+    .sfb-container.sfb-has-border .sfb-cta { width: 56px; height: 56px; }
+    .sfb-container.sfb-has-border .sfb-icons-only .sfb-item { width: 56px; height: 56px; }
+}
+
+/* Desktop (1025px - 1199px) */
+@media (min-width: 1025px) and (max-width: 1199px) {
+    .sfb-cta { width: 56px; height: 56px; }
+    .sfb-cta-icon { font-size: 24px; }
+}
+
+/* Tablet (max 1024px) */
+@media (max-width: 1024px) {
+    .sfb-position-right, .sfb-position-left { bottom: 20px; }
+    .sfb-position-right { right: 20px; }
+    .sfb-position-left { left: 20px; }
+    .sfb-cta { width: 48px !important; height: 48px !important; }
+    .sfb-cta-icon { font-size: 20px !important; }
+    .sfb-position-right .sfb-popup, .sfb-position-left .sfb-popup { bottom: 60px; }
+    .sfb-position-top-right .sfb-popup, .sfb-position-top-left .sfb-popup { top: 60px; }
+    .sfb-icons-only .sfb-item { width: 48px !important; height: 48px !important; }
+    .sfb-container.sfb-has-border .sfb-cta { width: 44px !important; height: 44px !important; }
+    .sfb-container.sfb-has-border .sfb-popup { bottom: 64px; }
+    .sfb-container.sfb-has-border .sfb-icons-only .sfb-item { width: 44px !important; height: 44px !important; }
+}
+
+/* Mobile (max 768px) */
+@media (max-width: 768px) {
+    .sfb-position-right, .sfb-position-left { bottom: 12px; }
+    .sfb-position-right { right: 12px; }
+    .sfb-position-left { left: 12px; }
+    .sfb-cta { width: 44px !important; height: 44px !important; }
+    .sfb-cta-icon { font-size: 18px !important; }
+    .sfb-position-right .sfb-popup, .sfb-position-left .sfb-popup { bottom: 56px; }
+    .sfb-position-top-right .sfb-popup, .sfb-position-top-left .sfb-popup { top: 56px; }
+    .sfb-custom-message { font-size: 11px; padding: 6px 12px; white-space: normal; max-width: 140px; }
+    .sfb-custom-message:after { display: none; }
+    .sfb-item { padding: 8px 12px !important; min-width: auto !important; }
+    .sfb-item i { font-size: 16px !important; width: 20px !important; }
+    .sfb-item-label { font-size: 11px !important; }
+    .sfb-icons-only .sfb-item { width: 40px !important; height: 40px !important; }
+    .sfb-icons-only .sfb-item i { font-size: 18px !important; }
+    .sfb-container.sfb-has-border { padding: 4px; }
+    .sfb-container.sfb-has-border .sfb-cta { width: 40px !important; height: 40px !important; }
+    .sfb-container.sfb-has-border .sfb-popup { bottom: 56px; }
+    .sfb-container.sfb-has-border .sfb-icons-only .sfb-item { width: 40px !important; height: 40px !important; }
+}
+
+/* Small Mobile (max 480px) */
+@media (max-width: 480px) {
+    .sfb-cta { width: 40px !important; height: 40px !important; }
+    .sfb-cta-icon { font-size: 16px !important; }
+    .sfb-position-right .sfb-popup, .sfb-position-left .sfb-popup { bottom: 52px; }
+    /* Container dimensions adjusted */
+    .sfb-container {
+        width: auto !important;
+        min-width: auto !important;
+    }
+    .sfb-item { padding: 6px 10px !important; min-width: auto !important; }
+    .sfb-item i { font-size: 14px !important; }
+    .sfb-item-label { font-size: 10px !important; }
+    .sfb-icons-only .sfb-item { width: 36px !important; height: 36px !important; }
+    .sfb-icons-only .sfb-item i { font-size: 16px !important; }
+    .sfb-container.sfb-has-border .sfb-cta { width: 36px !important; height: 36px !important; }
+    .sfb-container.sfb-has-border .sfb-popup { bottom: 52px; }
+    .sfb-container.sfb-has-border .sfb-icons-only .sfb-item { width: 36px !important; height: 36px !important; }
+}
+
+/* Extra Small Mobile (max 380px) */
+@media (max-width: 380px) {
+    .sfb-item { min-width: auto !important; padding: 5px 8px !important; }
+    .sfb-item i { font-size: 12px !important; width: 18px !important; }
+    .sfb-item-label { font-size: 9px !important; }
+    .sfb-icons-only .sfb-item { width: 32px !important; height: 32px !important; }
+    .sfb-icons-only .sfb-item i { font-size: 14px !important; }
+}
+
+/* ============================================ */
+/* UTILITIES & ACCESSIBILITY */
+/* ============================================ */
+
 .sfb-cta:focus-visible,
 .sfb-item:focus-visible {
-    outline: 2px solid var(--e-global-color-secondary, #0073aa);
+    outline: 2px solid var(--secondary, #c89d6e);
     outline-offset: 2px;
 }
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-    .sfb-item,
-    .sfb-cta,
-    .sfb-custom-message {
+    .sfb-item, .sfb-cta, .sfb-custom-message,
+    .sfb-container, .sfb-popup {
         transition: none !important;
         animation: none !important;
     }
 }
 
+/* Fix switch device */
+.sfb-container, .sfb-container * { box-sizing: border-box; }
+.sfb-cta, .sfb-icons-only .sfb-item { border-radius: 50% !important; }
+.sfb-container:not(.sfb-icons-only) .sfb-item { border-radius: 10px !important; }
+.sfb-container.sfb-transparent-icons { background: transparent !important; }
+
 /* Font Awesome */
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
-
-i[class*="fa-"] {
-    opacity: 1;
-    visibility: visible;
-    display: inline-block;
-}
-
-/* ============================================ */
-/* SCROLL TRANSPARENT EFFECT */
-/* ============================================ */
-
-.sfb-container {
-    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-                transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: opacity, transform;
-}
-
-.sfb-container.sfb-scrolling {
-    transition: opacity 0.1s cubic-bezier(0.4, 0, 0.2, 1),
-                transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.sfb-custom-message.sfb-custom-message-scroll {
-    opacity: 0.1 !important;
-    transform: translateX(-50%) scale(0.92);
-    transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-.sfb-container.sfb-transparent-icons:hover {
-    opacity: 1 !important;
-    transform: scale(1) !important;
-}
-
-/* ============================================ */
-/* FIX PENTRU SWITCH DEVICE */
-/* ============================================ */
-
-/* Elimină orice border-radius nedorit pe container */
-.sfb-container,
-.sfb-container * {
-    box-sizing: border-box;
-}
-
-/* Asigură că doar .sfb-cta are border-radius 50% */
-.sfb-cta,
-.sfb-icons-only .sfb-item {
-    border-radius: 50% !important;
-}
-
-/* Orice alt element nu trebuie să aibă border-radius 50% */
-.sfb-container:not(.sfb-icons-only) .sfb-item {
-    border-radius: 10px !important;
-}
-
-/* Previne aplicarea greșită a clasei transparent */
-.sfb-container.sfb-transparent-icons {
-    background: transparent !important;
-}
-
-/* Reset pentru orice stiluri nedorite la switch device */
-@media (max-width: 768px) and (min-width: 769px) {
-    .sfb-container {
-        transition: all 0.3s ease;
-    }
-}
-
-/* ============================================ */
-/* CONTAINER BORDER SETTINGS - Opțional */
-/* ============================================ */
-
-/* Container border - activat din admin */
-.sfb-container.sfb-has-border {
-    border: 2px solid #ffffff !important;
-    border-radius: 50% !important;
-    background: rgba(255, 255, 255, 0.1) !important;
-    backdrop-filter: blur(2px);
-    padding: 5px;
-}
-
-/* Adjust CTA when container has border */
-.sfb-container.sfb-has-border .sfb-cta {
-    width: 52px;
-    height: 52px;
-}
-
-/* Adjust popup position when container has border */
-.sfb-container.sfb-has-border .sfb-popup {
-    bottom: 72px;
-}
-
-
-/* ============================================ */
-/* RESPONSIVE DIMENSIONS - Asemanator cu scrollToTop */
-/* ============================================ */
-
-/* Desktop default */
-.sfb-cta {
-    width: 56px;
-    height: 56px;
-}
-
-.sfb-cta-icon {
-    font-size: 24px;
-}
-
-/* Tablet (max 1024px) */
-@media (max-width: 1024px) {
-    .sfb-container.sfb-position-right,
-    .sfb-container.sfb-position-left {
-        bottom: 20px;
-    }
-    
-    .sfb-position-right {
-        right: 20px;
-    }
-    
-    .sfb-position-left {
-        left: 20px;
-    }
-    
-    .sfb-cta {
-        width: 48px !important;
-        height: 48px !important;
-    }
-    
-    .sfb-cta-icon {
-        font-size: 20px !important;
-    }
-    
-    /* Popup adjustment */
-    .sfb-position-right .sfb-popup,
-    .sfb-position-left .sfb-popup {
-        bottom: 60px;
-    }
-    
-    .sfb-position-top-right .sfb-popup,
-    .sfb-position-top-left .sfb-popup {
-        top: 60px;
-    }
-}
-
-/* Mobile (max 768px) */
-@media (max-width: 768px) {
-    .sfb-container.sfb-position-right,
-    .sfb-container.sfb-position-left {
-        bottom: 12px;
-    }
-    
-    .sfb-position-right {
-        right: 12px;
-    }
-    
-    .sfb-position-left {
-        left: 12px;
-    }
-    
-    .sfb-cta {
-        width: 44px !important;
-        height: 44px !important;
-    }
-    
-    .sfb-cta-icon {
-        font-size: 18px !important;
-    }
-    
-    /* Popup adjustment */
-    .sfb-position-right .sfb-popup,
-    .sfb-position-left .sfb-popup {
-        bottom: 56px;
-    }
-    
-    .sfb-position-top-right .sfb-popup,
-    .sfb-position-top-left .sfb-popup {
-        top: 56px;
-    }
-    
-    /* Items adjustment */
-    .sfb-item {
-        padding: 8px 12px !important;
-        min-width: 140px !important;
-    }
-    
-    .sfb-item i {
-        font-size: 16px !important;
-        width: 20px !important;
-    }
-    
-    .sfb-item-label {
-        font-size: 11px !important;
-    }
-    
-    .sfb-icons-only .sfb-item {
-        width: 40px !important;
-        height: 40px !important;
-    }
-    
-    .sfb-icons-only .sfb-item i {
-        font-size: 18px !important;
-    }
-}
-
-/* Small mobile (max 480px) */
-@media (max-width: 480px) {
-    .sfb-cta {
-        width: 40px !important;
-        height: 40px !important;
-    }
-    
-    .sfb-cta-icon {
-        font-size: 16px !important;
-    }
-    
-    .sfb-position-right .sfb-popup,
-    .sfb-position-left .sfb-popup {
-        bottom: 52px;
-    }
-    
-    .sfb-item {
-        padding: 6px 10px !important;
-        min-width: 120px !important;
-    }
-    
-    .sfb-item i {
-        font-size: 14px !important;
-    }
-    
-    .sfb-item-label {
-        font-size: 10px !important;
-    }
-    
-    .sfb-icons-only .sfb-item {
-        width: 36px !important;
-        height: 36px !important;
-    }
-    
-    .sfb-icons-only .sfb-item i {
-        font-size: 16px !important;
-    }
-}
-
-/* ============================================ */
-/* CONTAINER BORDER SETTINGS - Cu culoare personalizată */
-/* ============================================ */
-
-/* Container border - activat din admin */
-.sfb-container.sfb-has-border {
-    border: 2px solid var(--sfb-container-border-color, #ffffff) !important;
-    border-radius: 50% !important;
-    background: var(--sfb-container-border-bg, rgba(255, 255, 255, 0.1)) !important;
-    backdrop-filter: blur(4px);
-    padding: 6px;
-    transition: all 0.3s ease;
-}
-
-/* Adjust CTA when container has border */
-.sfb-container.sfb-has-border .sfb-cta {
-    width: 52px;
-    height: 52px;
-}
-
-/* Adjust popup position when container has border */
-.sfb-container.sfb-has-border .sfb-popup {
-    bottom: 72px;
-}
-
-/* Tablet adjustment for border */
-@media (max-width: 1024px) {
-    .sfb-container.sfb-has-border .sfb-cta {
-        width: 44px !important;
-        height: 44px !important;
-    }
-    
-    .sfb-container.sfb-has-border .sfb-popup {
-        bottom: 64px;
-    }
-}
-
-/* Mobile adjustment for border */
-@media (max-width: 768px) {
-    .sfb-container.sfb-has-border {
-        padding: 4px;
-    }
-    
-    .sfb-container.sfb-has-border .sfb-cta {
-        width: 40px !important;
-        height: 40px !important;
-    }
-    
-    .sfb-container.sfb-has-border .sfb-popup {
-        bottom: 56px;
-    }
-}
-
-/* Hover effect for bordered container */
-.sfb-container.sfb-has-border:hover {
-    background: var(--sfb-container-border-bg-hover, rgba(255, 255, 255, 0.2)) !important;
-    transform: scale(1.02);
-}
-
-
-/* ============================================ */
-/* DIMENSIUNI RESPONSIVE COMPLETE */
-/* ============================================ */
-
-/* Desktop Large (1200px+) */
-@media (min-width: 1200px) {
-    .sfb-cta {
-        width: 60px;
-        height: 60px;
-    }
-    
-    .sfb-cta-icon {
-        font-size: 26px;
-    }
-    
-    .sfb-popup {
-        max-height: 360px;
-    }
-    
-    .sfb-item {
-        min-width: 200px;
-        padding: 12px 20px;
-    }
-}
-
-/* Desktop (1025px - 1199px) */
-@media (min-width: 1025px) and (max-width: 1199px) {
-    .sfb-cta {
-        width: 56px;
-        height: 56px;
-    }
-    
-    .sfb-cta-icon {
-        font-size: 24px;
-    }
-}
-
-/* Tablet Landscape (768px - 1024px) */
-@media (min-width: 768px) and (max-width: 1024px) {
-    .sfb-container.sfb-position-right,
-    .sfb-container.sfb-position-left {
-        bottom: 16px;
-    }
-    
-    .sfb-position-right {
-        right: 16px;
-    }
-    
-    .sfb-position-left {
-        left: 16px;
-    }
-    
-    .sfb-cta {
-        width: 48px;
-        height: 48px;
-    }
-    
-    .sfb-cta-icon {
-        font-size: 20px;
-    }
-    
-    .sfb-popup {
-        bottom: 60px;
-        max-height: 280px;
-    }
-    
-    .sfb-item {
-        padding: 8px 16px;
-        min-width: 160px;
-    }
-    
-    .sfb-icons-only .sfb-item {
-        width: 44px;
-        height: 44px;
-    }
-}
-
-/* Mobile Portrait (max 767px) - deja existent */
-@media (max-width: 767px) {
-    .sfb-container.sfb-position-right,
-    .sfb-container.sfb-position-left {
-        bottom: 12px;
-    }
-    
-    .sfb-position-right {
-        right: 12px;
-    }
-    
-    .sfb-position-left {
-        left: 12px;
-    }
-    
-    .sfb-cta {
-        width: 44px;
-        height: 44px;
-    }
-    
-    .sfb-cta-icon {
-        font-size: 18px;
-    }
-    
-    .sfb-popup {
-        bottom: 56px;
-        max-height: 260px;
-    }
-}
-
-/* Small Mobile (max 480px) */
-@media (max-width: 480px) {
-    .sfb-cta {
-        width: 40px;
-        height: 40px;
-    }
-    
-    .sfb-cta-icon {
-        font-size: 16px;
-    }
-    
-    .sfb-popup {
-        bottom: 52px;
-        max-height: 240px;
-    }
-    
-    .sfb-item {
-        padding: 6px 12px;
-        min-width: 130px;
-    }
-    
-    .sfb-item i {
-        font-size: 14px;
-    }
-    
-    .sfb-item-label {
-        font-size: 11px;
-    }
-    
-    .sfb-icons-only .sfb-item {
-        width: 36px;
-        height: 36px;
-    }
-    
-    .sfb-icons-only .sfb-item i {
-        font-size: 16px;
-    }
-}
-
-/* Container border responsive adjustments */
-@media (max-width: 1024px) {
-    .sfb-container.sfb-has-border .sfb-cta {
-        width: 44px !important;
-        height: 44px !important;
-    }
-    
-    .sfb-container.sfb-has-border .sfb-popup {
-        bottom: 64px;
-    }
-}
-
-@media (max-width: 768px) {
-    .sfb-container.sfb-has-border {
-        padding: 4px;
-    }
-    
-    .sfb-container.sfb-has-border .sfb-cta {
-        width: 40px !important;
-        height: 40px !important;
-    }
-    
-    .sfb-container.sfb-has-border .sfb-popup {
-        bottom: 56px;
-    }
-}
-
-@media (max-width: 480px) {
-    .sfb-container.sfb-has-border .sfb-cta {
-        width: 36px !important;
-        height: 36px !important;
-    }
-    
-    .sfb-container.sfb-has-border .sfb-popup {
-        bottom: 52px;
-    }
-}
-
-
-/* ============================================ */
-/* DIMENSIUNI RESPONSIVE COMPLETE */
-/* ============================================ */
-
-/* Desktop Large (1200px+) */
-@media (min-width: 1200px) {
-    .sfb-cta {
-        width: 60px;
-        height: 60px;
-    }
-    
-    .sfb-cta-icon {
-        font-size: 26px;
-    }
-    
-    .sfb-popup {
-        max-height: 360px;
-    }
-    
-    .sfb-item {
-        min-width: 200px;
-        padding: 12px 20px;
-    }
-}
-
-/* Desktop (1025px - 1199px) */
-@media (min-width: 1025px) and (max-width: 1199px) {
-    .sfb-cta {
-        width: 56px;
-        height: 56px;
-    }
-    
-    .sfb-cta-icon {
-        font-size: 24px;
-    }
-}
-
-/* Tablet Landscape (768px - 1024px) */
-@media (min-width: 768px) and (max-width: 1024px) {
-    .sfb-container.sfb-position-right,
-    .sfb-container.sfb-position-left {
-        bottom: 16px;
-    }
-    
-    .sfb-position-right {
-        right: 16px;
-    }
-    
-    .sfb-position-left {
-        left: 16px;
-    }
-    
-    .sfb-cta {
-        width: 48px;
-        height: 48px;
-    }
-    
-    .sfb-cta-icon {
-        font-size: 20px;
-    }
-    
-    .sfb-popup {
-        bottom: 60px;
-        max-height: 280px;
-    }
-    
-    .sfb-item {
-        padding: 8px 16px;
-        min-width: 160px;
-    }
-    
-    .sfb-icons-only .sfb-item {
-        width: 44px;
-        height: 44px;
-    }
-}
-
-/* Mobile Portrait (max 767px) - deja existent */
-@media (max-width: 767px) {
-    .sfb-container.sfb-position-right,
-    .sfb-container.sfb-position-left {
-        bottom: 12px;
-    }
-    
-    .sfb-position-right {
-        right: 12px;
-    }
-    
-    .sfb-position-left {
-        left: 12px;
-    }
-    
-    .sfb-cta {
-        width: 44px;
-        height: 44px;
-    }
-    
-    .sfb-cta-icon {
-        font-size: 18px;
-    }
-    
-    .sfb-popup {
-        bottom: 56px;
-        max-height: 260px;
-    }
-}
-
-/* Small Mobile (max 480px) */
-@media (max-width: 480px) {
-    .sfb-cta {
-        width: 40px;
-        height: 40px;
-    }
-    
-    .sfb-cta-icon {
-        font-size: 16px;
-    }
-    
-    .sfb-popup {
-        bottom: 52px;
-        max-height: 240px;
-    }
-    
-    .sfb-item {
-        padding: 6px 12px;
-        min-width: 130px;
-    }
-    
-    .sfb-item i {
-        font-size: 14px;
-    }
-    
-    .sfb-item-label {
-        font-size: 11px;
-    }
-    
-    .sfb-icons-only .sfb-item {
-        width: 36px;
-        height: 36px;
-    }
-    
-    .sfb-icons-only .sfb-item i {
-        font-size: 16px;
-    }
-}
-
-/* Container border responsive adjustments */
-@media (max-width: 1024px) {
-    .sfb-container.sfb-has-border .sfb-cta {
-        width: 44px !important;
-        height: 44px !important;
-    }
-    
-    .sfb-container.sfb-has-border .sfb-popup {
-        bottom: 64px;
-    }
-}
-
-@media (max-width: 768px) {
-    .sfb-container.sfb-has-border {
-        padding: 4px;
-    }
-    
-    .sfb-container.sfb-has-border .sfb-cta {
-        width: 40px !important;
-        height: 40px !important;
-    }
-    
-    .sfb-container.sfb-has-border .sfb-popup {
-        bottom: 56px;
-    }
-}
-
-@media (max-width: 480px) {
-    .sfb-container.sfb-has-border .sfb-cta {
-        width: 36px !important;
-        height: 36px !important;
-    }
-    
-    .sfb-container.sfb-has-border .sfb-popup {
-        bottom: 52px;
-    }
-}
-
-
-/* ============================================ */
-/* DIMENSIUNI CONSISTENTE PENTRU sfb-item CA sfb-cta */
-/* ============================================ */
-
-/* Desktop default - sfb-item cu aceleași dimensiuni ca sfb-cta în modul icons-only */
-.sfb-icons-only .sfb-item {
-    width: 56px !important;
-    height: 56px !important;
-    min-width: 56px !important;
-    min-height: 56px !important;
-    max-width: 56px !important;
-    max-height: 56px !important;
-}
-
-/* Desktop Large (1200px+) */
-@media (min-width: 1200px) {
-    .sfb-icons-only .sfb-item {
-        width: 60px !important;
-        height: 60px !important;
-        min-width: 60px !important;
-        min-height: 60px !important;
-    }
-}
-
-/* Tablet (max 1024px) */
-@media (max-width: 1024px) {
-    .sfb-icons-only .sfb-item {
-        width: 48px !important;
-        height: 48px !important;
-        min-width: 48px !important;
-        min-height: 48px !important;
-    }
-}
-
-/* Mobile (max 768px) */
-@media (max-width: 768px) {
-    .sfb-icons-only .sfb-item {
-        width: 44px !important;
-        height: 44px !important;
-        min-width: 44px !important;
-        min-height: 44px !important;
-    }
-}
-
-/* Small mobile (max 480px) */
-@media (max-width: 480px) {
-    .sfb-icons-only .sfb-item {
-        width: 40px !important;
-        height: 40px !important;
-        min-width: 40px !important;
-        min-height: 40px !important;
-    }
-}
-
-/* Când containerul are border, ajustează sfb-item */
-.sfb-container.sfb-has-border .sfb-icons-only .sfb-item {
-    width: 52px !important;
-    height: 52px !important;
-    min-width: 52px !important;
-    min-height: 52px !important;
-}
-
-@media (max-width: 1024px) {
-    .sfb-container.sfb-has-border .sfb-icons-only .sfb-item {
-        width: 44px !important;
-        height: 44px !important;
-        min-width: 44px !important;
-        min-height: 44px !important;
-    }
-}
-
-@media (max-width: 768px) {
-    .sfb-container.sfb-has-border .sfb-icons-only .sfb-item {
-        width: 40px !important;
-        height: 40px !important;
-        min-width: 40px !important;
-        min-height: 40px !important;
-    }
-}
-
-@media (max-width: 480px) {
-    .sfb-container.sfb-has-border .sfb-icons-only .sfb-item {
-        width: 36px !important;
-        height: 36px !important;
-        min-width: 36px !important;
-        min-height: 36px !important;
-    }
-}
+i[class*="fa-"] { opacity: 1; visibility: visible; display: inline-block; }
