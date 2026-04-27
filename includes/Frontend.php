@@ -117,8 +117,8 @@ class Frontend {
 private function get_button_colors($settings) {
     if ($settings['use_theme_colors']) {
         return [
-            'primary' => 'var(--e-global-color-primary, #0073aa)',
-            'secondary' => 'var(--e-global-color-secondary, #005a87)'
+            'primary' => 'var(--primary, #0073aa)',
+            'secondary' => 'var(--secondary, #005a87)'
         ];
     }
     
@@ -159,8 +159,8 @@ private function render_floating($buttons, $settings) {
     
     // Setări culori
     if ($settings['use_theme_colors']) {
-        $primary_color = 'var(--e-global-color-primary, #0073aa)';
-        $secondary_color = 'var(--e-global-color-secondary, #005a87)';
+        $primary_color = 'var(--primary, #0073aa)';
+        $secondary_color = 'var(--secondary, #005a87)';
     } else {
         $primary_color = $settings['primary_color'];
         $secondary_color = $settings['secondary_color'];
@@ -169,8 +169,8 @@ private function render_floating($buttons, $settings) {
     ob_start(); ?>
     
     <div class="sfb-container <?php echo esc_attr("$position_class $animation_class $mobile_class $container_border_class"); ?> <?php echo $show_names ? 'sfb-show-names' : 'sfb-icons-only'; ?> <?php echo $transparent_icons ? 'sfb-transparent-icons' : ''; ?>"
-     style="--e-global-color-primary: <?php echo esc_attr($primary_color); ?>; 
-            --e-global-color-secondary: <?php echo esc_attr($secondary_color); ?>;
+     style="--primary: <?php echo esc_attr($primary_color); ?>; 
+            --secondary: <?php echo esc_attr($secondary_color); ?>;
             --sfb-container-border-color: <?php echo esc_attr($border_color); ?>;
             --sfb-container-border-bg: <?php echo esc_attr($border_bg); ?>;">
         
