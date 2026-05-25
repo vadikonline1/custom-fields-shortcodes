@@ -56,12 +56,20 @@ add_action('plugins_loaded', function() {
     // Initializează Main class care va înregistra toate meniurile
     $main = SCFS\Main::get_instance(__FILE__);
     
-    // Initializează AJAX handler
-    SCFS\AjaxHandler::get_instance();
+    if (class_exists('SCFS\\AjaxHandler')) {
+        SCFS\AjaxHandler::get_instance();
+    }
     
-    // Initializează Frontend
-    SCFS\Frontend::get_instance();
+    if (class_exists('SCFS\\Frontend')) {
+        SCFS\Frontend::get_instance();
+    }
+    
+    // Inițializează Mobile Smart Bar
+    if (class_exists('SCFS\\MobileSmartBar')) {
+        SCFS\MobileSmartBar::get_instance();
+    }
 });
+
 
 register_activation_hook(__FILE__, ['SCFS\\AjaxHandler', 'create_database_table_on_activation']);
 
