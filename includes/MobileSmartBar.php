@@ -752,7 +752,7 @@ class MobileSmartBar {
     
     private function get_defaults() {
         return array(
-            'enabled' => true,
+            'enabled' => false,
             'theme' => 'auto',
             'items' => array(
                 'item_1' => array(
