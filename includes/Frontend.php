@@ -23,8 +23,21 @@ class Frontend {
     }
     
     public function enqueue_assets() {
-        wp_enqueue_style('scfs-frontend', plugins_url('../assets/frontend.css', __FILE__), array(), '1.0.0');
-        wp_enqueue_script('scfs-frontend', plugins_url('../assets/frontend.js', __FILE__), array('jquery'), '1.0.0', true);
+        wp_enqueue_style(
+            'scfs-frontend',
+            plugins_url('../assets/frontend.css', __FILE__),
+            array(),
+            filemtime(plugin_dir_path(__FILE__) . '../assets/frontend.css')
+        );
+        
+        wp_enqueue_script(
+            'scfs-frontend',
+            plugins_url('../assets/frontend.js', __FILE__),
+            array('jquery'),
+            filemtime(plugin_dir_path(__FILE__) . '../assets/frontend.js'),
+            true
+        );
+        
         
         // Verificare forțată pentru iconițe
         add_action('wp_footer', function() {
