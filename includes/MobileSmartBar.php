@@ -42,6 +42,9 @@ class MobileSmartBar {
         
         ?>
         <style>
+			/* Font Awesome */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css");
             .scfs-msb-wrap {
                 background: #f1f1f1;
                 min-height: 100vh;
@@ -127,6 +130,15 @@ class MobileSmartBar {
                 border-radius: 6px;
                 font-size: 13px;
             }
+            .scfs-item-field textarea {
+                width: 100%;
+                padding: 8px 10px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                font-size: 13px;
+                font-family: monospace;
+                resize: vertical;
+            }
             .scfs-remove-item {
                 background: #dc3545;
                 color: white;
@@ -156,67 +168,13 @@ class MobileSmartBar {
             .scfs-add-item:hover {
                 background: #218838;
             }
-            .scfs-icon-selector {
-                display: flex;
-                gap: 8px;
-                flex-wrap: wrap;
-                margin-top: 8px;
-            }
-            .scfs-icon-btn {
-                padding: 6px 12px;
-                background: white;
-                border: 1px solid #ddd;
+            .scfs-icon-preview {
+                background: #f0f0f0;
+                padding: 8px;
                 border-radius: 6px;
-                cursor: pointer;
-                font-size: 12px;
-            }
-            .scfs-icon-btn:hover {
-                border-color: #667eea;
-                background: #f0f0ff;
-            }
-            .scfs-icon-btn.active {
-                background: #667eea;
-                color: white;
-                border-color: #667eea;
-            }
-            .scfs-custom-icon {
                 margin-top: 8px;
-            }
-            .scfs-custom-icon input {
-                width: 100%;
-                padding: 6px 10px;
-                font-size: 12px;
-            }
-            .scfs-phone-mockup {
-                background: #1a1a1a;
-                border-radius: 35px;
-                padding: 20px 12px;
-            }
-            .scfs-preview-bar {
-                background: white;
-                border-radius: 50px;
-                padding: 10px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                gap: 5px;
-                flex-wrap: wrap;
-            }
-            .scfs-preview-item {
-                flex: 1;
                 text-align: center;
-                font-size: 10px;
-                min-width: 50px;
-            }
-            .scfs-preview-center {
-                width: 50px;
-                height: 50px;
-                background: #25d366;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin: -25px auto 0;
+                font-size: 24px;
             }
             .scfs-note {
                 background: #fff3cd;
@@ -233,33 +191,13 @@ class MobileSmartBar {
                     flex-direction: column;
                 }
             }
+
         </style>
         
         <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if jQuery is available
             if (typeof jQuery !== 'undefined') {
                 (function($) {
-                    // Icon selector - predefined icons
-                    $(document).on('click', '.scfs-icon-btn', function() {
-                        var iconValue = $(this).data('icon');
-                        var $row = $(this).closest('.scfs-item-row');
-                        $row.find('.icon-field').val(iconValue);
-                        $row.find('.scfs-icon-btn').removeClass('active');
-                        $(this).addClass('active');
-                        $row.find('.custom-icon-input').val('');
-                    });
-                    
-                    // Custom icon input
-                    $(document).on('input', '.custom-icon-input', function() {
-                        var customValue = $(this).val();
-                        var $row = $(this).closest('.scfs-item-row');
-                        if (customValue) {
-                            $row.find('.icon-field').val(customValue);
-                            $row.find('.scfs-icon-btn').removeClass('active');
-                        }
-                    });
-                    
                     // Add new button
                     $('#scfs-add-item').on('click', function() {
                         var newId = 'new_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
@@ -275,12 +213,10 @@ class MobileSmartBar {
                         $template.find('.label-field').val('');
                         $template.find('.url-field').val('');
                         $template.find('.icon-field').val('');
-                        $template.find('.custom-icon-input').val('');
-                        $template.find('.scfs-icon-btn').removeClass('active');
+                        $template.find('.icon-preview').html('');
                         $template.css('display', 'flex');
                         $('.scfs-items-container').append($template);
                         
-                        // Disable delete button for new enabled item
                         var $deleteBtn = $template.find('.scfs-remove-item');
                         $deleteBtn.addClass('disabled');
                         $deleteBtn.prop('disabled', true);
@@ -332,7 +268,18 @@ class MobileSmartBar {
                         }
                     });
                     
-                    // Initialize delete buttons state
+                    // Live icon preview
+                    $(document).on('input', '.icon-field', function() {
+                        var iconValue = $(this).val();
+                        var $preview = $(this).closest('.scfs-item-field').find('.icon-preview');
+                        if (iconValue.trim()) {
+                            $preview.html(iconValue);
+                        } else {
+                            $preview.html('No icon');
+                        }
+                    });
+                    
+                    // Initialize delete buttons state and previews
                     $('.scfs-item-row').each(function() {
                         var $row = $(this);
                         var $deleteBtn = $row.find('.scfs-remove-item');
@@ -340,11 +287,14 @@ class MobileSmartBar {
                             $deleteBtn.addClass('disabled');
                             $deleteBtn.prop('disabled', true);
                         }
+                        
+                        var iconValue = $row.find('.icon-field').val();
+                        if (iconValue && iconValue.trim()) {
+                            $row.find('.icon-preview').html(iconValue);
+                        }
                     });
                 })(jQuery);
             } else {
-                console.log('jQuery not loaded yet');
-                // Reload jQuery if needed
                 var script = document.createElement('script');
                 script.src = 'https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js';
                 script.onload = function() {
@@ -385,119 +335,8 @@ class MobileSmartBar {
                 margin-bottom: env(safe-area-inset-bottom, 0px) !important;
             }
             
-            /* Adaugă spațiu la sfârșitul paginii */
             body {
                 margin-bottom: 80px !important;
-            }
-            
-            /* Asigură-te că bara este deasupra tuturor elementelor fixe */
-            .scfs-mobile-bar {
-                z-index: 9999999 !important;
-            }
-            
-            /* Suprimă toate celelalte elemente care ar putea fi deasupra */
-            .scrollToTop,
-            .scroll-to-top,
-            .back-to-top,
-            .go-top,
-            .scrolltop,
-            .totop,
-            .top-button,
-            .scrollup,
-            .btn-scroll-top,
-            .scroll-top-button,
-            .sfb-container,
-            #scrollToTop,
-            #scroll-to-top,
-            #back-to-top,
-            #go-top,
-            .elementor-element .scroll-top,
-            .wp-block-button__link.scroll-top,
-            button.scroll-top,
-            a.scroll-top,
-            .scrollTop,
-            .scroll-top-btn,
-            .page-scroll-top,
-            .scrolltop-button,
-            .scrolling-top,
-            .top-scroll,
-            .scrollToTop-button,
-            .scrollToTop-btn,
-            .scroll_To_Top {
-                z-index: 9999998 !important;
-                bottom: 100px !important;
-            }
-            
-            /* Chat widgets și alte elemente fixe */
-            .wp-chatbot-container,
-            .wc-chatbot-container,
-            .fb-customerchat,
-            .fb_dialog,
-            .fb_dialog_content,
-            .whatsapp-chat-widget,
-            .tawk-mini,
-            .tawk-button,
-            .tawk-chat-widget,
-            #tawk-widget,
-            .tawkio-chat,
-            .crpnt-chat,
-            .chat-widget,
-            .chatbot-container,
-            .widget_chat,
-            .wp-live-chat,
-            .live-chat,
-            .chat-button,
-            .chat-icon,
-            .chat-circle,
-            .chat-widget-button,
-            .c-widget,
-            .customer-chat {
-                z-index: 9999998 !important;
-                margin-bottom: 80px !important;
-            }
-            
-            /* Cookie banners și GDPR */
-            #cookie-law-info-bar,
-            .cc-window,
-            .gdpr-cookie-banner,
-            .cookie-notice,
-            .cli-modal,
-            .cli-barmodal,
-            .cookie-popup,
-            .cookies-banner,
-            .gdpr-banner,
-            .cookie-consent,
-            .cookiebanner,
-            .cookie-banner {
-                z-index: 9999997 !important;
-                bottom: 100px !important;
-            }
-            
-            /* Floating buttons, contact forms, etc */
-            .floating-btn,
-            .floating-button,
-            .contact-floating,
-            .contact-bar,
-            .fixed-contact,
-            .sticky-contact,
-            .floating-contact,
-            .floating-widget,
-            .fixed-chat,
-            .sticky-chat,
-            .fixed-sidebar,
-            .sticky-sidebar {
-                z-index: 9999998 !important;
-                margin-bottom: 80px !important;
-            }
-            
-            /* Notification bars, top bars */
-            .top-bar,
-            .notification-bar,
-            .announcement-bar,
-            .top-notification,
-            .sticky-header,
-            .fixed-header {
-                z-index: 9999996 !important;
             }
             
             .scfs-mobile-bar.light {
@@ -545,14 +384,11 @@ class MobileSmartBar {
             .scfs-mobile-item:hover {
                 transform: translateY(-3px) !important;
             }
-            .scfs-mobile-item .dashicons {
-                font-size: 24px !important;
-                width: 24px !important;
-                height: 24px !important;
-            }
-            .scfs-mobile-item svg {
-                width: 24px !important;
-                height: 24px !important;
+            
+            /* Icon container pentru orice tip de iconiță */
+            .scfs-mobile-icon {
+                display: block !important;
+                line-height: 1 !important;
             }
             
             .scfs-mobile-center {
@@ -569,6 +405,10 @@ class MobileSmartBar {
                 transition: transform 0.2s !important;
                 position: relative !important;
                 z-index: 10 !important;
+            }
+            
+            .scfs-mobile-center .scfs-mobile-icon {
+                font-size: 28px !important;
             }
             
             .scfs-mobile-center::before {
@@ -616,18 +456,6 @@ class MobileSmartBar {
                 transform: scale(1.08) !important;
             }
             
-            .scfs-mobile-center .dashicons {
-                color: white !important;
-                font-size: 30px !important;
-                width: 30px !important;
-                height: 30px !important;
-            }
-            .scfs-mobile-center svg {
-                width: 30px !important;
-                height: 30px !important;
-                color: white !important;
-            }
-            
             /* Resetare pentru desktop */
             @media (min-width: 769px) {
                 body {
@@ -638,91 +466,66 @@ class MobileSmartBar {
                 }
             }
             
-            /* Responsive */
-            @media (max-width: 480px) {
-                .scfs-mobile-bar {
-                    bottom: 10px !important;
-                    left: 10px !important;
-                    right: 10px !important;
-                    padding: 6px 12px !important;
-                    gap: 8px !important;
-                }
-                .scfs-mobile-center {
-                    width: 50px !important;
-                    height: 50px !important;
-                    margin-top: -30px !important;
-                }
-                .scfs-mobile-item span {
-                    font-size: 9px !important;
-                }
-                body {
-                    margin-bottom: 70px !important;
-                }
-                
-                /* Scroll to top buttons on mobile */
-                .scrollToTop,
-                .scroll-to-top,
-                .back-to-top,
-                .go-top,
-                .scrolltop {
-                    bottom: 80px !important;
-                }
-            }
-            
-            /* Pentru ecrane mici dar nu foarte mici */
-            @media (min-width: 481px) and (max-width: 768px) {
-                body {
-                    margin-bottom: 80px !important;
-                }
-                
-                .scrollToTop,
-                .scroll-to-top,
-                .back-to-top,
-                .go-top,
-                .scrolltop {
-                    bottom: 100px !important;
-                }
-            }
-            
-            /* Forță pentru orice element care ar putea fi deasupra */
-            *:not(.scfs-mobile-bar):not(.scfs-mobile-bar *) {
-                z-index: auto !important;
-            }
-            
-            /* Excepție pentru butoanele de scroll - le dăm un z-index mai mic */
-            [class*="scrollToTop"],
-            [class*="scroll-to-top"],
-            [class*="back-to-top"],
-            [class*="go-top"],
-            [class*="scrolltop"],
-            [id*="scrollToTop"],
-            [id*="scroll-to-top"],
-            [id*="back-to-top"],
-            [class*="scrollTop"],
-            button[class*="scroll"],
-            a[class*="scroll"] {
-                z-index: 9999998 !important;
-            }
-            
-            /* Elemente specifice din diverse teme și plugin-uri */
-            .td-scroll-up,
-            .td-scroll-up-visible,
-            .elementor-scroll-top,
-            .et-scroll-to-top,
-            .ast-scroll-to-top,
-            .ai-scroll-top,
-            .ghostkit-scroll-top,
-            .wpdt-scroll-top,
-            .scroll-top-wrapper,
-            .scroll-top-container,
-            .go-to-top,
-            .backToTop,
-            .toTop,
-            .topbutton,
-            .scrollup-button {
-                z-index: 9999998 !important;
-                bottom: 100px !important;
-            }
+/* Responsive */
+@media (max-width: 480px) {
+    .scfs-mobile-bar {
+        bottom: 10px !important;
+        left: 10px !important;
+        right: 10px !important;
+        padding: 8px 15px !important;
+        gap: 10px !important;
+    }
+    .scfs-mobile-center {
+        width: 52px !important;
+        height: 52px !important;
+        margin-top: -31px !important;
+    }
+    .scfs-mobile-center .scfs-mobile-icon {
+        font-size: 26px !important;
+    }
+    .scfs-mobile-item {
+        gap: 3px !important;
+    }
+    .scfs-mobile-item .scfs-mobile-icon {
+        font-size: 20px !important;
+    }
+    .scfs-mobile-item span {
+        font-size: 10px !important;
+        line-height: 1.2 !important;
+    }
+    body {
+        margin-bottom: 70px !important;
+    }
+}
+
+@media (min-width: 481px) and (max-width: 640px) {
+    .scfs-mobile-bar {
+        padding: 10px 18px !important;
+        gap: 12px !important;
+    }
+    .scfs-mobile-item .scfs-mobile-icon {
+        font-size: 22px !important;
+    }
+    .scfs-mobile-item span {
+        font-size: 10px !important;
+    }
+    body {
+        margin-bottom: 80px !important;
+    }
+}
+
+/* Pentru ecrane mai mari de 640px (tablete mici) */
+@media (min-width: 641px) and (max-width: 768px) {
+    .scfs-mobile-item .scfs-mobile-icon {
+        font-size: 24px !important;
+    }
+    .scfs-mobile-item span {
+        font-size: 11px !important;
+    }
+    body {
+        margin-bottom: 80px !important;
+    }
+}
         </style>
         <?php
     }
@@ -759,7 +562,7 @@ class MobileSmartBar {
                     'show' => true,
                     'label' => 'Messenger',
                     'url' => 'https://m.me/',
-                    'icon' => 'dashicons-facebook',
+                    'icon' => '💬',
                     'position' => 'left',
                     'order' => 0
                 ),
@@ -767,7 +570,7 @@ class MobileSmartBar {
                     'show' => true,
                     'label' => 'WhatsApp',
                     'url' => 'https://wa.me/',
-                    'icon' => 'dashicons-whatsapp',
+                    'icon' => '💚',
                     'position' => 'right',
                     'order' => 2
                 ),
@@ -775,7 +578,7 @@ class MobileSmartBar {
                     'show' => true,
                     'label' => 'Call',
                     'url' => 'tel:',
-                    'icon' => 'phone',
+                    'icon' => '📞',
                     'position' => 'center',
                     'order' => 1
                 )
@@ -823,7 +626,7 @@ class MobileSmartBar {
                         'show' => !empty($item['show']),
                         'label' => sanitize_text_field($item['label']),
                         'url' => esc_url_raw($item['url']),
-                        'icon' => sanitize_text_field($item['icon']),
+                        'icon' => wp_kses_post($item['icon']), // Permite HTML pentru iconițe
                         'position' => sanitize_text_field($item['position']),
                         'order' => intval($item['order'])
                     );
@@ -835,22 +638,17 @@ class MobileSmartBar {
     }
     
     private function get_icon_html($icon) {
-        // Check if it's a Dashicon
-        if (strpos($icon, 'dashicons-') !== false) {
-            return '<span class="dashicons ' . esc_attr($icon) . '"></span>';
+        if (empty($icon)) {
+            return '<span class="scfs-mobile-icon">🔗</span>';
         }
-        // Check if it's the phone icon
-        if ($icon === 'phone') {
-            return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
-                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
-                    </svg>';
+        
+        // Dacă iconița conține HTML, o returnăm direct
+        if (strpos($icon, '<') !== false && strpos($icon, '>') !== false) {
+            return '<span class="scfs-mobile-icon">' . $icon . '</span>';
         }
-        // Check if it's a custom text/emoji
-        if (!empty($icon) && strpos($icon, 'dashicons') === false && $icon !== 'phone') {
-            return '<span style="font-size: 22px;">' . esc_html($icon) . '</span>';
-        }
-        // Default fallback
-        return '<span class="dashicons dashicons-admin-links"></span>';
+        
+        // Altfel, o afișăm ca text (emoji sau caracter)
+        return '<span class="scfs-mobile-icon">' . esc_html($icon) . '</span>';
     }
     
     public function admin_page() {
@@ -926,24 +724,14 @@ class MobileSmartBar {
                                                 </select>
                                             </div>
                                             <div class="scfs-item-field">
-                                                <label>Icon</label>
-                                                <input type="hidden" class="icon-field" name="<?php echo $this->option_name; ?>[items][<?php echo $key; ?>][icon]" value="<?php echo esc_attr($item['icon']); ?>">
-                                                <input type="hidden" class="order-field" name="<?php echo $this->option_name; ?>[items][<?php echo $key; ?>][order]" value="<?php echo esc_attr($item['order'] ?? 0); ?>">
-                                                <div class="scfs-icon-selector">
-                                                    <span class="scfs-icon-btn <?php echo $item['icon'] == 'dashicons-facebook' ? 'active' : ''; ?>" data-icon="dashicons-facebook">📘 FB</span>
-                                                    <span class="scfs-icon-btn <?php echo $item['icon'] == 'dashicons-instagram' ? 'active' : ''; ?>" data-icon="dashicons-instagram">📸 IG</span>
-                                                    <span class="scfs-icon-btn <?php echo $item['icon'] == 'dashicons-whatsapp' ? 'active' : ''; ?>" data-icon="dashicons-whatsapp">💚 WA</span>
-                                                    <span class="scfs-icon-btn <?php echo $item['icon'] == 'dashicons-email' ? 'active' : ''; ?>" data-icon="dashicons-email">✉️ Mail</span>
-                                                    <span class="scfs-icon-btn <?php echo $item['icon'] == 'phone' ? 'active' : ''; ?>" data-icon="phone">📞 Tel</span>
-                                                    <span class="scfs-icon-btn <?php echo $item['icon'] == 'dashicons-twitter' ? 'active' : ''; ?>" data-icon="dashicons-twitter">🐦 X</span>
-                                                    <span class="scfs-icon-btn <?php echo $item['icon'] == 'dashicons-youtube' ? 'active' : ''; ?>" data-icon="dashicons-youtube">📺 YT</span>
-                                                    <span class="scfs-icon-btn <?php echo $item['icon'] == 'dashicons-linkedin' ? 'active' : ''; ?>" data-icon="dashicons-linkedin">🔗 IN</span>
-                                                    <span class="scfs-icon-btn <?php echo $item['icon'] == 'dashicons-tiktok' ? 'active' : ''; ?>" data-icon="dashicons-tiktok">🎵 TT</span>
+                                                <label>Icon (HTML, Emoji, or Text)</label>
+                                                <textarea class="icon-field" name="<?php echo $this->option_name; ?>[items][<?php echo $key; ?>][icon]" rows="3" placeholder="Enter emoji (👍), HTML code, or text"><?php echo esc_textarea($item['icon']); ?></textarea>
+                                                <div class="scfs-icon-preview icon-preview">
+                                                    <?php echo $this->get_icon_html($item['icon']); ?>
                                                 </div>
-                                                <div class="scfs-custom-icon">
-                                                    <input type="text" class="custom-icon-input" placeholder="Or enter custom icon (emoji or text)" value="<?php echo !in_array($item['icon'], ['dashicons-facebook', 'dashicons-instagram', 'dashicons-whatsapp', 'dashicons-email', 'phone', 'dashicons-twitter', 'dashicons-youtube', 'dashicons-linkedin', 'dashicons-tiktok']) ? esc_attr($item['icon']) : ''; ?>">
-                                                </div>
+                                                <p class="description">Examples: "👍", "📞", "💬", "&lt;svg&gt;...&lt;/svg&gt;", "🚀"</p>
                                             </div>
+                                            <input type="hidden" class="order-field" name="<?php echo $this->option_name; ?>[items][<?php echo $key; ?>][order]" value="<?php echo esc_attr($item['order'] ?? 0); ?>">
                                         </div>
                                         <button type="button" class="scfs-remove-item <?php echo $item['show'] ? 'disabled' : ''; ?>" <?php echo $item['show'] ? 'disabled' : ''; ?>>Delete</button>
                                     </div>
@@ -956,7 +744,9 @@ class MobileSmartBar {
                                     <strong>💡 Tips:</strong><br>
                                     • Only ONE button can have Center position (highlighted with pulse effect)<br>
                                     • To delete a button, first uncheck "Enabled", then click Delete<br>
-                                    • You can use custom icons: emojis (😊, ❤️, 🎉) or any text (☎️, ✉️, 🌐)
+                                    • You can use any emoji: 😊, ❤️, 🎉, 📞, 💬, etc.<br>
+                                    • You can use HTML code for custom icons (SVG, Font Awesome, etc.)<br>
+                                    • You can use simple text: ☎, ✉, 🌐
                                 </div>
                             </div>
                             
@@ -969,7 +759,7 @@ class MobileSmartBar {
                             <h3>📱 Live Preview</h3>
                             <div class="scfs-phone-mockup">
                                 <div class="scfs-preview-bar">
-                                    <div class="scfs-preview-item">📘<br>Messenger</div>
+                                    <div class="scfs-preview-item">💬<br>Messenger</div>
                                     <div class="scfs-preview-item">💚<br>WhatsApp</div>
                                     <div class="scfs-preview-center">📞</div>
                                 </div>
@@ -992,6 +782,16 @@ class MobileSmartBar {
                                 <li><strong>YouTube:</strong> https://youtube.com/@channel</li>
                                 <li><strong>LinkedIn:</strong> https://linkedin.com/in/username</li>
                                 <li><strong>TikTok:</strong> https://tiktok.com/@username</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="scfs-card">
+                            <h3>🎨 Icon Examples</h3>
+                            <ul style="margin: 0; padding-left: 20px; font-size: 13px;">
+                                <li><strong>Emojis:</strong> 👍, ❤️, 🎉, 📞, 💬, 💚, 📘, 🐦</li>
+                                <li><strong>HTML SVG:</strong> &lt;svg width="24" height="24" viewBox="0 0 24 24"&gt;...&lt;/svg&gt;</li>
+                                <li><strong>Font Awesome:</strong> &lt;i class="fab fa-facebook"&gt;&lt;/i&gt;</li>
+                                <li><strong>Simple text:</strong> ☎, ✉, 🌐, ⚡</li>
                             </ul>
                         </div>
                     </div>
@@ -1023,24 +823,11 @@ class MobileSmartBar {
                     </select>
                 </div>
                 <div class="scfs-item-field">
-                    <label>Icon</label>
-                    <input type="hidden" class="icon-field" value="">
-                    <input type="hidden" class="order-field" value="0">
-                    <div class="scfs-icon-selector">
-                        <span class="scfs-icon-btn" data-icon="dashicons-facebook">📘 FB</span>
-                        <span class="scfs-icon-btn" data-icon="dashicons-instagram">📸 IG</span>
-                        <span class="scfs-icon-btn" data-icon="dashicons-whatsapp">💚 WA</span>
-                        <span class="scfs-icon-btn" data-icon="dashicons-email">✉️ Mail</span>
-                        <span class="scfs-icon-btn" data-icon="phone">📞 Tel</span>
-                        <span class="scfs-icon-btn" data-icon="dashicons-twitter">🐦 X</span>
-                        <span class="scfs-icon-btn" data-icon="dashicons-youtube">📺 YT</span>
-                        <span class="scfs-icon-btn" data-icon="dashicons-linkedin">🔗 IN</span>
-                        <span class="scfs-icon-btn" data-icon="dashicons-tiktok">🎵 TT</span>
-                    </div>
-                    <div class="scfs-custom-icon">
-                        <input type="text" class="custom-icon-input" placeholder="Or enter custom icon (emoji or text)">
-                    </div>
+                    <label>Icon (HTML, Emoji, or Text)</label>
+                    <textarea class="icon-field" rows="3" placeholder="Enter emoji (👍), HTML code, or text"></textarea>
+                    <div class="scfs-icon-preview icon-preview">No icon</div>
                 </div>
+                <input type="hidden" class="order-field" value="0">
             </div>
             <button type="button" class="scfs-remove-item">Delete</button>
         </div>
