@@ -34,17 +34,17 @@ class MobileSmartBar {
             return;
         }
         
-        // Asigură-te că jQuery este încărcat
         wp_enqueue_script('jquery');
         wp_enqueue_script('jquery-ui-core');
         wp_enqueue_script('jquery-ui-sortable');
         wp_enqueue_style('dashicons');
-        
+        wp_enqueue_style('wp-color-picker');
+        wp_enqueue_script('wp-color-picker');
         ?>
         <style>
-			/* Font Awesome */
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
-@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css");
+            @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+            @import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css");
+            
             .scfs-msb-wrap {
                 background: #f1f1f1;
                 min-height: 100vh;
@@ -91,6 +91,31 @@ class MobileSmartBar {
                 margin: 0 0 15px;
                 padding-bottom: 10px;
                 border-bottom: 2px solid #eee;
+            }
+            .scfs-color-row {
+                display: flex;
+                gap: 15px;
+                flex-wrap: wrap;
+                margin-bottom: 15px;
+            }
+            .scfs-color-field {
+                flex: 1;
+                min-width: 120px;
+            }
+            .scfs-color-field label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: 500;
+                font-size: 12px;
+            }
+            .scfs-color-field input {
+                width: 100%;
+            }
+            .custom-colors-section {
+                display: none;
+            }
+            .custom-colors-section.visible {
+                display: block;
             }
             .scfs-items-container {
                 margin-top: 20px;
@@ -183,6 +208,11 @@ class MobileSmartBar {
                 margin-top: 15px;
                 font-size: 12px;
             }
+            .scfs-css-editor {
+                font-family: monospace;
+                background: #1e1e1e;
+                color: #d4d4d4;
+            }
             @media (max-width: 768px) {
                 .scfs-msb-main-grid {
                     flex-direction: column;
@@ -190,14 +220,31 @@ class MobileSmartBar {
                 .scfs-item-fields {
                     flex-direction: column;
                 }
+                .scfs-color-row {
+                    flex-direction: column;
+                }
             }
-
         </style>
         
         <script>
         document.addEventListener('DOMContentLoaded', function() {
             if (typeof jQuery !== 'undefined') {
                 (function($) {
+                    // Initialize color pickers
+                    $('.scfs-color-picker').wpColorPicker();
+                    
+                    // Toggle custom colors section based on theme selection
+                    function toggleCustomColors() {
+                        if ($('select[name="scfs_mobile_smart_bar[theme]"]').val() === 'custom') {
+                            $('.custom-colors-section').addClass('visible');
+                        } else {
+                            $('.custom-colors-section').removeClass('visible');
+                        }
+                    }
+                    
+                    $('select[name="scfs_mobile_smart_bar[theme]"]').on('change', toggleCustomColors);
+                    toggleCustomColors();
+                    
                     // Add new button
                     $('#scfs-add-item').on('click', function() {
                         var newId = 'new_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
@@ -313,9 +360,42 @@ class MobileSmartBar {
         }
         
         wp_enqueue_style('dashicons');
+        $options = $this->get_options();
+        
+        $custom_css = '';
+        
+        // CSS personalizat - se aplică doar când tema este "custom"
+        if ($options['theme'] === 'custom') {
+            $custom_css .= "
+                .scfs-mobile-bar {
+                    background: {$options['bg_color']} !important;
+                    border-radius: {$options['border_radius']}px !important;
+                    box-shadow: 0 5px 25px {$options['shadow_color']} !important;
+                }
+                .scfs-mobile-bar .scfs-mobile-item {
+                    color: {$options['text_color']} !important;
+                }
+                .scfs-mobile-bar .scfs-mobile-item:hover {
+                    color: {$options['hover_color']} !important;
+                    transform: translateY(-3px) !important;
+                }
+                .scfs-mobile-center {
+                    background: {$options['center_bg_color']} !important;
+                    box-shadow: 0 5px 15px {$options['center_shadow_color']} !important;
+                }
+                .scfs-mobile-center:hover {
+                    background: {$options['center_hover_color']} !important;
+                    transform: scale(1.08) !important;
+                }
+            ";
+        }
+        
+        // Adaugă CSS-ul personalizat scris de utilizator
+        if (!empty($options['custom_css'])) {
+            $custom_css .= "\n" . $options['custom_css'];
+        }
         ?>
         <style>
-            /* Bara mobilă - cea mai de sus */
             .scfs-mobile-bar {
                 position: fixed !important;
                 bottom: 20px !important;
@@ -377,7 +457,7 @@ class MobileSmartBar {
                 align-items: center !important;
                 gap: 5px !important;
                 text-decoration: none !important;
-                transition: transform 0.2s !important;
+                transition: transform 0.2s, color 0.2s !important;
                 font-size: 11px !important;
                 font-weight: 500 !important;
             }
@@ -385,7 +465,6 @@ class MobileSmartBar {
                 transform: translateY(-3px) !important;
             }
             
-            /* Icon container pentru orice tip de iconiță */
             .scfs-mobile-icon {
                 display: block !important;
                 line-height: 1 !important;
@@ -402,7 +481,7 @@ class MobileSmartBar {
                 text-decoration: none !important;
                 margin-top: -35px !important;
                 box-shadow: 0 5px 15px rgba(37,211,102,0.4) !important;
-                transition: transform 0.2s !important;
+                transition: transform 0.2s, background 0.2s !important;
                 position: relative !important;
                 z-index: 10 !important;
             }
@@ -411,6 +490,7 @@ class MobileSmartBar {
                 font-size: 28px !important;
             }
             
+            <?php if ($options['center_pulse']): ?>
             .scfs-mobile-center::before {
                 content: '' !important;
                 position: absolute !important;
@@ -451,12 +531,12 @@ class MobileSmartBar {
                     opacity: 0;
                 }
             }
+            <?php endif; ?>
             
             .scfs-mobile-center:hover {
                 transform: scale(1.08) !important;
             }
             
-            /* Resetare pentru desktop */
             @media (min-width: 769px) {
                 body {
                     margin-bottom: 0 !important;
@@ -466,70 +546,70 @@ class MobileSmartBar {
                 }
             }
             
-/* Responsive */
-@media (max-width: 480px) {
-    .scfs-mobile-bar {
-        bottom: 10px !important;
-        left: 10px !important;
-        right: 10px !important;
-        padding: 8px 15px !important;
-        gap: 10px !important;
-    }
-    .scfs-mobile-center {
-        width: 52px !important;
-        height: 52px !important;
-        margin-top: -31px !important;
-    }
-    .scfs-mobile-center .scfs-mobile-icon {
-        font-size: 26px !important;
-    }
-    .scfs-mobile-item {
-        gap: 3px !important;
-    }
-    .scfs-mobile-item .scfs-mobile-icon {
-        font-size: 20px !important;
-    }
-    .scfs-mobile-item span {
-        font-size: 10px !important;
-        line-height: 1.2 !important;
-    }
-    body {
-        margin-bottom: 70px !important;
-    }
-}
-
-@media (min-width: 481px) and (max-width: 640px) {
-    .scfs-mobile-bar {
-        padding: 10px 18px !important;
-        gap: 12px !important;
-    }
-    .scfs-mobile-item .scfs-mobile-icon {
-        font-size: 22px !important;
-    }
-    .scfs-mobile-item span {
-        font-size: 10px !important;
-    }
-    body {
-        margin-bottom: 80px !important;
-    }
-}
-
-/* Pentru ecrane mai mari de 640px (tablete mici) */
-@media (min-width: 641px) and (max-width: 768px) {
-    .scfs-mobile-item .scfs-mobile-icon {
-        font-size: 24px !important;
-    }
-    .scfs-mobile-item span {
-        font-size: 11px !important;
-    }
-    body {
-        margin-bottom: 80px !important;
-    }
-}
+            @media (max-width: 480px) {
+                .scfs-mobile-bar {
+                    bottom: 10px !important;
+                    left: 10px !important;
+                    right: 10px !important;
+                    padding: 8px 15px !important;
+                    gap: 10px !important;
+                }
+                .scfs-mobile-center {
+                    width: 52px !important;
+                    height: 52px !important;
+                    margin-top: -31px !important;
+                }
+                .scfs-mobile-center .scfs-mobile-icon {
+                    font-size: 26px !important;
+                }
+                .scfs-mobile-item {
+                    gap: 3px !important;
+                }
+                .scfs-mobile-item .scfs-mobile-icon {
+                    font-size: 20px !important;
+                }
+                .scfs-mobile-item span {
+                    font-size: 10px !important;
+                    line-height: 1.2 !important;
+                }
+                body {
+                    margin-bottom: 70px !important;
+                }
+            }
+            
+            @media (min-width: 481px) and (max-width: 640px) {
+                .scfs-mobile-bar {
+                    padding: 10px 18px !important;
+                    gap: 12px !important;
+                }
+                .scfs-mobile-item .scfs-mobile-icon {
+                    font-size: 22px !important;
+                }
+                .scfs-mobile-item span {
+                    font-size: 10px !important;
+                }
+                body {
+                    margin-bottom: 80px !important;
+                }
+            }
+            
+            @media (min-width: 641px) and (max-width: 768px) {
+                .scfs-mobile-item .scfs-mobile-icon {
+                    font-size: 24px !important;
+                }
+                .scfs-mobile-item span {
+                    font-size: 11px !important;
+                }
+                body {
+                    margin-bottom: 80px !important;
+                }
+            }
+            
+            <?php echo $custom_css; ?>
         </style>
         <?php
     }
-        
+    
     public function admin_menu() {
         add_submenu_page(
             'scfs-oop',
@@ -557,6 +637,16 @@ class MobileSmartBar {
         return array(
             'enabled' => false,
             'theme' => 'auto',
+            'custom_css' => '',
+            'bg_color' => '#ffffff',
+            'text_color' => '#333333',
+            'hover_color' => '#667eea',
+            'shadow_color' => 'rgba(0,0,0,0.15)',
+            'center_bg_color' => '#25d366',
+            'center_hover_color' => '#1da15b',
+            'center_shadow_color' => 'rgba(37,211,102,0.4)',
+            'border_radius' => '60',
+            'center_pulse' => true,
             'items' => array(
                 'item_1' => array(
                     'show' => true,
@@ -594,6 +684,16 @@ class MobileSmartBar {
         if (!isset($options['items']) || empty($options['items'])) {
             $options['items'] = $this->get_defaults()['items'];
         }
+        // Setează valorile implicite pentru câmpurile noi dacă nu există
+        if (!isset($options['shadow_color'])) {
+            $options['shadow_color'] = 'rgba(0,0,0,0.15)';
+        }
+        if (!isset($options['center_shadow_color'])) {
+            $options['center_shadow_color'] = 'rgba(37,211,102,0.4)';
+        }
+        if (!isset($options['center_pulse'])) {
+            $options['center_pulse'] = true;
+        }
         return $options;
     }
     
@@ -616,6 +716,16 @@ class MobileSmartBar {
         $output = array(
             'enabled' => !empty($input['enabled']),
             'theme' => sanitize_text_field($input['theme']),
+            'custom_css' => wp_kses_post($input['custom_css']),
+            'bg_color' => sanitize_hex_color($input['bg_color']),
+            'text_color' => sanitize_hex_color($input['text_color']),
+            'hover_color' => sanitize_hex_color($input['hover_color']),
+            'shadow_color' => sanitize_text_field($input['shadow_color']),
+            'center_bg_color' => sanitize_hex_color($input['center_bg_color']),
+            'center_hover_color' => sanitize_hex_color($input['center_hover_color']),
+            'center_shadow_color' => sanitize_text_field($input['center_shadow_color']),
+            'border_radius' => intval($input['border_radius']),
+            'center_pulse' => !empty($input['center_pulse']),
             'items' => array()
         );
         
@@ -626,7 +736,7 @@ class MobileSmartBar {
                         'show' => !empty($item['show']),
                         'label' => sanitize_text_field($item['label']),
                         'url' => esc_url_raw($item['url']),
-                        'icon' => wp_kses_post($item['icon']), // Permite HTML pentru iconițe
+                        'icon' => wp_kses_post($item['icon']),
                         'position' => sanitize_text_field($item['position']),
                         'order' => intval($item['order'])
                     );
@@ -642,12 +752,10 @@ class MobileSmartBar {
             return '<span class="scfs-mobile-icon">🔗</span>';
         }
         
-        // Dacă iconița conține HTML, o returnăm direct
         if (strpos($icon, '<') !== false && strpos($icon, '>') !== false) {
             return '<span class="scfs-mobile-icon">' . $icon . '</span>';
         }
         
-        // Altfel, o afișăm ca text (emoji sau caracter)
         return '<span class="scfs-mobile-icon">' . esc_html($icon) . '</span>';
     }
     
@@ -659,7 +767,6 @@ class MobileSmartBar {
         $options = $this->get_options();
         $items = $options['items'];
         
-        // Sort items by order
         uasort($items, function($a, $b) {
             return ($a['order'] ?? 0) - ($b['order'] ?? 0);
         });
@@ -685,13 +792,81 @@ class MobileSmartBar {
                                     </label>
                                 </div>
                                 <div class="scfs-item-field">
-                                    <label>Theme</label>
+                                    <label>Theme Preset</label>
                                     <select name="<?php echo $this->option_name; ?>[theme]">
                                         <option value="auto" <?php selected($options['theme'], 'auto'); ?>>🌓 Auto (follows device settings)</option>
                                         <option value="light" <?php selected($options['theme'], 'light'); ?>>☀️ Light</option>
                                         <option value="dark" <?php selected($options['theme'], 'dark'); ?>>🌙 Dark</option>
                                         <option value="glass" <?php selected($options['theme'], 'glass'); ?>>✨ Glass</option>
+                                        <option value="custom" <?php selected($options['theme'], 'custom'); ?>>🎨 Custom</option>
                                     </select>
+                                </div>
+                            </div>
+                            
+                            <div class="scfs-card custom-colors-section <?php echo ($options['theme'] === 'custom') ? 'visible' : ''; ?>">
+                                <h3>🎨 Custom Colors</h3>
+                                
+                                <h4>Bar Settings</h4>
+                                <div class="scfs-color-row">
+                                    <div class="scfs-color-field">
+                                        <label>Background Color</label>
+                                        <input type="text" class="scfs-color-picker" name="<?php echo $this->option_name; ?>[bg_color]" value="<?php echo esc_attr($options['bg_color']); ?>" data-default-color="#ffffff">
+                                    </div>
+                                    <div class="scfs-color-field">
+                                        <label>Text Color</label>
+                                        <input type="text" class="scfs-color-picker" name="<?php echo $this->option_name; ?>[text_color]" value="<?php echo esc_attr($options['text_color']); ?>" data-default-color="#333333">
+                                    </div>
+                                    <div class="scfs-color-field">
+                                        <label>Hover Color</label>
+                                        <input type="text" class="scfs-color-picker" name="<?php echo $this->option_name; ?>[hover_color]" value="<?php echo esc_attr($options['hover_color']); ?>" data-default-color="#667eea">
+                                    </div>
+                                </div>
+                                <div class="scfs-color-row">
+                                    <div class="scfs-color-field">
+                                        <label>Shadow Color</label>
+                                        <input type="text" class="scfs-color-picker" name="<?php echo $this->option_name; ?>[shadow_color]" value="<?php echo esc_attr($options['shadow_color']); ?>" data-default-color="rgba(0,0,0,0.15)">
+                                    </div>
+                                    <div class="scfs-color-field">
+                                        <label>Border Radius (px)</label>
+                                        <input type="number" name="<?php echo $this->option_name; ?>[border_radius]" value="<?php echo esc_attr($options['border_radius']); ?>" min="0" max="100" step="1">
+                                    </div>
+                                </div>
+                                
+                                <h4>Center Button Settings</h4>
+                                <div class="scfs-color-row">
+                                    <div class="scfs-color-field">
+                                        <label>Background Color</label>
+                                        <input type="text" class="scfs-color-picker" name="<?php echo $this->option_name; ?>[center_bg_color]" value="<?php echo esc_attr($options['center_bg_color']); ?>" data-default-color="#25d366">
+                                    </div>
+                                    <div class="scfs-color-field">
+                                        <label>Hover Color</label>
+                                        <input type="text" class="scfs-color-picker" name="<?php echo $this->option_name; ?>[center_hover_color]" value="<?php echo esc_attr($options['center_hover_color']); ?>" data-default-color="#1da15b">
+                                    </div>
+                                    <div class="scfs-color-field">
+                                        <label>Shadow Color</label>
+                                        <input type="text" class="scfs-color-picker" name="<?php echo $this->option_name; ?>[center_shadow_color]" value="<?php echo esc_attr($options['center_shadow_color']); ?>" data-default-color="rgba(37,211,102,0.4)">
+                                    </div>
+                                </div>
+                                
+                                <div class="scfs-color-row">
+                                    <div class="scfs-color-field">
+                                        <label>
+                                            <input type="checkbox" name="<?php echo $this->option_name; ?>[center_pulse]" value="1" <?php checked(1, $options['center_pulse']); ?>>
+                                            <strong>Enable Pulse Effect</strong>
+                                        </label>
+                                        <p class="description">Ringing/pulsing animation on center button</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="scfs-card">
+                                <h3>🎨 Custom CSS</h3>
+                                <div class="scfs-item-field">
+                                    <textarea class="scfs-css-editor" name="<?php echo $this->option_name; ?>[custom_css]" rows="8" style="font-family: monospace; width: 100%;" placeholder="/* Add your custom CSS here */
+.scfs-mobile-item {
+    /* Example: font-weight: bold; */
+}"><?php echo esc_textarea($options['custom_css']); ?></textarea>
+                                    <p class="description">Add your own CSS rules for advanced customization.</p>
                                 </div>
                             </div>
                             
@@ -745,8 +920,7 @@ class MobileSmartBar {
                                     • Only ONE button can have Center position (highlighted with pulse effect)<br>
                                     • To delete a button, first uncheck "Enabled", then click Delete<br>
                                     • You can use any emoji: 😊, ❤️, 🎉, 📞, 💬, etc.<br>
-                                    • You can use HTML code for custom icons (SVG, Font Awesome, etc.)<br>
-                                    • You can use simple text: ☎, ✉, 🌐
+                                    • You can use HTML code for custom icons (SVG, Font Awesome, etc.)
                                 </div>
                             </div>
                             
@@ -782,16 +956,6 @@ class MobileSmartBar {
                                 <li><strong>YouTube:</strong> https://youtube.com/@channel</li>
                                 <li><strong>LinkedIn:</strong> https://linkedin.com/in/username</li>
                                 <li><strong>TikTok:</strong> https://tiktok.com/@username</li>
-                            </ul>
-                        </div>
-                        
-                        <div class="scfs-card">
-                            <h3>🎨 Icon Examples</h3>
-                            <ul style="margin: 0; padding-left: 20px; font-size: 13px;">
-                                <li><strong>Emojis:</strong> 👍, ❤️, 🎉, 📞, 💬, 💚, 📘, 🐦</li>
-                                <li><strong>HTML SVG:</strong> &lt;svg width="24" height="24" viewBox="0 0 24 24"&gt;...&lt;/svg&gt;</li>
-                                <li><strong>Font Awesome:</strong> &lt;i class="fab fa-facebook"&gt;&lt;/i&gt;</li>
-                                <li><strong>Simple text:</strong> ☎, ✉, 🌐, ⚡</li>
                             </ul>
                         </div>
                     </div>
@@ -843,12 +1007,10 @@ class MobileSmartBar {
         $items = $options['items'];
         $theme_class = $this->get_theme_class();
         
-        // Sort items by order
         uasort($items, function($a, $b) {
             return ($a['order'] ?? 0) - ($b['order'] ?? 0);
         });
         
-        // Separate items by position
         $left_items = array();
         $right_items = array();
         $center_item = null;
