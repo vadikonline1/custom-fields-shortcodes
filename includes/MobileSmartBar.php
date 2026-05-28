@@ -377,7 +377,7 @@ class MobileSmartBar {
                 justify-content: space-between !important;
                 align-items: center !important;
                 gap: 15px !important;
-                z-index: 9999999 !important;
+                z-index: 9999 !important;
                 box-shadow: 0 5px 25px rgba(0,0,0,0.15) !important;
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
                 transition: all 0.3s ease !important;
