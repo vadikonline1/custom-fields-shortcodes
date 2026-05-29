@@ -109,3 +109,8 @@ if (!class_exists('SCFS_Main_Plugin')) {
         }
     }
 }
+
+add_filter('kses_allowed_protocols', function($protocols) {
+    $protocols[] = 'viber';
+    return $protocols;
+});
