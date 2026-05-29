@@ -1,13 +1,21 @@
 # Social & Custom Fields Shortcodes
 
 **Contributors:** Steel..xD
+
 **Plugin URI:** https://github.com/vadikonline1/custom-fields-shortcodes
+
 **Tags:** shortcodes, custom fields, social buttons, mobile bar, floating buttons, whatsapp, messenger, contact bar
+
 **Requires at least:** 5.0
+
 **Tested up to:** 6.7
+
 **Stable tag:** 1.4.0
+
 **Requires PHP:** 7.0
+
 **License:** GPL v2 or later
+
 **License URI:** https://www.gnu.org/licenses/gpl-2.0.html
 
 ---
