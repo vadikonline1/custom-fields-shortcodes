@@ -838,7 +838,7 @@ class MobileSmartBar {
     
     public function admin_page() {
         if (!current_user_can('manage_options')) {
-            wp_die(esc_html__('Unauthorized', 'custom-fields-shortcodes-main'));
+            wp_die(esc_html__('Unauthorized', 'social-custom-fields-shortcodes'));
         }
         
         $options = $this->get_options();
@@ -851,8 +851,8 @@ class MobileSmartBar {
         <div class="scfs-msb-wrap">
             <div class="scfs-msb-container">
                 <div class="scfs-msb-header">
-                    <h1><?php esc_html_e('📱 Mobile Smart Bar', 'custom-fields-shortcodes-main'); ?></h1>
-                    <p><?php esc_html_e('Configure your mobile action bar - Add unlimited buttons!', 'custom-fields-shortcodes-main'); ?></p>
+                    <h1><?php esc_html_e('📱 Mobile Smart Bar', 'social-custom-fields-shortcodes'); ?></h1>
+                    <p><?php esc_html_e('Configure your mobile action bar - Add unlimited buttons!', 'social-custom-fields-shortcodes'); ?></p>
                 </div>
                 
                 <div class="scfs-msb-main-grid">
@@ -861,66 +861,66 @@ class MobileSmartBar {
                             <?php settings_fields('scfs_msb_group'); ?>
                             
                             <div class="scfs-card">
-                                <h3><?php esc_html_e('⚙️ General Settings', 'custom-fields-shortcodes-main'); ?></h3>
+                                <h3><?php esc_html_e('⚙️ General Settings', 'social-custom-fields-shortcodes'); ?></h3>
                                 <div class="scfs-item-field">
                                     <label>
                                         <input type="checkbox" name="<?php echo esc_attr($this->option_name); ?>[enabled]" value="1" <?php checked(1, $options['enabled']); ?>>
-                                        <strong><?php esc_html_e('Enable Mobile Bar', 'custom-fields-shortcodes-main'); ?></strong>
+                                        <strong><?php esc_html_e('Enable Mobile Bar', 'social-custom-fields-shortcodes'); ?></strong>
                                     </label>
                                 </div>
                                 <div class="scfs-item-field">
-                                    <label><?php esc_html_e('Theme Preset', 'custom-fields-shortcodes-main'); ?></label>
+                                    <label><?php esc_html_e('Theme Preset', 'social-custom-fields-shortcodes'); ?></label>
                                     <select name="<?php echo esc_attr($this->option_name); ?>[theme]">
-                                        <option value="auto" <?php selected($options['theme'], 'auto'); ?>><?php esc_html_e('🌓 Auto (follows device settings)', 'custom-fields-shortcodes-main'); ?></option>
-                                        <option value="light" <?php selected($options['theme'], 'light'); ?>><?php esc_html_e('☀️ Light', 'custom-fields-shortcodes-main'); ?></option>
-                                        <option value="dark" <?php selected($options['theme'], 'dark'); ?>><?php esc_html_e('🌙 Dark', 'custom-fields-shortcodes-main'); ?></option>
-                                        <option value="glass" <?php selected($options['theme'], 'glass'); ?>><?php esc_html_e('✨ Glass', 'custom-fields-shortcodes-main'); ?></option>
-                                        <option value="custom" <?php selected($options['theme'], 'custom'); ?>><?php esc_html_e('🎨 Custom', 'custom-fields-shortcodes-main'); ?></option>
+                                        <option value="auto" <?php selected($options['theme'], 'auto'); ?>><?php esc_html_e('🌓 Auto (follows device settings)', 'social-custom-fields-shortcodes'); ?></option>
+                                        <option value="light" <?php selected($options['theme'], 'light'); ?>><?php esc_html_e('☀️ Light', 'social-custom-fields-shortcodes'); ?></option>
+                                        <option value="dark" <?php selected($options['theme'], 'dark'); ?>><?php esc_html_e('🌙 Dark', 'social-custom-fields-shortcodes'); ?></option>
+                                        <option value="glass" <?php selected($options['theme'], 'glass'); ?>><?php esc_html_e('✨ Glass', 'social-custom-fields-shortcodes'); ?></option>
+                                        <option value="custom" <?php selected($options['theme'], 'custom'); ?>><?php esc_html_e('🎨 Custom', 'social-custom-fields-shortcodes'); ?></option>
                                     </select>
                                 </div>
                             </div>
                             
                             <div class="scfs-card custom-colors-section <?php echo ($options['theme'] === 'custom') ? 'visible' : ''; ?>">
-                                <h3><?php esc_html_e('🎨 Custom Colors', 'custom-fields-shortcodes-main'); ?></h3>
+                                <h3><?php esc_html_e('🎨 Custom Colors', 'social-custom-fields-shortcodes'); ?></h3>
                                 
-                                <h4><?php esc_html_e('Bar Settings', 'custom-fields-shortcodes-main'); ?></h4>
+                                <h4><?php esc_html_e('Bar Settings', 'social-custom-fields-shortcodes'); ?></h4>
                                 <div class="scfs-color-row">
                                     <div class="scfs-color-field">
-                                        <label><?php esc_html_e('Background Color', 'custom-fields-shortcodes-main'); ?></label>
+                                        <label><?php esc_html_e('Background Color', 'social-custom-fields-shortcodes'); ?></label>
                                         <input type="text" class="scfs-color-picker" name="<?php echo esc_attr($this->option_name); ?>[bg_color]" value="<?php echo esc_attr($options['bg_color']); ?>" data-default-color="#ffffff">
                                     </div>
                                     <div class="scfs-color-field">
-                                        <label><?php esc_html_e('Text Color', 'custom-fields-shortcodes-main'); ?></label>
+                                        <label><?php esc_html_e('Text Color', 'social-custom-fields-shortcodes'); ?></label>
                                         <input type="text" class="scfs-color-picker" name="<?php echo esc_attr($this->option_name); ?>[text_color]" value="<?php echo esc_attr($options['text_color']); ?>" data-default-color="#333333">
                                     </div>
                                     <div class="scfs-color-field">
-                                        <label><?php esc_html_e('Hover Color', 'custom-fields-shortcodes-main'); ?></label>
+                                        <label><?php esc_html_e('Hover Color', 'social-custom-fields-shortcodes'); ?></label>
                                         <input type="text" class="scfs-color-picker" name="<?php echo esc_attr($this->option_name); ?>[hover_color]" value="<?php echo esc_attr($options['hover_color']); ?>" data-default-color="#667eea">
                                     </div>
                                 </div>
                                 <div class="scfs-color-row">
                                     <div class="scfs-color-field">
-                                        <label><?php esc_html_e('Shadow Color', 'custom-fields-shortcodes-main'); ?></label>
+                                        <label><?php esc_html_e('Shadow Color', 'social-custom-fields-shortcodes'); ?></label>
                                         <input type="text" class="scfs-color-picker" name="<?php echo esc_attr($this->option_name); ?>[shadow_color]" value="<?php echo esc_attr($options['shadow_color']); ?>" data-default-color="rgba(0,0,0,0.15)">
                                     </div>
                                     <div class="scfs-color-field">
-                                        <label><?php esc_html_e('Border Radius (px)', 'custom-fields-shortcodes-main'); ?></label>
+                                        <label><?php esc_html_e('Border Radius (px)', 'social-custom-fields-shortcodes'); ?></label>
                                         <input type="number" name="<?php echo esc_attr($this->option_name); ?>[border_radius]" value="<?php echo esc_attr($options['border_radius']); ?>" min="0" max="100" step="1">
                                     </div>
                                 </div>
                                 
-                                <h4><?php esc_html_e('Center Button Settings', 'custom-fields-shortcodes-main'); ?></h4>
+                                <h4><?php esc_html_e('Center Button Settings', 'social-custom-fields-shortcodes'); ?></h4>
                                 <div class="scfs-color-row">
                                     <div class="scfs-color-field">
-                                        <label><?php esc_html_e('Background Color', 'custom-fields-shortcodes-main'); ?></label>
+                                        <label><?php esc_html_e('Background Color', 'social-custom-fields-shortcodes'); ?></label>
                                         <input type="text" class="scfs-color-picker" name="<?php echo esc_attr($this->option_name); ?>[center_bg_color]" value="<?php echo esc_attr($options['center_bg_color']); ?>" data-default-color="#25d366">
                                     </div>
                                     <div class="scfs-color-field">
-                                        <label><?php esc_html_e('Hover Color', 'custom-fields-shortcodes-main'); ?></label>
+                                        <label><?php esc_html_e('Hover Color', 'social-custom-fields-shortcodes'); ?></label>
                                         <input type="text" class="scfs-color-picker" name="<?php echo esc_attr($this->option_name); ?>[center_hover_color]" value="<?php echo esc_attr($options['center_hover_color']); ?>" data-default-color="#1da15b">
                                     </div>
                                     <div class="scfs-color-field">
-                                        <label><?php esc_html_e('Shadow Color', 'custom-fields-shortcodes-main'); ?></label>
+                                        <label><?php esc_html_e('Shadow Color', 'social-custom-fields-shortcodes'); ?></label>
                                         <input type="text" class="scfs-color-picker" name="<?php echo esc_attr($this->option_name); ?>[center_shadow_color]" value="<?php echo esc_attr($options['center_shadow_color']); ?>" data-default-color="rgba(37,211,102,0.4)">
                                     </div>
                                 </div>
@@ -929,111 +929,111 @@ class MobileSmartBar {
                                     <div class="scfs-color-field">
                                         <label>
                                             <input type="checkbox" name="<?php echo esc_attr($this->option_name); ?>[center_pulse]" value="1" <?php checked(1, $options['center_pulse']); ?>>
-                                            <strong><?php esc_html_e('Enable Pulse Effect', 'custom-fields-shortcodes-main'); ?></strong>
+                                            <strong><?php esc_html_e('Enable Pulse Effect', 'social-custom-fields-shortcodes'); ?></strong>
                                         </label>
-                                        <p class="description"><?php esc_html_e('Ringing/pulsing animation on center button', 'custom-fields-shortcodes-main'); ?></p>
+                                        <p class="description"><?php esc_html_e('Ringing/pulsing animation on center button', 'social-custom-fields-shortcodes'); ?></p>
                                     </div>
                                 </div>
                             </div>
                             
                             <div class="scfs-card">
-                                <h3><?php esc_html_e('🎨 Custom CSS', 'custom-fields-shortcodes-main'); ?></h3>
+                                <h3><?php esc_html_e('🎨 Custom CSS', 'social-custom-fields-shortcodes'); ?></h3>
                                 <div class="scfs-item-field">
                                     <textarea class="scfs-css-editor" name="<?php echo esc_attr($this->option_name); ?>[custom_css]" rows="8" style="font-family: monospace; width: 100%;" placeholder="/* Add your custom CSS here */
 
 .scfs-mobile-item {
     /* Example: font-weight: bold; */
 }"><?php echo esc_textarea($options['custom_css']); ?></textarea>
-                                    <p class="description"><?php esc_html_e('Add your own CSS rules for advanced customization.', 'custom-fields-shortcodes-main'); ?></p>
+                                    <p class="description"><?php esc_html_e('Add your own CSS rules for advanced customization.', 'social-custom-fields-shortcodes'); ?></p>
                                 </div>
                             </div>
                             
                             <div class="scfs-card">
-                                <h3><?php esc_html_e('🔘 Buttons', 'custom-fields-shortcodes-main'); ?></h3>
-                                <p><strong><?php esc_html_e('Note:', 'custom-fields-shortcodes-main'); ?></strong> <?php esc_html_e('You can only have ONE button with Center position. To delete a button, first disable it (uncheck "Enabled"), then click Delete.', 'custom-fields-shortcodes-main'); ?></p>
+                                <h3><?php esc_html_e('🔘 Buttons', 'social-custom-fields-shortcodes'); ?></h3>
+                                <p><strong><?php esc_html_e('Note:', 'social-custom-fields-shortcodes'); ?></strong> <?php esc_html_e('You can only have ONE button with Center position. To delete a button, first disable it (uncheck "Enabled"), then click Delete.', 'social-custom-fields-shortcodes'); ?></p>
                                 
                                 <div class="scfs-items-container">
                                     <?php foreach ($items as $key => $item): ?>
                                     <div class="scfs-item-row">
                                         <div class="scfs-item-fields">
                                             <div class="scfs-item-field">
-                                                <label><?php esc_html_e('Enabled', 'custom-fields-shortcodes-main'); ?></label>
+                                                <label><?php esc_html_e('Enabled', 'social-custom-fields-shortcodes'); ?></label>
                                                 <input type="checkbox" class="show-field" name="<?php echo esc_attr($this->option_name); ?>[items][<?php echo esc_attr($key); ?>][show]" value="1" <?php checked(1, $item['show']); ?>>
                                             </div>
                                             <div class="scfs-item-field">
-                                                <label><?php esc_html_e('Label', 'custom-fields-shortcodes-main'); ?></label>
-                                                <input type="text" class="label-field" name="<?php echo esc_attr($this->option_name); ?>[items][<?php echo esc_attr($key); ?>][label]" value="<?php echo esc_attr($item['label']); ?>" placeholder="<?php esc_attr_e('Button text', 'custom-fields-shortcodes-main'); ?>">
+                                                <label><?php esc_html_e('Label', 'social-custom-fields-shortcodes'); ?></label>
+                                                <input type="text" class="label-field" name="<?php echo esc_attr($this->option_name); ?>[items][<?php echo esc_attr($key); ?>][label]" value="<?php echo esc_attr($item['label']); ?>" placeholder="<?php esc_attr_e('Button text', 'social-custom-fields-shortcodes'); ?>">
                                             </div>
                                             <div class="scfs-item-field">
-                                                <label><?php esc_html_e('URL', 'custom-fields-shortcodes-main'); ?></label>
+                                                <label><?php esc_html_e('URL', 'social-custom-fields-shortcodes'); ?></label>
                                                 <input type="url" class="url-field" name="<?php echo esc_attr($this->option_name); ?>[items][<?php echo esc_attr($key); ?>][url]" value="<?php echo esc_url($item['url']); ?>" placeholder="https:// or tel: or mailto:">
                                             </div>
                                             <div class="scfs-item-field">
-                                                <label><?php esc_html_e('Position', 'custom-fields-shortcodes-main'); ?></label>
+                                                <label><?php esc_html_e('Position', 'social-custom-fields-shortcodes'); ?></label>
                                                 <select class="position-field" name="<?php echo esc_attr($this->option_name); ?>[items][<?php echo esc_attr($key); ?>][position]">
-                                                    <option value="left" <?php selected($item['position'], 'left'); ?>><?php esc_html_e('Left', 'custom-fields-shortcodes-main'); ?></option>
-                                                    <option value="center" <?php selected($item['position'], 'center'); ?>><?php esc_html_e('Center (Highlighted)', 'custom-fields-shortcodes-main'); ?></option>
-                                                    <option value="right" <?php selected($item['position'], 'right'); ?>><?php esc_html_e('Right', 'custom-fields-shortcodes-main'); ?></option>
+                                                    <option value="left" <?php selected($item['position'], 'left'); ?>><?php esc_html_e('Left', 'social-custom-fields-shortcodes'); ?></option>
+                                                    <option value="center" <?php selected($item['position'], 'center'); ?>><?php esc_html_e('Center (Highlighted)', 'social-custom-fields-shortcodes'); ?></option>
+                                                    <option value="right" <?php selected($item['position'], 'right'); ?>><?php esc_html_e('Right', 'social-custom-fields-shortcodes'); ?></option>
                                                 </select>
                                             </div>
                                             <div class="scfs-item-field">
-                                                <label><?php esc_html_e('Icon (HTML, Emoji, or Text)', 'custom-fields-shortcodes-main'); ?></label>
-                                                <textarea class="icon-field" name="<?php echo esc_attr($this->option_name); ?>[items][<?php echo esc_attr($key); ?>][icon]" rows="3" placeholder="<?php esc_attr_e('Enter emoji (👍), HTML code, or text', 'custom-fields-shortcodes-main'); ?>"><?php echo esc_textarea($item['icon']); ?></textarea>
+                                                <label><?php esc_html_e('Icon (HTML, Emoji, or Text)', 'social-custom-fields-shortcodes'); ?></label>
+                                                <textarea class="icon-field" name="<?php echo esc_attr($this->option_name); ?>[items][<?php echo esc_attr($key); ?>][icon]" rows="3" placeholder="<?php esc_attr_e('Enter emoji (👍), HTML code, or text', 'social-custom-fields-shortcodes'); ?>"><?php echo esc_textarea($item['icon']); ?></textarea>
                                                 <div class="scfs-icon-preview icon-preview">
                                                     <?php echo wp_kses_post( $this->get_icon_html( $item['icon'] ) ); ?>
                                                 </div>
-                                                <p class="description"><?php esc_html_e('Examples: "👍", "📞", "💬", "<svg>...</svg>", "🚀"', 'custom-fields-shortcodes-main'); ?></p>
+                                                <p class="description"><?php esc_html_e('Examples: "👍", "📞", "💬", "<svg>...</svg>", "🚀"', 'social-custom-fields-shortcodes'); ?></p>
                                             </div>
                                             <input type="hidden" class="order-field" name="<?php echo esc_attr($this->option_name); ?>[items][<?php echo esc_attr($key); ?>][order]" value="<?php echo esc_attr($item['order'] ?? 0); ?>">
                                         </div>
-                                        <button type="button" class="scfs-remove-item <?php echo $item['show'] ? 'disabled' : ''; ?>" <?php echo $item['show'] ? 'disabled' : ''; ?>><?php esc_html_e('Delete', 'custom-fields-shortcodes-main'); ?></button>
+                                        <button type="button" class="scfs-remove-item <?php echo $item['show'] ? 'disabled' : ''; ?>" <?php echo $item['show'] ? 'disabled' : ''; ?>><?php esc_html_e('Delete', 'social-custom-fields-shortcodes'); ?></button>
                                     </div>
                                     <?php endforeach; ?>
                                 </div>
                                 
-                                <button type="button" id="scfs-add-item" class="scfs-add-item"><?php esc_html_e('+ Add New Button', 'custom-fields-shortcodes-main'); ?></button>
+                                <button type="button" id="scfs-add-item" class="scfs-add-item"><?php esc_html_e('+ Add New Button', 'social-custom-fields-shortcodes'); ?></button>
                                 
                                 <div class="scfs-note">
-                                    <strong><?php esc_html_e('💡 Tips:', 'custom-fields-shortcodes-main'); ?></strong><br>
-                                    <?php esc_html_e('• Only ONE button can have Center position (highlighted with pulse effect)', 'custom-fields-shortcodes-main'); ?><br>
-                                    <?php esc_html_e('• To delete a button, first uncheck "Enabled", then click Delete', 'custom-fields-shortcodes-main'); ?><br>
-                                    <?php esc_html_e('• You can use any emoji: 😊, ❤️, 🎉, 📞, 💬, etc.', 'custom-fields-shortcodes-main'); ?><br>
-                                    <?php esc_html_e('• You can use HTML code for custom icons (SVG, Font Awesome, etc.)', 'custom-fields-shortcodes-main'); ?>
+                                    <strong><?php esc_html_e('💡 Tips:', 'social-custom-fields-shortcodes'); ?></strong><br>
+                                    <?php esc_html_e('• Only ONE button can have Center position (highlighted with pulse effect)', 'social-custom-fields-shortcodes'); ?><br>
+                                    <?php esc_html_e('• To delete a button, first uncheck "Enabled", then click Delete', 'social-custom-fields-shortcodes'); ?><br>
+                                    <?php esc_html_e('• You can use any emoji: 😊, ❤️, 🎉, 📞, 💬, etc.', 'social-custom-fields-shortcodes'); ?><br>
+                                    <?php esc_html_e('• You can use HTML code for custom icons (SVG, Font Awesome, etc.)', 'social-custom-fields-shortcodes'); ?>
                                 </div>
                             </div>
                             
-                            <?php submit_button(__('💾 Save Settings', 'custom-fields-shortcodes-main'), 'primary'); ?>
+                            <?php submit_button(__('💾 Save Settings', 'social-custom-fields-shortcodes'), 'primary'); ?>
                         </form>
                     </div>
                     
                     <div class="scfs-msb-sidebar">
                         <div class="scfs-card">
-                            <h3><?php esc_html_e('📱 Live Preview', 'custom-fields-shortcodes-main'); ?></h3>
+                            <h3><?php esc_html_e('📱 Live Preview', 'social-custom-fields-shortcodes'); ?></h3>
                             <div class="scfs-phone-mockup">
                                 <div class="scfs-preview-bar">
-                                    <div class="scfs-preview-item">💬<br><?php esc_html_e('Messenger', 'custom-fields-shortcodes-main'); ?></div>
-                                    <div class="scfs-preview-item">💚<br><?php esc_html_e('WhatsApp', 'custom-fields-shortcodes-main'); ?></div>
+                                    <div class="scfs-preview-item">💬<br><?php esc_html_e('Messenger', 'social-custom-fields-shortcodes'); ?></div>
+                                    <div class="scfs-preview-item">💚<br><?php esc_html_e('WhatsApp', 'social-custom-fields-shortcodes'); ?></div>
                                     <div class="scfs-preview-center">📞</div>
                                 </div>
                             </div>
                             <p style="margin-top: 15px; font-size: 12px; color: #666; text-align: center;">
-                                ⚡ <?php esc_html_e('The bar appears only on mobile devices', 'custom-fields-shortcodes-main'); ?>
+                                ⚡ <?php esc_html_e('The bar appears only on mobile devices', 'social-custom-fields-shortcodes'); ?>
                             </p>
                         </div>
                         
                         <div class="scfs-card">
-                            <h3><?php esc_html_e('ℹ️ URL Examples', 'custom-fields-shortcodes-main'); ?></h3>
+                            <h3><?php esc_html_e('ℹ️ URL Examples', 'social-custom-fields-shortcodes'); ?></h3>
                             <ul style="margin: 0; padding-left: 20px; font-size: 13px;">
-                                <li><strong><?php esc_html_e('Facebook:', 'custom-fields-shortcodes-main'); ?></strong> https://facebook.com/username</li>
-                                <li><strong><?php esc_html_e('Messenger:', 'custom-fields-shortcodes-main'); ?></strong> https://m.me/username</li>
-                                <li><strong><?php esc_html_e('WhatsApp:', 'custom-fields-shortcodes-main'); ?></strong> https://wa.me/123456789</li>
-                                <li><strong><?php esc_html_e('Phone:', 'custom-fields-shortcodes-main'); ?></strong> tel:+123456789</li>
-                                <li><strong><?php esc_html_e('Email:', 'custom-fields-shortcodes-main'); ?></strong> mailto:email@example.com</li>
-                                <li><strong><?php esc_html_e('Instagram:', 'custom-fields-shortcodes-main'); ?></strong> https://instagram.com/username</li>
-                                <li><strong><?php esc_html_e('Twitter/X:', 'custom-fields-shortcodes-main'); ?></strong> https://twitter.com/username</li>
-                                <li><strong><?php esc_html_e('YouTube:', 'custom-fields-shortcodes-main'); ?></strong> https://youtube.com/@channel</li>
-                                <li><strong><?php esc_html_e('LinkedIn:', 'custom-fields-shortcodes-main'); ?></strong> https://linkedin.com/in/username</li>
-                                <li><strong><?php esc_html_e('TikTok:', 'custom-fields-shortcodes-main'); ?></strong> https://tiktok.com/@username</li>
+                                <li><strong><?php esc_html_e('Facebook:', 'social-custom-fields-shortcodes'); ?></strong> https://facebook.com/username</li>
+                                <li><strong><?php esc_html_e('Messenger:', 'social-custom-fields-shortcodes'); ?></strong> https://m.me/username</li>
+                                <li><strong><?php esc_html_e('WhatsApp:', 'social-custom-fields-shortcodes'); ?></strong> https://wa.me/123456789</li>
+                                <li><strong><?php esc_html_e('Phone:', 'social-custom-fields-shortcodes'); ?></strong> tel:+123456789</li>
+                                <li><strong><?php esc_html_e('Email:', 'social-custom-fields-shortcodes'); ?></strong> mailto:email@example.com</li>
+                                <li><strong><?php esc_html_e('Instagram:', 'social-custom-fields-shortcodes'); ?></strong> https://instagram.com/username</li>
+                                <li><strong><?php esc_html_e('Twitter/X:', 'social-custom-fields-shortcodes'); ?></strong> https://twitter.com/username</li>
+                                <li><strong><?php esc_html_e('YouTube:', 'social-custom-fields-shortcodes'); ?></strong> https://youtube.com/@channel</li>
+                                <li><strong><?php esc_html_e('LinkedIn:', 'social-custom-fields-shortcodes'); ?></strong> https://linkedin.com/in/username</li>
+                                <li><strong><?php esc_html_e('TikTok:', 'social-custom-fields-shortcodes'); ?></strong> https://tiktok.com/@username</li>
                             </ul>
                         </div>
                     </div>
@@ -1045,33 +1045,33 @@ class MobileSmartBar {
         <div class="scfs-item-row scfs-item-template" style="display:none;">
             <div class="scfs-item-fields">
                 <div class="scfs-item-field">
-                    <label><?php esc_html_e('Enabled', 'custom-fields-shortcodes-main'); ?></label>
+                    <label><?php esc_html_e('Enabled', 'social-custom-fields-shortcodes'); ?></label>
                     <input type="checkbox" class="show-field" value="1" checked>
                 </div>
                 <div class="scfs-item-field">
-                    <label><?php esc_html_e('Label', 'custom-fields-shortcodes-main'); ?></label>
-                    <input type="text" class="label-field" placeholder="<?php esc_attr_e('Button text', 'custom-fields-shortcodes-main'); ?>">
+                    <label><?php esc_html_e('Label', 'social-custom-fields-shortcodes'); ?></label>
+                    <input type="text" class="label-field" placeholder="<?php esc_attr_e('Button text', 'social-custom-fields-shortcodes'); ?>">
                 </div>
                 <div class="scfs-item-field">
-                    <label><?php esc_html_e('URL', 'custom-fields-shortcodes-main'); ?></label>
+                    <label><?php esc_html_e('URL', 'social-custom-fields-shortcodes'); ?></label>
                     <input type="url" class="url-field" placeholder="https://...">
                 </div>
                 <div class="scfs-item-field">
-                    <label><?php esc_html_e('Position', 'custom-fields-shortcodes-main'); ?></label>
+                    <label><?php esc_html_e('Position', 'social-custom-fields-shortcodes'); ?></label>
                     <select class="position-field">
-                        <option value="left"><?php esc_html_e('Left', 'custom-fields-shortcodes-main'); ?></option>
-                        <option value="center"><?php esc_html_e('Center (Highlighted)', 'custom-fields-shortcodes-main'); ?></option>
-                        <option value="right"><?php esc_html_e('Right', 'custom-fields-shortcodes-main'); ?></option>
+                        <option value="left"><?php esc_html_e('Left', 'social-custom-fields-shortcodes'); ?></option>
+                        <option value="center"><?php esc_html_e('Center (Highlighted)', 'social-custom-fields-shortcodes'); ?></option>
+                        <option value="right"><?php esc_html_e('Right', 'social-custom-fields-shortcodes'); ?></option>
                     </select>
                 </div>
                 <div class="scfs-item-field">
-                    <label><?php esc_html_e('Icon (HTML, Emoji, or Text)', 'custom-fields-shortcodes-main'); ?></label>
-                    <textarea class="icon-field" rows="3" placeholder="<?php esc_attr_e('Enter emoji (👍), HTML code, or text', 'custom-fields-shortcodes-main'); ?>"></textarea>
-                    <div class="scfs-icon-preview icon-preview"><?php esc_html_e('No icon', 'custom-fields-shortcodes-main'); ?></div>
+                    <label><?php esc_html_e('Icon (HTML, Emoji, or Text)', 'social-custom-fields-shortcodes'); ?></label>
+                    <textarea class="icon-field" rows="3" placeholder="<?php esc_attr_e('Enter emoji (👍), HTML code, or text', 'social-custom-fields-shortcodes'); ?>"></textarea>
+                    <div class="scfs-icon-preview icon-preview"><?php esc_html_e('No icon', 'social-custom-fields-shortcodes'); ?></div>
                 </div>
                 <input type="hidden" class="order-field" value="0">
             </div>
-            <button type="button" class="scfs-remove-item"><?php esc_html_e('Delete', 'custom-fields-shortcodes-main'); ?></button>
+            <button type="button" class="scfs-remove-item"><?php esc_html_e('Delete', 'social-custom-fields-shortcodes'); ?></button>
         </div>
         <?php
     }
