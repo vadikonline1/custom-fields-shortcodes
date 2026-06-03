@@ -72,25 +72,25 @@ class SocialButtonsTable extends \WP_List_Table {
     public function get_columns() {
         $columns = array(
             'cb'        => '<input type="checkbox" />',
-            'order'     => esc_html__( 'Order', 'custom-fields-shortcodes-main' ),
-            'name'      => esc_html__( 'Name', 'custom-fields-shortcodes-main' ),
-            'label'     => esc_html__( 'Label', 'custom-fields-shortcodes-main' ),
-            'icon'      => esc_html__( 'Icon', 'custom-fields-shortcodes-main' ),
-            'type'      => esc_html__( 'Type', 'custom-fields-shortcodes-main' ),
-            'shortcode' => esc_html__( 'Shortcode', 'custom-fields-shortcodes-main' ),
+            'order'     => esc_html__( 'Order', 'social-custom-fields-shortcodes' ),
+            'name'      => esc_html__( 'Name', 'social-custom-fields-shortcodes' ),
+            'label'     => esc_html__( 'Label', 'social-custom-fields-shortcodes' ),
+            'icon'      => esc_html__( 'Icon', 'social-custom-fields-shortcodes' ),
+            'type'      => esc_html__( 'Type', 'social-custom-fields-shortcodes' ),
+            'shortcode' => esc_html__( 'Shortcode', 'social-custom-fields-shortcodes' ),
         );
 
         if ( $this->is_trash ) {
-            $columns['trashed'] = esc_html__( 'Trashed Date', 'custom-fields-shortcodes-main' );
+            $columns['trashed'] = esc_html__( 'Trashed Date', 'social-custom-fields-shortcodes' );
         } else {
-            $columns['floating'] = esc_html__( 'Floating', 'custom-fields-shortcodes-main' );
-            $columns['actions'] = esc_html__( 'Actions', 'custom-fields-shortcodes-main' );
+            $columns['floating'] = esc_html__( 'Floating', 'social-custom-fields-shortcodes' );
+            $columns['actions'] = esc_html__( 'Actions', 'social-custom-fields-shortcodes' );
         }
 
         if ( ! $this->is_trash ) {
-            $columns['actions'] = esc_html__( 'Actions', 'custom-fields-shortcodes-main' );
+            $columns['actions'] = esc_html__( 'Actions', 'social-custom-fields-shortcodes' );
         } else {
-            $columns['actions'] = esc_html__( 'Actions', 'custom-fields-shortcodes-main' );
+            $columns['actions'] = esc_html__( 'Actions', 'social-custom-fields-shortcodes' );
         }
 
         return $columns;
@@ -156,12 +156,12 @@ class SocialButtonsTable extends \WP_List_Table {
     public function get_bulk_actions() {
         if ( $this->is_trash ) {
             return array(
-                'restore'           => esc_html__( 'Restore', 'custom-fields-shortcodes-main' ),
-                'delete_permanently' => esc_html__( 'Delete Permanently', 'custom-fields-shortcodes-main' ),
+                'restore'           => esc_html__( 'Restore', 'social-custom-fields-shortcodes' ),
+                'delete_permanently' => esc_html__( 'Delete Permanently', 'social-custom-fields-shortcodes' ),
             );
         } else {
             return array(
-                'trash' => esc_html__( 'Move to Trash', 'custom-fields-shortcodes-main' ),
+                'trash' => esc_html__( 'Move to Trash', 'social-custom-fields-shortcodes' ),
             );
         }
     }
@@ -218,19 +218,19 @@ class SocialButtonsTable extends \WP_List_Table {
 
     public function column_name( $item ) {
         if ( ! isset( $item['id'] ) ) {
-            return '<strong>' . esc_html__( 'Error: No ID', 'custom-fields-shortcodes-main' ) . '</strong>';
+            return '<strong>' . esc_html__( 'Error: No ID', 'social-custom-fields-shortcodes' ) . '</strong>';
         }
 
-        $name = '<strong>' . esc_html( $item['name'] ?? __( 'Unnamed', 'custom-fields-shortcodes-main' ) ) . '</strong>';
+        $name = '<strong>' . esc_html( $item['name'] ?? __( 'Unnamed', 'social-custom-fields-shortcodes' ) ) . '</strong>';
 
         if ( ! $this->is_trash ) {
             $actions = array(
                 'edit' => sprintf(
-                    '<a href="%s">' . esc_html__( 'Edit', 'custom-fields-shortcodes-main' ) . '</a>',
+                    '<a href="%s">' . esc_html__( 'Edit', 'social-custom-fields-shortcodes' ) . '</a>',
                     esc_url( admin_url( 'admin.php?page=scfs-social-buttons&action=edit&id=' . urlencode( $item['id'] ) ) )
                 ),
                 'trash' => sprintf(
-                    '<a href="%s" onclick="return confirm(\'' . esc_js( __( 'Move to trash?', 'custom-fields-shortcodes-main' ) ) . '\')">' . esc_html__( 'Trash', 'custom-fields-shortcodes-main' ) . '</a>',
+                    '<a href="%s" onclick="return confirm(\'' . esc_js( __( 'Move to trash?', 'social-custom-fields-shortcodes' ) ) . '\')">' . esc_html__( 'Trash', 'social-custom-fields-shortcodes' ) . '</a>',
                     esc_url( wp_nonce_url( admin_url( 'admin.php?page=scfs-social-buttons&action=trash_single&id=' . urlencode( $item['id'] ) ), 'trash_button_' . $item['id'] ) )
                 )
             );
@@ -276,8 +276,8 @@ class SocialButtonsTable extends \WP_List_Table {
 
     public function column_floating( $item ) {
         return isset( $item['floating'] ) && $item['floating'] 
-            ? '<span class="dashicons dashicons-yes" style="color:#46b450;"></span> ' . esc_html__( 'Yes', 'custom-fields-shortcodes-main' )
-            : '<span class="dashicons dashicons-no" style="color:#dc3232;"></span> ' . esc_html__( 'No', 'custom-fields-shortcodes-main' );
+            ? '<span class="dashicons dashicons-yes" style="color:#46b450;"></span> ' . esc_html__( 'Yes', 'social-custom-fields-shortcodes' )
+            : '<span class="dashicons dashicons-no" style="color:#dc3232;"></span> ' . esc_html__( 'No', 'social-custom-fields-shortcodes' );
     }
 
     public function column_trashed( $item ) {
@@ -304,8 +304,8 @@ class SocialButtonsTable extends \WP_List_Table {
                 'delete_button_' . $id 
             );
             
-            $actions['restore'] = '<a href="' . esc_url( $restore_url ) . '" class="button button-small">' . esc_html__( 'Restore', 'custom-fields-shortcodes-main' ) . '</a>';
-            $actions['delete'] = '<a href="' . esc_url( $delete_url ) . '" class="button button-small button-danger" onclick="return confirm(\'' . esc_js( __( 'Delete permanently?', 'custom-fields-shortcodes-main' ) ) . '\')">' . esc_html__( 'Delete', 'custom-fields-shortcodes-main' ) . '</a>';
+            $actions['restore'] = '<a href="' . esc_url( $restore_url ) . '" class="button button-small">' . esc_html__( 'Restore', 'social-custom-fields-shortcodes' ) . '</a>';
+            $actions['delete'] = '<a href="' . esc_url( $delete_url ) . '" class="button button-small button-danger" onclick="return confirm(\'' . esc_js( __( 'Delete permanently?', 'social-custom-fields-shortcodes' ) ) . '\')">' . esc_html__( 'Delete', 'social-custom-fields-shortcodes' ) . '</a>';
         } else {
             $edit_url = admin_url( 'admin.php?page=scfs-social-buttons&action=edit&id=' . urlencode( $id ) );
             $trash_url = wp_nonce_url( 
@@ -313,8 +313,8 @@ class SocialButtonsTable extends \WP_List_Table {
                 'trash_button_' . $id 
             );
             
-            $actions['edit'] = '<a href="' . esc_url( $edit_url ) . '" class="button button-small">' . esc_html__( 'Edit', 'custom-fields-shortcodes-main' ) . '</a>';
-            $actions['trash'] = '<a href="' . esc_url( $trash_url ) . '" class="button button-small button-link-delete" onclick="return confirm(\'' . esc_js( __( 'Move to trash?', 'custom-fields-shortcodes-main' ) ) . '\')">' . esc_html__( 'Trash', 'custom-fields-shortcodes-main' ) . '</a>';
+            $actions['edit'] = '<a href="' . esc_url( $edit_url ) . '" class="button button-small">' . esc_html__( 'Edit', 'social-custom-fields-shortcodes' ) . '</a>';
+            $actions['trash'] = '<a href="' . esc_url( $trash_url ) . '" class="button button-small button-link-delete" onclick="return confirm(\'' . esc_js( __( 'Move to trash?', 'social-custom-fields-shortcodes' ) ) . '\')">' . esc_html__( 'Trash', 'social-custom-fields-shortcodes' ) . '</a>';
         }
 
         return implode( ' ', $actions );
@@ -322,9 +322,9 @@ class SocialButtonsTable extends \WP_List_Table {
 
     public function no_items() {
         if ( $this->is_trash ) {
-            esc_html_e( 'No buttons found in trash.', 'custom-fields-shortcodes-main' );
+            esc_html_e( 'No buttons found in trash.', 'social-custom-fields-shortcodes' );
         } else {
-            esc_html_e( 'No buttons found.', 'custom-fields-shortcodes-main' );
+            esc_html_e( 'No buttons found.', 'social-custom-fields-shortcodes' );
         }
     }
 }
