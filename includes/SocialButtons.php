@@ -43,18 +43,61 @@ class SocialButtons {
         if (!isset($_GET['page']) || $_GET['page'] !== 'scfs-social-buttons') {
             return;
         }
-        
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['scfs_action'])) {
+
+        // Fix: Unslash and sanitize REQUEST_METHOD
+        $method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) ) : '';
+        $method = sanitize_text_field($method);
+
+        if ('POST' !== $method) {
+            return;
+        }
+
+        if (
+            !isset($_POST['_wpnonce']) ||
+            !wp_verify_nonce(
+                sanitize_text_field(wp_unslash($_POST['_wpnonce'])),
+                'scfs_save_button'
+            )
+        ) {
+            return;
+        }
+            
+        if (
+            isset($_SERVER['REQUEST_METHOD']) &&
+            'POST' === sanitize_text_field(wp_unslash($_SERVER['REQUEST_METHOD'])) &&
+            isset($_POST['scfs_action'])
+        ) {
             check_admin_referer('scfs_save_button');
             
-            $action = sanitize_text_field($_POST['scfs_action']);
-            $id = sanitize_text_field($_POST['id'] ?? '');
+            $action = isset( $_POST['scfs_action'] )
+            ? sanitize_text_field(
+                wp_unslash( $_POST['scfs_action'] )
+            )
+            : '';
+            
+            $id = isset( $_POST['id'] )
+            ? sanitize_text_field(
+                wp_unslash( $_POST['id'] )
+            )
+            : '';
             
             switch ($action) {
                 case 'save':
-                    $label = sanitize_text_field($_POST['label']);
-                    $url = sanitize_text_field($_POST['url']);
-                    $type = sanitize_text_field($_POST['type']);
+                    $label = isset( $_POST['label'] )
+                    ? sanitize_text_field(
+                        wp_unslash( $_POST['label'] )
+                    )
+                    : '';
+                    $url = isset( $_POST['url'] )
+                    ? sanitize_text_field(
+                        wp_unslash( $_POST['url'] )
+                    )
+                    : '';
+                    $type = isset( $_POST['type'] )
+                    ? sanitize_text_field(
+                        wp_unslash( $_POST['type'] )
+                    )
+                    : '';
                     
                     // Clean URL based on type
                     switch ($type) {
@@ -98,7 +141,7 @@ class SocialButtons {
                         'name' => $name,
                         'label' => $label,
                         'url' => $url,
-                        'icon' => sanitize_text_field($_POST['icon']),
+                        'icon' => isset( $_POST['icon'] ) ? sanitize_text_field(wp_unslash( $_POST['icon'] )): '',
                         'type' => $type,
                         'order' => intval($_POST['order'] ?? 0),
                         'floating' => isset($_POST['floating']) ? 1 : 0
@@ -119,7 +162,7 @@ class SocialButtons {
                     }
                     
                     ob_start();
-                    wp_redirect(admin_url('admin.php?page=scfs-social-buttons&message=' . urlencode($message)));
+                    wp_safe_redirect(admin_url('admin.php?page=scfs-social-buttons&message=' . urlencode($message)));
                     exit;
             }
         }
@@ -129,10 +172,19 @@ class SocialButtons {
         if (!isset($_GET['page']) || $_GET['page'] !== 'scfs-social-buttons') {
             return;
         }
-        
-        $action = $_GET['action'] ?? '';
-        $id = $_GET['id'] ?? '';
-        
+
+        if (!isset($_GET['_wpnonce'])) {
+            return;
+        }
+
+        $action = isset($_GET['action'])
+            ? sanitize_text_field(wp_unslash($_GET['action']))
+            : '';
+
+        $id = isset($_GET['id'])
+            ? sanitize_text_field(wp_unslash($_GET['id']))
+            : '';
+
         if (empty($action) || empty($id)) {
             return;
         }
@@ -143,7 +195,7 @@ class SocialButtons {
         switch ($action) {
             case 'trash_single':
                 $nonce_action = 'trash_button_' . $id;
-                if (wp_verify_nonce($_GET['_wpnonce'] ?? '', $nonce_action)) {
+                if (wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['_wpnonce'] ?? '')), $nonce_action)) {
                     $this->trash($id);
                     $redirect_url .= '&message=' . urlencode('Button moved to trash!');
                 }
@@ -151,7 +203,7 @@ class SocialButtons {
                 
             case 'restore_single':
                 $nonce_action = 'restore_button_' . $id;
-                if (wp_verify_nonce($_GET['_wpnonce'] ?? '', $nonce_action)) {
+                if (wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['_wpnonce'] ?? '')), $nonce_action)) {
                     $this->restore($id);
                     $redirect_url .= '&message=' . urlencode('Button restored!');
                 }
@@ -159,7 +211,7 @@ class SocialButtons {
                 
             case 'delete_single':
                 $nonce_action = 'delete_button_' . $id;
-                if (wp_verify_nonce($_GET['_wpnonce'] ?? '', $nonce_action)) {
+                if (wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['_wpnonce'] ?? '')), $nonce_action)) {
                     $this->delete($id);
                     $redirect_url .= '&message=' . urlencode('Button permanently deleted!');
                 }
@@ -168,53 +220,67 @@ class SocialButtons {
         
         if ($nonce_action) {
             ob_start();
-            wp_redirect($redirect_url);
+            wp_safe_redirect($redirect_url);
             exit;
         }
     }
 
-    public function admin_page() {
-        if (!isset($_GET['page']) || $_GET['page'] !== 'scfs-social-buttons') {
-            return;
-        }
+public function admin_page() {
 
-        $action = $_GET['action'] ?? '';
-        $id = $_GET['id'] ?? 0;
-        $message = $_GET['message'] ?? '';
-        
-        // Handle trash page access
-        if ($action === 'trash' && !isset($_GET['id'])) {
-            $this->trash_page();
-            return;
-        }
-        
-        echo '<div class="wrap scfs-admin">';
-        
-        // Adaugă breadcrumb
-        echo '<nav class="scfs-breadcrumb">';
-        echo '<a href="' . admin_url('admin.php?page=scfs-oop') . '">Dashboard</a> &raquo; ';
-        echo '<span>Social Buttons</span>';
-        echo '</nav>';
-        
-        // Show messages
-        if ($message) {
-            echo '<div class="notice notice-success is-dismissible"><p>' . esc_html(urldecode($message)) . '</p></div>';
-        }
+	// phpcs:disable WordPress.Security.NonceVerification.Recommended
 
-        switch ($action) {
-            case 'add':
-            case 'edit':
-                $this->edit_form($id);
-                break;
-            case 'trash':
-                $this->trash_page();
-                break;
-            default:
-                $this->list_page();
-        }
-        
+	$action = isset( $_GET['action'] )
+		? sanitize_key( wp_unslash( $_GET['action'] ) )
+		: '';
+
+	$id = isset( $_GET['id'] )
+		? absint( wp_unslash( $_GET['id'] ) )
+		: 0;
+
+	$message = isset( $_GET['message'] )
+		? sanitize_text_field( wp_unslash( $_GET['message'] ) )
+		: '';
+
+	// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+    // Handle trash page access.
+    if ( 'trash' === $action && 0 === $id ) {
+        $this->trash_page();
+        return;
+    }
+
+    echo '<div class="wrap scfs-admin">';
+
+    echo '<nav class="scfs-breadcrumb">';
+    echo '<a href="' . esc_url( admin_url( 'admin.php?page=scfs-oop' ) ) . '">';
+    echo esc_html__( 'Dashboard', 'custom-fields-shortcodes-main' );
+    echo '</a> &raquo; ';
+    echo '<span>' . esc_html__( 'Social Buttons', 'custom-fields-shortcodes-main' ) . '</span>';
+    echo '</nav>';
+
+    if ( ! empty( $message ) ) {
+        echo '<div class="notice notice-success is-dismissible">';
+        echo '<p>' . esc_html( urldecode( $message ) ) . '</p>';
         echo '</div>';
     }
+
+    switch ( $action ) {
+        case 'add':
+        case 'edit':
+            $this->edit_form( $id );
+            break;
+
+        case 'trash':
+            $this->trash_page();
+            break;
+
+        default:
+            $this->list_page();
+            break;
+    }
+
+    echo '</div>';
+}
     
     private function list_page() {
         if (!class_exists('SCFS\\SocialButtonsTable')) {
@@ -226,16 +292,23 @@ class SocialButtons {
         
         ?>
         <h1 class="wp-heading-inline">Social Buttons</h1>
-        <a href="<?php echo admin_url('admin.php?page=scfs-social-buttons&action=add'); ?>" class="page-title-action">
-            Add New
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=scfs-social-buttons&action=add' ) ); ?>" class="page-title-action">
+			<?php esc_html_e( 'Add New', 'custom-fields-shortcodes-main' ); ?>
+		</a>
+
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=scfs-social-buttons&action=trash' ) ); ?>" class="page-title-action">
+            <?php
+            /* translators: %d: number of items in trash */
+            printf(
+                esc_html__( 'Trash (%d)', 'custom-fields-shortcodes-main' ),
+                absint( $this->get_trash_count() )
+            );
+            ?>
         </a>
-        <a href="<?php echo admin_url('admin.php?page=scfs-social-buttons&action=trash'); ?>" class="page-title-action">
-            Trash (<?php echo $this->get_trash_count(); ?>)
-        </a>
-        
-        <form method="post" action="<?php echo admin_url('admin.php?page=scfs-social-buttons'); ?>">
-            <?php $table->display(); ?>
-        </form>
+
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=scfs-social-buttons' ) ); ?>">
+			<?php $table->display(); ?>
+		</form>
         <?php
     }
     
@@ -370,7 +443,7 @@ class SocialButtons {
             </table>
             
             <?php submit_button($is_edit ? 'Update Button' : 'Add Button'); ?>
-            <a href="<?php echo admin_url('admin.php?page=scfs-social-buttons'); ?>" class="button button-secondary">
+            <a href="<?php echo esc_url( admin_url( 'admin.php?page=scfs-social-buttons' ) ); ?>" class="button button-secondary">
                 Cancel
             </a>
         </form>
@@ -488,7 +561,9 @@ class SocialButtons {
         
         ?>
         <h1>Trash</h1>
-        <a href="<?php echo admin_url('admin.php?page=scfs-social-buttons'); ?>" class="button">Back to Buttons</a>
+        <a href="<?php echo esc_url( admin_url( 'admin.php?page=scfs-social-buttons' ) ); ?>" class="button">
+			<?php esc_html_e( 'Back to Buttons', 'custom-fields-shortcodes-main' ); ?>
+		</a>
         
         <form method="post">
             <?php $table->display(); ?>
