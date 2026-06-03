@@ -6,7 +6,7 @@
  * Version: 1.4.0
  * Author: Steel..xD
  * License: GPL v2 or later
- * Text Domain: custom-fields-shortcodes-main
+ * Text Domain: social-custom-fields-shortcodes
  * Domain Path: /languages
  * Requires Plugins: github-plugin-manager-main
  */
