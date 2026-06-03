@@ -1,6 +1,6 @@
 <?php
 namespace SCFS;
-
+if ( ! defined( 'ABSPATH' ) ) exit;
 class Main {
     private static $instance = null;
     private $plugin_file;
@@ -46,8 +46,12 @@ class Main {
     }
     
     public function admin_page() {
+        // Verificare nonce pentru debug
+        $show_debug = isset($_GET['debug']) && current_user_can('manage_options') && 
+                      check_admin_referer('scfs_debug_nonce', 'scfs_debug_nonce') === false ? false : 
+                      (isset($_GET['debug']) && current_user_can('manage_options'));
+        
         $migration_done = AjaxHandler::is_migration_done();
-        $show_debug = isset($_GET['debug']) && current_user_can('manage_options');
         ?>
         <div class="wrap scfs-admin">
             <h1 class="scfs-title">Social & Custom Fields Shortcodes</h1>
@@ -83,7 +87,7 @@ class Main {
                         type: 'POST',
                         data: {
                             action: 'scfs_migrate_data',
-                            nonce: '<?php echo wp_create_nonce('scfs_migrate_nonce'); ?>'
+                            nonce: '<?php echo esc_js(wp_create_nonce('scfs_migrate_nonce')); ?>'
                         },
                         success: function(response) {
                             if (response.success) {
@@ -99,7 +103,7 @@ class Main {
                                     location.reload();
                                 }, 3000);
                             } else {
-                                $text.text('Eroare la migrare: ' . response.data);
+                                $text.text('Eroare la migrare: ' + response.data);
                                 $status.find('.spinner').remove();
                                 $button.text('Încearcă din nou').show();
                             }
@@ -117,8 +121,8 @@ class Main {
             
             <?php if ($show_debug): ?>
             <div class="scfs-debug-section">
-                <?php echo AjaxHandler::debug_database_state(); ?>
-                <?php echo AjaxHandler::debug_old_data(); ?>
+                <?php echo wp_kses_post(AjaxHandler::debug_database_state()); ?>
+                <?php echo wp_kses_post(AjaxHandler::debug_old_data()); ?>
             </div>
             <?php endif; ?>
             
@@ -127,10 +131,10 @@ class Main {
                     <h2><span class="dashicons dashicons-admin-settings"></span> Custom Fields</h2>
                     <p>Create and manage custom fields with shortcodes.</p>
                     <div class="scfs-card-actions">
-                        <a href="<?php echo admin_url('admin.php?page=scfs-custom-fields'); ?>" class="button button-primary">
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=scfs-custom-fields')); ?>" class="button button-primary">
                             Manage Fields
                         </a>
-                        <a href="<?php echo admin_url('admin.php?page=scfs-custom-fields&action=add'); ?>" class="button">
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=scfs-custom-fields&action=add')); ?>" class="button">
                             Add New
                         </a>
                     </div>
@@ -140,10 +144,10 @@ class Main {
                     <h2><span class="dashicons dashicons-share"></span> Social Buttons</h2>
                     <p>Create floating social buttons with icons.</p>
                     <div class="scfs-card-actions">
-                        <a href="<?php echo admin_url('admin.php?page=scfs-social-buttons'); ?>" class="button button-primary">
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=scfs-social-buttons')); ?>" class="button button-primary">
                             Manage Buttons
                         </a>
-                        <a href="<?php echo admin_url('admin.php?page=scfs-social-buttons&action=add'); ?>" class="button">
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=scfs-social-buttons&action=add')); ?>" class="button">
                             Add New
                         </a>
                     </div>
@@ -153,7 +157,7 @@ class Main {
                     <h2><span class="dashicons dashicons-admin-settings"></span> Social Settings</h2>
                     <p>Configure floating button appearance and behavior.</p>
                     <div class="scfs-card-actions">
-                        <a href="<?php echo admin_url('admin.php?page=scfs-social-settings'); ?>" class="button button-primary">
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=scfs-social-settings')); ?>" class="button button-primary">
                             Configure
                         </a>
                     </div>
@@ -163,7 +167,7 @@ class Main {
                     <h2><span class="dashicons dashicons-download"></span> CDN Libraries</h2>
                     <p>Manage icon libraries and external resources.</p>
                     <div class="scfs-card-actions">
-                        <a href="<?php echo admin_url('admin.php?page=scfs-social-cdn'); ?>" class="button button-primary">
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=scfs-social-cdn')); ?>" class="button button-primary">
                             Manage CDNs
                         </a>
                     </div>
@@ -176,25 +180,34 @@ class Main {
                 $social_buttons_count = count($this->social_buttons->get_all());
                 ?>
                 <div class="scfs-stat">
-                    <span class="count"><?php echo $custom_fields_count; ?></span>
+                    <span class="count"><?php echo esc_html($custom_fields_count); ?></span>
                     <span class="label">Custom Fields</span>
                 </div>
                 <div class="scfs-stat">
-                    <span class="count"><?php echo $social_buttons_count; ?></span>
+                    <span class="count"><?php echo esc_html($social_buttons_count); ?></span>
                     <span class="label">Social Buttons</span>
                 </div>
                 <div class="scfs-stat">
-                    <span class="count"><?php echo $migration_done ? '✅' : '❌'; ?></span>
+                    <span class="count"><?php echo esc_html($migration_done ? '✅' : '❌'); ?></span>
                     <span class="label">Optimized Storage</span>
                 </div>
             </div>
             
             <?php if (current_user_can('manage_options')): ?>
             <div class="scfs-debug-link">
-                <a href="<?php echo add_query_arg('debug', '1'); ?>" class="button button-secondary">
+                <?php 
+                $debug_url = add_query_arg(
+                    array(
+                        'debug' => '1',
+                        'scfs_debug_nonce' => wp_create_nonce('scfs_debug_nonce')
+                    )
+                );
+                $hide_debug_url = remove_query_arg(array('debug', 'scfs_debug_nonce'));
+                ?>
+                <a href="<?php echo esc_url($debug_url); ?>" class="button button-secondary">
                     Debug Database
                 </a>
-                <a href="<?php echo remove_query_arg('debug'); ?>" class="button button-secondary">
+                <a href="<?php echo esc_url($hide_debug_url); ?>" class="button button-secondary">
                     Hide Debug
                 </a>
             </div>
