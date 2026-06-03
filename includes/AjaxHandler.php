@@ -1,6 +1,6 @@
 <?php
 namespace SCFS;
-
+if ( ! defined( 'ABSPATH' ) ) exit;
 class AjaxHandler {
     private static $instance = null;
     private static $migration_done_key = 'scfs_data_migrated_v3';
@@ -43,6 +43,19 @@ class AjaxHandler {
         add_action('wp_ajax_scfs_migrate_data', [$this, 'migrate_data_ajax']);
     }
     
+    // Helper function for debug logging
+    private static function log_debug($message, $data = null) {
+        if (defined('WP_DEBUG') && WP_DEBUG === true) {
+            if ($data !== null) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log,WordPress.PHP.DevelopmentFunctions.error_log_print_r
+                error_log('SCFS: ' . $message . ': ' . print_r($data, true));
+            } else {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log('SCFS: ' . $message);
+            }
+        }
+    }
+    
     // =========================
     // TABLE CREATION
     // =========================
@@ -66,17 +79,16 @@ class AjaxHandler {
         global $wpdb;
         $table_name = $wpdb->prefix . 'scfs';
         $charset_collate = $wpdb->get_charset_collate();
-        
-        $table_exists = $wpdb->get_var($wpdb->prepare(
-            "SHOW TABLES LIKE %s", 
-            $table_name
-        )) === $table_name;
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $sql = "SHOW TABLES LIKE %s";
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- No dynamic user data used here.
+        $table_exists = $wpdb->get_var($wpdb->prepare($sql, $table_name)) === $table_name;
         
         if ($table_exists) {
             return true;
         }
-        
-        $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $sql_create = "CREATE TABLE IF NOT EXISTS {$table_name} (
             id bigint(20) NOT NULL AUTO_INCREMENT,
             item_id varchar(100) NOT NULL,
             item_type varchar(50) DEFAULT 'custom_field',
@@ -90,18 +102,17 @@ class AjaxHandler {
             KEY item_type (item_type),
             KEY trashed (trashed),
             KEY item_order (item_order)
-        ) $charset_collate;";
+        ) {$charset_collate};";
         
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-        $result = dbDelta($sql);
-        
-        $table_exists = $wpdb->get_var($wpdb->prepare(
-            "SHOW TABLES LIKE %s", 
-            $table_name
-        )) === $table_name;
+        $result = dbDelta($sql_create);
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $sql = "SHOW TABLES LIKE %s";
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- No dynamic user data used here.
+        $table_exists = $wpdb->get_var($wpdb->prepare($sql, $table_name)) === $table_name;
         
         if (!$table_exists) {
-            error_log('SCFS: Failed to create database table: ' . $table_name);
+            self::log_debug('Failed to create database table: ' . $table_name);
             return false;
         }
         
@@ -144,11 +155,10 @@ class AjaxHandler {
     
     private function get_raw_option_data($option_name) {
         global $wpdb;
-        
-        $raw_value = $wpdb->get_var($wpdb->prepare(
-            "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
-            $option_name
-        ));
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $sql = "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s";
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- No dynamic user data used here.
+        $raw_value = $wpdb->get_var($wpdb->prepare($sql, $option_name));
         
         return $raw_value ? $raw_value : false;
     }
@@ -158,6 +168,7 @@ class AjaxHandler {
             return;
         }
         
+        $nonce = esc_js(wp_create_nonce('scfs_migrate_nonce'));
         ?>
         <div class="notice notice-warning is-dismissible">
             <p>
@@ -192,7 +203,7 @@ class AjaxHandler {
                     type: 'POST',
                     data: {
                         action: 'scfs_migrate_data',
-                        nonce: '<?php echo wp_create_nonce('scfs_migrate_nonce'); ?>'
+                        nonce: '<?php echo esc_js( $nonce ); ?>'
                     },
                     success: function(response) {
                         if (response.success) {
@@ -260,12 +271,12 @@ class AjaxHandler {
         
         $migrated_options = [];
         
-        error_log('SCFS: ===== STARTING SIMPLE MIGRATION PROCESS =====');
+        self::log_debug('===== STARTING SIMPLE MIGRATION PROCESS =====');
         
         // 1. MIGRARE BUTOANE SOCIALE
         $sfb_buttons_data = $this->extract_and_rebuild_data('sfb_buttons');
         if ($sfb_buttons_data !== false) {
-            error_log('SCFS: Migrating sfb_buttons...');
+            self::log_debug('Migrating sfb_buttons...');
             $migrated = $this->migrate_social_buttons_simple($sfb_buttons_data, 'sfb_buttons');
             $stats['social_buttons_migrated'] += $migrated['migrated'];
             $stats['failed'] += $migrated['failed'];
@@ -278,7 +289,7 @@ class AjaxHandler {
         
         $scfs_social_buttons_data = $this->extract_and_rebuild_data('scfs_social_buttons');
         if ($scfs_social_buttons_data !== false) {
-            error_log('SCFS: Migrating scfs_social_buttons...');
+            self::log_debug('Migrating scfs_social_buttons...');
             $migrated = $this->migrate_social_buttons_simple($scfs_social_buttons_data, 'scfs_social_buttons');
             $stats['social_buttons_migrated'] += $migrated['migrated'];
             $stats['failed'] += $migrated['failed'];
@@ -292,7 +303,7 @@ class AjaxHandler {
         // 2. MIGRARE CÂMPURI CUSTOM
         $cfs_fields_data = $this->extract_and_rebuild_data('cfs_fields');
         if ($cfs_fields_data !== false) {
-            error_log('SCFS: Migrating cfs_fields...');
+            self::log_debug('Migrating cfs_fields...');
             $migrated = $this->migrate_cfs_fields_simple($cfs_fields_data);
             $stats['custom_fields_migrated'] += $migrated['migrated'];
             $stats['failed'] += $migrated['failed'];
@@ -305,7 +316,7 @@ class AjaxHandler {
         
         $scfs_custom_fields_data = $this->extract_and_rebuild_data('scfs_custom_fields');
         if ($scfs_custom_fields_data !== false) {
-            error_log('SCFS: Migrating scfs_custom_fields...');
+            self::log_debug('Migrating scfs_custom_fields...');
             $migrated = $this->migrate_scfs_custom_fields_simple($scfs_custom_fields_data);
             $stats['custom_fields_migrated'] += $migrated['migrated'];
             $stats['failed'] += $migrated['failed'];
@@ -319,16 +330,16 @@ class AjaxHandler {
         $total_migrated = $stats['social_buttons_migrated'] + $stats['custom_fields_migrated'];
         
         if ($total_migrated > 0) {
-            error_log('SCFS: ===== MIGRATION COMPLETED SUCCESSFULLY =====');
-            error_log('SCFS: Total migrated: ' . $total_migrated);
-            error_log('SCFS: Migrated options: ' . implode(', ', $migrated_options));
+            self::log_debug('===== MIGRATION COMPLETED SUCCESSFULLY =====');
+            self::log_debug('Total migrated: ' . $total_migrated);
+            self::log_debug('Migrated options: ' . implode(', ', $migrated_options));
             
             foreach ($migrated_options as $option) {
                 delete_option($option);
-                error_log('SCFS: Deleted old option: ' . $option);
+                self::log_debug('Deleted old option: ' . $option);
             }
         } else {
-            error_log('SCFS: ===== NO DATA WAS MIGRATED =====');
+            self::log_debug('===== NO DATA WAS MIGRATED =====');
         }
         
         return [
@@ -345,43 +356,42 @@ class AjaxHandler {
     
     private function extract_and_rebuild_data($option_name) {
         global $wpdb;
-        
-        $raw_value = $wpdb->get_var($wpdb->prepare(
-            "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
-            $option_name
-        ));
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $sql = "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s";
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- No dynamic user data used here.
+        $raw_value = $wpdb->get_var($wpdb->prepare($sql, $option_name));
         
         if (!$raw_value) {
-            error_log('SCFS: No data found for option: ' . $option_name);
+            self::log_debug('No data found for option: ' . $option_name);
             return false;
         }
         
-        error_log('SCFS: Processing option: ' . $option_name . ' (length: ' . strlen($raw_value) . ')');
+        self::log_debug('Processing option: ' . $option_name . ' (length: ' . strlen($raw_value) . ')');
         
         $decoded_data = maybe_unserialize($raw_value);
         
         if ($decoded_data !== false && $decoded_data !== $raw_value) {
-            error_log('SCFS: WordPress unserialize worked for ' . $option_name);
+            self::log_debug('WordPress unserialize worked for ' . $option_name);
             return $decoded_data;
         }
         
         $decoded_data = @unserialize($raw_value);
         if ($decoded_data !== false) {
-            error_log('SCFS: Direct unserialize worked for ' . $option_name);
+            self::log_debug('Direct unserialize worked for ' . $option_name);
             return $decoded_data;
         }
         
         if ($option_name === 'cfs_fields') {
-            error_log('SCFS: Using manual extraction for cfs_fields');
+            self::log_debug('Using manual extraction for cfs_fields');
             return $this->manual_extract_cfs_fields($raw_value);
         }
         
         if (is_string($raw_value) && !empty(trim($raw_value))) {
-            error_log('SCFS: Treating as simple string for ' . $option_name);
+            self::log_debug('Treating as simple string for ' . $option_name);
             return $raw_value;
         }
         
-        error_log('SCFS: Could not extract data for ' . $option_name);
+        self::log_debug('Could not extract data for ' . $option_name);
         return false;
     }
     
@@ -403,7 +413,7 @@ class AjaxHandler {
         }
         
         if (!empty($result)) {
-            error_log('SCFS: Manual extraction successful, got ' . count($result) . ' items');
+            self::log_debug('Manual extraction successful, got ' . count($result) . ' items');
             return $result;
         }
         
@@ -434,7 +444,7 @@ class AjaxHandler {
         }
         
         if (!empty($result)) {
-            error_log('SCFS: Simple extraction successful, got ' . count($result) . ' items');
+            self::log_debug('Simple extraction successful, got ' . count($result) . ' items');
         }
         
         return $result;
@@ -445,11 +455,11 @@ class AjaxHandler {
         $failed = 0;
         
         if (!is_array($buttons_data) || empty($buttons_data)) {
-            error_log('SCFS: No social buttons data to migrate from ' . $source);
+            self::log_debug('No social buttons data to migrate from ' . $source);
             return ['migrated' => 0, 'failed' => 0];
         }
         
-        error_log('SCFS: Processing ' . count($buttons_data) . ' social buttons from ' . $source);
+        self::log_debug('Processing ' . count($buttons_data) . ' social buttons from ' . $source);
         
         foreach ($buttons_data as $index => $button) {
             if (is_array($button) && isset($button['id'])) {
@@ -469,7 +479,7 @@ class AjaxHandler {
             }
         }
         
-        error_log('SCFS: Migrated ' . $migrated . ' social buttons from ' . $source);
+        self::log_debug('Migrated ' . $migrated . ' social buttons from ' . $source);
         return ['migrated' => $migrated, 'failed' => $failed];
     }
     
@@ -478,11 +488,11 @@ class AjaxHandler {
         $failed = 0;
         
         if (!is_array($fields_data) || empty($fields_data)) {
-            error_log('SCFS: No cfs_fields data to migrate');
+            self::log_debug('No cfs_fields data to migrate');
             return ['migrated' => 0, 'failed' => 0];
         }
         
-        error_log('SCFS: Processing ' . count($fields_data) . ' cfs fields');
+        self::log_debug('Processing ' . count($fields_data) . ' cfs fields');
         $order_counter = 1;
         
         foreach ($fields_data as $key => $value) {
@@ -517,7 +527,7 @@ class AjaxHandler {
             }
         }
         
-        error_log('SCFS: Migrated ' . $migrated . ' cfs fields');
+        self::log_debug('Migrated ' . $migrated . ' cfs fields');
         return ['migrated' => $migrated, 'failed' => $failed];
     }
     
@@ -526,11 +536,11 @@ class AjaxHandler {
         $failed = 0;
         
         if (!is_array($fields_data) || empty($fields_data)) {
-            error_log('SCFS: No scfs_custom_fields data to migrate');
+            self::log_debug('No scfs_custom_fields data to migrate');
             return ['migrated' => 0, 'failed' => 0];
         }
         
-        error_log('SCFS: Processing ' . count($fields_data) . ' scfs custom fields');
+        self::log_debug('Processing ' . count($fields_data) . ' scfs custom fields');
         
         foreach ($fields_data as $index => $field) {
             if (is_array($field) && isset($field['id'])) {
@@ -550,23 +560,22 @@ class AjaxHandler {
             }
         }
         
-        error_log('SCFS: Migrated ' . $migrated . ' scfs custom fields');
+        self::log_debug('Migrated ' . $migrated . ' scfs custom fields');
         return ['migrated' => $migrated, 'failed' => $failed];
     }
     
     private function save_item_to_database($item_id, $item_type, $data, $order = 0, $trashed = null) {
         global $wpdb;
         $table_name = $wpdb->prefix . 'scfs';
-        
-        $existing = $wpdb->get_var($wpdb->prepare(
-            "SELECT id FROM $table_name WHERE item_id = %s AND item_type = %s",
-            $item_id,
-            $item_type
-        ));
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $sql = "SELECT id FROM {$table_name} WHERE item_id = %s AND item_type = %s";
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- No dynamic user data used here.
+        $existing = $wpdb->get_var($wpdb->prepare($sql, $item_id, $item_type));
         
         $serialized_data = maybe_serialize($data);
         
         if ($existing) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
             $result = $wpdb->update(
                 $table_name,
                 [
@@ -580,6 +589,7 @@ class AjaxHandler {
                 ]
             );
         } else {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
             $result = $wpdb->insert(
                 $table_name,
                 [
@@ -592,6 +602,9 @@ class AjaxHandler {
                 ]
             );
         }
+        
+        // Clear cache for this item type
+        wp_cache_delete($item_type, 'scfs_items');
         
         return $result !== false;
     }
@@ -611,7 +624,7 @@ class AjaxHandler {
             $backup_name = self::$backup_prefix . $option_name;
             $serialized_data = maybe_serialize($data);
             update_option($backup_name, $serialized_data);
-            error_log('SCFS: Created backup: ' . $backup_name);
+            self::log_debug('Created backup: ' . $backup_name);
         }
     }
     
@@ -623,21 +636,25 @@ class AjaxHandler {
         global $wpdb;
         $table_name = $wpdb->prefix . 'scfs';
         
-        $table_exists = $wpdb->get_var($wpdb->prepare(
-            "SHOW TABLES LIKE %s", 
-            $table_name
-        )) === $table_name;
+        // Try cache first
+        $cache_key = $item_type . '_' . $item_id;
+        $cached = wp_cache_get($cache_key, 'scfs_items');
+        if ($cached !== false) {
+            return $cached;
+        }
+        
+        $sql = "SHOW TABLES LIKE %s";
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- No dynamic user data used here.
+        $table_exists = $wpdb->get_var($wpdb->prepare($sql, $table_name)) === $table_name;
         
         if (!$table_exists) {
             return null;
         }
         
-        $result = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM $table_name 
-             WHERE item_id = %s AND item_type = %s AND trashed IS NULL",
-            $item_id,
-            $item_type
-        ), ARRAY_A);
+        $sql = "SELECT * FROM {$table_name} 
+                WHERE item_id = %s AND item_type = %s AND trashed IS NULL";
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- No dynamic user data used here.
+        $result = $wpdb->get_row($wpdb->prepare($sql, $item_id, $item_type), ARRAY_A);
         
         if ($result) {
             $data = maybe_unserialize($result['item_data']);
@@ -646,6 +663,9 @@ class AjaxHandler {
                 $data['_db_created'] = $result['created_at'];
                 $data['_db_updated'] = $result['updated_at'];
             }
+            
+            // Cache the result
+            wp_cache_set($cache_key, $data, 'scfs_items', 3600);
             return $data;
         }
         
@@ -656,29 +676,33 @@ class AjaxHandler {
         global $wpdb;
         $table_name = $wpdb->prefix . 'scfs';
         
-        $table_exists = $wpdb->get_var($wpdb->prepare(
-            "SHOW TABLES LIKE %s", 
-            $table_name
-        )) === $table_name;
+        // Try cache first
+        $cache_key = $item_type . '_all_' . ($include_trashed ? 'with_trash' : 'no_trash');
+        $cached = wp_cache_get($cache_key, 'scfs_items');
+        if ($cached !== false) {
+            return $cached;
+        }
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $sql = "SHOW TABLES LIKE %s";
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- No dynamic user data used here.
+        $table_exists = $wpdb->get_var($wpdb->prepare($sql, $table_name)) === $table_name;
         
         if (!$table_exists) {
             return [];
         }
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $sql_where = $include_trashed 
+            ? "SELECT item_id,item_data,id,created_at,updated_at,item_order,trashed
+               FROM {$table_name}
+               WHERE item_type = %s
+               ORDER BY item_order ASC, created_at ASC"
+            : "SELECT item_id,item_data,id,created_at,updated_at,item_order,trashed
+               FROM {$table_name}
+               WHERE item_type = %s AND trashed IS NULL
+               ORDER BY item_order ASC, created_at ASC";
         
-        $where_clause = "item_type = %s";
-        $params = [$item_type];
-        
-        if (!$include_trashed) {
-            $where_clause .= " AND trashed IS NULL";
-        }
-        
-        $results = $wpdb->get_results($wpdb->prepare(
-            "SELECT item_id, item_data, id, created_at, updated_at, item_order, trashed 
-             FROM $table_name 
-             WHERE $where_clause 
-             ORDER BY item_order ASC, created_at ASC",
-            $item_type
-        ), ARRAY_A);
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- No dynamic user data used here.
+        $results = $wpdb->get_results($wpdb->prepare($sql_where, $item_type), ARRAY_A);
         
         $items = [];
         foreach ($results as $row) {
@@ -699,32 +723,35 @@ class AjaxHandler {
             }
         }
         
+        // Cache the results
+        wp_cache_set($cache_key, $items, 'scfs_items', 3600);
+        
         return $items;
     }
     
     public static function save_item_to_database_static($item_id, $item_type, $data, $order = 0, $trashed = null) {
         global $wpdb;
         $table_name = $wpdb->prefix . 'scfs';
-        
-        $table_exists = $wpdb->get_var($wpdb->prepare(
-            "SHOW TABLES LIKE %s", 
-            $table_name
-        )) === $table_name;
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $sql = "SHOW TABLES LIKE %s";
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- No dynamic user data used here.
+        $table_exists = $wpdb->get_var($wpdb->prepare($sql, $table_name)) === $table_name;
         
         if (!$table_exists) {
-            error_log('SCFS: Cannot save to database, table does not exist');
+            self::log_debug('Cannot save to database, table does not exist');
             return false;
         }
-        
-        $existing = $wpdb->get_var($wpdb->prepare(
-            "SELECT id FROM $table_name WHERE item_id = %s AND item_type = %s",
-            $item_id,
-            $item_type
-        ));
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $sql = "SELECT id FROM {$table_name}
+                WHERE item_id = %s
+                AND item_type = %s";
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- No dynamic user data used here.
+        $existing = $wpdb->get_var($wpdb->prepare($sql, $item_id, $item_type));
         
         $serialized_data = maybe_serialize($data);
         
         if ($existing) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
             $result = $wpdb->update(
                 $table_name,
                 [
@@ -738,6 +765,7 @@ class AjaxHandler {
                 ]
             );
         } else {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
             $result = $wpdb->insert(
                 $table_name,
                 [
@@ -751,45 +779,57 @@ class AjaxHandler {
             );
         }
         
+        // Clear cache for this item type
+        wp_cache_delete($item_type . '_all_no_trash', 'scfs_items');
+        wp_cache_delete($item_type . '_all_with_trash', 'scfs_items');
+        wp_cache_delete($item_type . '_' . $item_id, 'scfs_items');
+        
         return $result !== false;
     }
     
     public static function delete_item_from_database($item_id, $item_type = 'custom_field') {
         global $wpdb;
         $table_name = $wpdb->prefix . 'scfs';
-        
-        $table_exists = $wpdb->get_var($wpdb->prepare(
-            "SHOW TABLES LIKE %s", 
-            $table_name
-        )) === $table_name;
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $sql = "SHOW TABLES LIKE %s";
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- No dynamic user data used here.
+        $table_exists = $wpdb->get_var($wpdb->prepare($sql, $table_name)) === $table_name;
         
         if (!$table_exists) {
             return false;
         }
         
-        return $wpdb->delete(
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+        $result = $wpdb->delete(
             $table_name,
             [
                 'item_id' => $item_id,
                 'item_type' => $item_type
             ]
-        ) !== false;
+        );
+        
+        // Clear cache for this item type
+        wp_cache_delete($item_type . '_all_no_trash', 'scfs_items');
+        wp_cache_delete($item_type . '_all_with_trash', 'scfs_items');
+        wp_cache_delete($item_type . '_' . $item_id, 'scfs_items');
+        
+        return $result !== false;
     }
     
     public static function trash_item_in_database($item_id, $item_type = 'custom_field') {
         global $wpdb;
         $table_name = $wpdb->prefix . 'scfs';
-        
-        $table_exists = $wpdb->get_var($wpdb->prepare(
-            "SHOW TABLES LIKE %s", 
-            $table_name
-        )) === $table_name;
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $sql = "SHOW TABLES LIKE %s";
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- No dynamic user data used here.
+        $table_exists = $wpdb->get_var($wpdb->prepare($sql, $table_name)) === $table_name;
         
         if (!$table_exists) {
             return false;
         }
         
-        return $wpdb->update(
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+        $result = $wpdb->update(
             $table_name,
             [
                 'trashed' => current_time('mysql'),
@@ -799,23 +839,30 @@ class AjaxHandler {
                 'item_id' => $item_id,
                 'item_type' => $item_type
             ]
-        ) !== false;
+        );
+        
+        // Clear cache for this item type
+        wp_cache_delete($item_type . '_all_no_trash', 'scfs_items');
+        wp_cache_delete($item_type . '_all_with_trash', 'scfs_items');
+        wp_cache_delete($item_type . '_' . $item_id, 'scfs_items');
+        
+        return $result !== false;
     }
     
     public static function restore_item_in_database($item_id, $item_type = 'custom_field') {
         global $wpdb;
         $table_name = $wpdb->prefix . 'scfs';
-        
-        $table_exists = $wpdb->get_var($wpdb->prepare(
-            "SHOW TABLES LIKE %s", 
-            $table_name
-        )) === $table_name;
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $sql = "SHOW TABLES LIKE %s";
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- No dynamic user data used here.
+        $table_exists = $wpdb->get_var($wpdb->prepare($sql, $table_name)) === $table_name;
         
         if (!$table_exists) {
             return false;
         }
         
-        return $wpdb->update(
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+        $result = $wpdb->update(
             $table_name,
             [
                 'trashed' => NULL,
@@ -825,7 +872,14 @@ class AjaxHandler {
                 'item_id' => $item_id,
                 'item_type' => $item_type
             ]
-        ) !== false;
+        );
+        
+        // Clear cache for this item type
+        wp_cache_delete($item_type . '_all_no_trash', 'scfs_items');
+        wp_cache_delete($item_type . '_all_with_trash', 'scfs_items');
+        wp_cache_delete($item_type . '_' . $item_id, 'scfs_items');
+        
+        return $result !== false;
     }
     
     // =========================
@@ -874,7 +928,7 @@ class AjaxHandler {
         }
         
         $allowed_schemes = ['http', 'https', 'tel', 'mailto', 'viber', 'whatsapp', 'tg', 'fb-messenger'];
-        $scheme = parse_url($url, PHP_URL_SCHEME);
+        $scheme = wp_parse_url($url, PHP_URL_SCHEME);
         return in_array($scheme, $allowed_schemes);
     }
     
@@ -966,9 +1020,9 @@ class AjaxHandler {
             wp_die('Unauthorized');
         }
         
-        $cdn_name = sanitize_text_field($_POST['cdn_name']);
-        $cdn_type = sanitize_text_field($_POST['cdn_type']);
-        $cdn_url = esc_url_raw($_POST['cdn_url']);
+        $cdn_name = isset($_POST['cdn_name']) ? sanitize_text_field(wp_unslash($_POST['cdn_name'])) : '';
+        $cdn_type = isset($_POST['cdn_type']) ? sanitize_text_field(wp_unslash($_POST['cdn_type'])) : '';
+        $cdn_url = isset($_POST['cdn_url']) ? esc_url_raw(wp_unslash($_POST['cdn_url'])) : '';
         
         if (empty($cdn_name) || empty($cdn_type) || empty($cdn_url)) {
             wp_send_json_error('All fields are required');
@@ -999,8 +1053,8 @@ class AjaxHandler {
             wp_die('Unauthorized');
         }
         
-        $cdn_id = sanitize_text_field($_POST['cdn_id']);
-        $status = intval($_POST['status']);
+        $cdn_id = isset($_POST['cdn_id']) ? sanitize_text_field(wp_unslash($_POST['cdn_id'])) : '';
+        $status = isset($_POST['status']) ? intval($_POST['status']) : 0;
         
         $social_settings = SocialSettings::get_instance();
         $cdn_settings_name = 'scfs_cdn_settings';
@@ -1024,8 +1078,8 @@ class AjaxHandler {
             wp_die('Unauthorized');
         }
         
-        $id = sanitize_text_field($_POST['id']);
-        $order = intval($_POST['order']);
+        $id = isset($_POST['id']) ? sanitize_text_field(wp_unslash($_POST['id'])) : '';
+        $order = isset($_POST['order']) ? intval($_POST['order']) : 0;
         
         $social_buttons = SocialButtons::get_instance();
         if ($social_buttons->update($id, ['order' => $order])) {

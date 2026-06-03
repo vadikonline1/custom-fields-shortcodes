@@ -38,37 +38,31 @@ class Frontend {
             true
         );
         
-        
         // Verificare forțată pentru iconițe
         add_action('wp_footer', function() {
-            echo '<script>
+            ?>
+            <script>
             document.addEventListener("DOMContentLoaded", function() {
-                // Verifică iconițele după 1 secundă
                 setTimeout(function() {
                     var icons = document.querySelectorAll(".sfb-item i, .scfs-inline-button i, .scfs-single-button i");
                     
                     icons.forEach(function(icon, index) {
-                        // Forțează vizibilitatea
                         icon.style.opacity = "1";
                         icon.style.visibility = "visible";
                         icon.style.display = "inline-flex";
                         
-                        // Verifică dacă Font Awesome este încărcat
                         var style = window.getComputedStyle(icon);
                         var fontFamily = style.fontFamily;
                         
                         if (fontFamily.indexOf("Font Awesome") === -1 && 
                             fontFamily.indexOf("FontAwesome") === -1) {
-                            console.warn("SCFS: Icon #" + index + " doesnt have Font Awesome font");
+                            console.warn("SCFS: Icon #" + index + " doesn't have Font Awesome font");
                             
-                            // Încearcă să re-aplici font-ul
-                            icon.style.fontFamily = \'"Font Awesome 6 Free", "Font Awesome 6 Brands", sans-serif\';
+                            icon.style.fontFamily = '"Font Awesome 6 Free", "Font Awesome 6 Brands", sans-serif';
                             
-                            // Dacă tot nu merge, aplică fallback
                             setTimeout(function() {
                                 var newStyle = window.getComputedStyle(icon);
                                 if (newStyle.fontFamily.indexOf("Font Awesome") === -1) {
-                                    // Aplică fallback emoji
                                     var iconClass = icon.className;
                                     var emoji = "🔗";
                                     
@@ -86,12 +80,11 @@ class Frontend {
                         }
                     });
                     
-                    // Log pentru debugging
                     console.log("SCFS: Checked " + icons.length + " icons");
-                    
                 }, 1000);
             });
-            </script>';
+            </script>
+            <?php
         });
     }
     
@@ -127,65 +120,65 @@ class Frontend {
         return $this->render_inline($inline_buttons, $settings);
     }
 
-private function get_button_colors($settings) {
-    if ($settings['use_theme_colors']) {
+    private function get_button_colors($settings) {
+        if ($settings['use_theme_colors']) {
+            return [
+                'primary' => 'var(--primary, #0073aa)',
+                'secondary' => 'var(--secondary, #005a87)'
+            ];
+        }
+        
         return [
-            'primary' => 'var(--primary, #0073aa)',
-            'secondary' => 'var(--secondary, #005a87)'
+            'primary' => $settings['button_primary_color'],
+            'secondary' => $settings['button_secondary_color']
         ];
     }
-    
-    return [
-        'primary' => $settings['button_primary_color'],
-        'secondary' => $settings['button_secondary_color']
-    ];
-}
 
-private function render_floating($buttons, $settings) {
-    // Verifică dacă plugin-ul este activ
-    if (!Activator::is_active()) {
-        return '';
-    }
-    
-    $floating_buttons = array_filter($buttons, function($btn) {
-        return isset($btn['floating']) && $btn['floating'];
-    });
-    
-    if (empty($floating_buttons)) return '';
-    
-    usort($floating_buttons, function($a, $b) {
-        $order_a = $a['order'] ?? 9999;
-        $order_b = $b['order'] ?? 9999;
-        return $order_a <=> $order_b;
-    });
-    
-    $position_class = 'sfb-position-' . $settings['position'];
-    $animation_class = 'sfb-animation-' . $settings['animation'];
-    $mobile_class = $settings['mobile_enabled'] ? 'sfb-mobile-enabled' : 'sfb-mobile-disabled';
-    $show_names = $settings['show_names'];
-    $show_custom_message = $settings['show_custom_message'];
-    $transparent_icons = !$show_names && $settings['transparent_icons'];
-	// Setări border
-	$container_border_class = $settings['container_border'] ? 'sfb-has-border' : '';
-	$border_color = $settings['container_border_color'];
-	$border_bg = $settings['container_border_bg'];
-    
-    // Setări culori
-    if ($settings['use_theme_colors']) {
-        $primary_color = 'var(--primary, #0073aa)';
-        $secondary_color = 'var(--secondary, #005a87)';
-    } else {
-        $primary_color = $settings['primary_color'];
-        $secondary_color = $settings['secondary_color'];
-    }
-    
-    ob_start(); ?>
-    
-    <div class="sfb-container <?php echo esc_attr("$position_class $animation_class $mobile_class $container_border_class"); ?> <?php echo $show_names ? 'sfb-show-names' : 'sfb-icons-only'; ?> <?php echo $transparent_icons ? 'sfb-transparent-icons' : ''; ?>"
-     style="--primary: <?php echo esc_attr($primary_color); ?>; 
-            --secondary: <?php echo esc_attr($secondary_color); ?>;
-            --sfb-container-border-color: <?php echo esc_attr($border_color); ?>;
-            --sfb-container-border-bg: <?php echo esc_attr($border_bg); ?>;">
+    private function render_floating($buttons, $settings) {
+        // Verifică dacă plugin-ul este activ
+        if (!Activator::is_active()) {
+            return '';
+        }
+        
+        $floating_buttons = array_filter($buttons, function($btn) {
+            return isset($btn['floating']) && $btn['floating'];
+        });
+        
+        if (empty($floating_buttons)) return '';
+        
+        usort($floating_buttons, function($a, $b) {
+            $order_a = $a['order'] ?? 9999;
+            $order_b = $b['order'] ?? 9999;
+            return $order_a <=> $order_b;
+        });
+        
+        $position_class = 'sfb-position-' . $settings['position'];
+        $animation_class = 'sfb-animation-' . $settings['animation'];
+        $mobile_class = $settings['mobile_enabled'] ? 'sfb-mobile-enabled' : 'sfb-mobile-disabled';
+        $show_names = $settings['show_names'];
+        $show_custom_message = $settings['show_custom_message'];
+        $transparent_icons = !$show_names && $settings['transparent_icons'];
+        // Setări border
+        $container_border_class = $settings['container_border'] ? 'sfb-has-border' : '';
+        $border_color = $settings['container_border_color'];
+        $border_bg = $settings['container_border_bg'];
+        
+        // Setări culori
+        if ($settings['use_theme_colors']) {
+            $primary_color = 'var(--primary, #0073aa)';
+            $secondary_color = 'var(--secondary, #005a87)';
+        } else {
+            $primary_color = $settings['primary_color'];
+            $secondary_color = $settings['secondary_color'];
+        }
+        
+        ob_start(); ?>
+        
+        <div class="sfb-container <?php echo esc_attr("$position_class $animation_class $mobile_class $container_border_class"); ?> <?php echo $show_names ? 'sfb-show-names' : 'sfb-icons-only'; ?> <?php echo $transparent_icons ? 'sfb-transparent-icons' : ''; ?>"
+             style="--primary: <?php echo esc_attr($primary_color); ?>; 
+                    --secondary: <?php echo esc_attr($secondary_color); ?>;
+                    --sfb-container-border-color: <?php echo esc_attr($border_color); ?>;
+                    --sfb-container-border-bg: <?php echo esc_attr($border_bg); ?>;">
         
         <?php if($show_custom_message): ?>
         <div class="sfb-custom-message" 
@@ -197,7 +190,7 @@ private function render_floating($buttons, $settings) {
         
         <!-- CTA Button folosește primary color -->
         <div class="sfb-cta" style="background-color: <?php echo esc_attr($primary_color); ?>;" aria-label="Open social menu" role="button" tabindex="0">
-            <span class="sfb-cta-icon"><?php echo $settings['button_icon']; ?></span>
+            <span class="sfb-cta-icon"><?php echo esc_html($settings['button_icon']); ?></span>
         </div>
         
         <div class="sfb-popup" role="menu" aria-label="Social media links">
@@ -208,11 +201,20 @@ private function render_floating($buttons, $settings) {
                 ?>
                 
                 <!-- Floating buttons folosesc secondary color -->
-                <a href="<?php echo esc_attr($href); ?>" class="sfb-item" 
-                   <?php echo $this->get_button_target($button); ?> 
+                <a href="<?php echo esc_url($href); ?>" class="sfb-item" 
+                   <?php echo wp_kses_post($this->get_button_target($button)); ?> 
                    role="menuitem"
-                   style="--item-index: <?php echo $index; ?>; <?php echo !$transparent_icons ? 'background-color: ' . esc_attr($secondary_color) . ';' : ''; ?> <?php echo $transparent_icons ? 'border-color: ' . esc_attr($secondary_color) . ';' : ''; ?> color: <?php echo $transparent_icons ? esc_attr($secondary_color) : '#ffffff'; ?>;">
-                    <?php echo $icon; ?>
+                   style="--item-index: <?php echo esc_attr($index); ?>; <?php echo !$transparent_icons ? 'background-color: ' . esc_attr($secondary_color) . ';' : ''; ?> <?php echo $transparent_icons ? 'border-color: ' . esc_attr($secondary_color) . ';' : ''; ?> color: <?php echo $transparent_icons ? esc_attr($secondary_color) : '#ffffff'; ?>;">
+                    <?php 
+                    // Allow HTML for icons (Font Awesome, SVG, etc.)
+                    echo wp_kses($icon, array(
+                        'i' => array('class' => array(), 'style' => array(), 'aria-hidden' => array()),
+                        'span' => array('class' => array(), 'style' => array()),
+                        'svg' => array('xmlns' => array(), 'viewBox' => array(), 'width' => array(), 'height' => array(), 'fill' => array()),
+                        'path' => array('d' => array(), 'fill' => array()),
+                        'img' => array('src' => array(), 'alt' => array(), 'width' => array(), 'height' => array()),
+                    )); 
+                    ?>
                     <?php if($show_names): ?>
                         <span class="sfb-item-label"><?php echo esc_html($button['label'] ?? 'Button'); ?></span>
                     <?php endif; ?>
@@ -223,45 +225,45 @@ private function render_floating($buttons, $settings) {
     
     <?php
     return ob_get_clean();
-}
+    }
 
-private function get_button_icon($button) {
-    // Verificăm icon_type din baza de date
-    if (isset($button['icon_type'])) {
-        switch ($button['icon_type']) {
-            case 'class': // ATENȚIE: În DB este 'class', nu 'fa'
-                // Iconiță Font Awesome cu clasă
-                $icon_class = $button['icon'] ?? 'fas fa-link';
-                return '<i class="' . esc_attr($icon_class) . '"></i>';
-                
-            case 'html':
-                // Iconiță HTML directă
-                return $button['icon'] ?? '<i class="fas fa-link"></i>';
-                
-            case 'custom':
-                // Iconiță custom
-                return $button['custom_icon'] ?? '<i class="fas fa-link"></i>';
-                
-            default:
-                // Fallback
-                return '<i class="fas fa-link"></i>';
-        }
-    } else {
-        // Verificăm dacă există icon în vechiul format
-        if (isset($button['icon'])) {
-            // Verificăm dacă este o clasă Font Awesome
-            if (strpos($button['icon'], 'fa-') !== false) {
-                return '<i class="' . esc_attr($button['icon']) . '"></i>';
-            } else {
-                // Presupunem că este HTML
-                return $button['icon'];
+    private function get_button_icon($button) {
+        // Verificăm icon_type din baza de date
+        if (isset($button['icon_type'])) {
+            switch ($button['icon_type']) {
+                case 'class':
+                    // Iconiță Font Awesome cu clasă
+                    $icon_class = $button['icon'] ?? 'fas fa-link';
+                    return '<i class="' . esc_attr($icon_class) . '"></i>';
+                    
+                case 'html':
+                    // Iconiță HTML directă
+                    return $button['icon'] ?? '<i class="fas fa-link"></i>';
+                    
+                case 'custom':
+                    // Iconiță custom
+                    return $button['custom_icon'] ?? '<i class="fas fa-link"></i>';
+                    
+                default:
+                    // Fallback
+                    return '<i class="fas fa-link"></i>';
             }
         } else {
-            // Fallback complet
-            return '<i class="fas fa-link"></i>';
+            // Verificăm dacă există icon în vechiul format
+            if (isset($button['icon'])) {
+                // Verificăm dacă este o clasă Font Awesome
+                if (strpos($button['icon'], 'fa-') !== false) {
+                    return '<i class="' . esc_attr($button['icon']) . '"></i>';
+                } else {
+                    // Presupunem că este HTML
+                    return $button['icon'];
+                }
+            } else {
+                // Fallback complet
+                return '<i class="fas fa-link"></i>';
+            }
         }
     }
-}
     
     private function render_inline($buttons, $settings) {
         if (empty($buttons)) return '';
@@ -279,9 +281,15 @@ private function get_button_icon($button) {
                 $icon = $this->get_button_icon($button);
                 ?>
                 
-                <a href="<?php echo esc_attr($href); ?>" class="scfs-inline-button <?php echo $is_transparent ? 'scfs-transparent' : ''; ?>" 
-                   <?php echo $this->get_button_target($button); ?>>
-                    <?php echo $icon; ?>
+                <a href="<?php echo esc_url($href); ?>" class="scfs-inline-button <?php echo $is_transparent ? 'scfs-transparent' : ''; ?>" 
+                   <?php echo wp_kses_post($this->get_button_target($button)); ?>>
+                    <?php echo wp_kses($icon, array(
+                        'i' => array('class' => array(), 'style' => array(), 'aria-hidden' => array()),
+                        'span' => array('class' => array(), 'style' => array()),
+                        'svg' => array('xmlns' => array(), 'viewBox' => array(), 'width' => array(), 'height' => array(), 'fill' => array()),
+                        'path' => array('d' => array(), 'fill' => array()),
+                        'img' => array('src' => array(), 'alt' => array(), 'width' => array(), 'height' => array()),
+                    )); ?>
                     <?php if($show_names): ?>
                         <span><?php echo esc_html($button['label'] ?? 'Button'); ?></span>
                     <?php endif; ?>
@@ -301,10 +309,16 @@ private function get_button_icon($button) {
         
         return sprintf(
             '<a href="%s" class="scfs-single-button %s" %s>%s%s</a>',
-            esc_attr($href),
+            esc_url($href),
             $is_transparent ? 'scfs-transparent' : '',
             $this->get_button_target($button),
-            $icon,
+            wp_kses($icon, array(
+                'i' => array('class' => array(), 'style' => array(), 'aria-hidden' => array()),
+                'span' => array('class' => array(), 'style' => array()),
+                'svg' => array('xmlns' => array(), 'viewBox' => array(), 'width' => array(), 'height' => array(), 'fill' => array()),
+                'path' => array('d' => array(), 'fill' => array()),
+                'img' => array('src' => array(), 'alt' => array(), 'width' => array(), 'height' => array()),
+            )),
             $show_names ? '<span>' . esc_html($button['label'] ?? 'Button') . '</span>' : ''
         );
     }
@@ -321,9 +335,9 @@ private function get_button_icon($button) {
         $url = $button['url'] ?? '#';
         
         if ($type === 'url') {
-            $scheme = parse_url($url, PHP_URL_SCHEME);
-            if (!in_array($scheme, ['tel', 'mailto', 'viber', 'whatsapp', 'tg', 'fb-messenger'])) {
-                return 'target="_blank" rel="noopener"';
+            $scheme = wp_parse_url($url, PHP_URL_SCHEME);
+            if (!in_array($scheme, ['tel', 'mailto', 'viber', 'whatsapp', 'tg', 'fb-messenger'], true)) {
+                return 'target="_blank" rel="noopener noreferrer"';
             }
         }
         return '';
@@ -354,6 +368,6 @@ private function get_button_icon($button) {
         }
         
         // Output floating buttons
-        echo $this->render_floating($floating_buttons, $settings);
+        echo wp_kses_post($this->render_floating($floating_buttons, $settings));
     }
 }

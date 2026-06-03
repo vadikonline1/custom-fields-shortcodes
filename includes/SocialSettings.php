@@ -1,6 +1,6 @@
 <?php
 namespace SCFS;
-
+if ( ! defined( 'ABSPATH' ) ) exit;
 class SocialSettings {
     private static $instance = null;
     private $settings_name = 'scfs_social_settings';
@@ -247,7 +247,7 @@ class SocialSettings {
                     $style = wp_styles()->registered[$handle] ?? null;
                     if ($style && (strpos($handle, 'scfs') !== false || 
                                    strpos($handle, 'font') !== false)) {
-                        $loaded_styles[] = $handle . ': ' . ($style->src ?? 'inline');
+                        $loaded_styles[] = esc_html($handle . ': ' . ($style->src ?? 'inline'));
                     }
                 }
                 
@@ -255,13 +255,13 @@ class SocialSettings {
                 foreach (wp_scripts()->done as $handle) {
                     $script = wp_scripts()->registered[$handle] ?? null;
                     if ($script && strpos($handle, 'scfs') !== false) {
-                        $loaded_scripts[] = $handle . ': ' . ($script->src ?? 'inline');
+                        $loaded_scripts[] = esc_html($handle . ': ' . ($script->src ?? 'inline'));
                     }
                 }
                 
-                echo 'Loaded SCFS Styles: ' . implode(', ', $loaded_styles);
+                echo 'Loaded SCFS Styles: ' . esc_html(implode(', ', $loaded_styles));
                 echo ' | ';
-                echo 'Loaded SCFS Scripts: ' . implode(', ', $loaded_scripts);
+                echo 'Loaded SCFS Scripts: ' . esc_html(implode(', ', $loaded_scripts));
                 
                 echo ' -->';
             }, 999);
@@ -365,7 +365,7 @@ class SocialSettings {
             return;
         }
         
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['scfs_save_settings'])) {
+        if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['scfs_save_settings'])) {
             check_admin_referer('scfs_save_settings');
             
             // Activează/dezactivează plugin-ul
@@ -379,27 +379,27 @@ class SocialSettings {
             update_option('scfs_plugin_status', $plugin_status);
             
             $settings = [
-                'position' => sanitize_text_field($_POST['position']),
-                'button_icon' => sanitize_text_field($_POST['button_icon']),
-                'animation' => sanitize_text_field($_POST['animation']),
+                'position' => isset($_POST['position']) ? sanitize_text_field(wp_unslash($_POST['position'])) : 'right',
+                'button_icon' => isset($_POST['button_icon']) ? sanitize_text_field(wp_unslash($_POST['button_icon'])) : '☰',
+                'animation' => isset($_POST['animation']) ? sanitize_text_field(wp_unslash($_POST['animation'])) : 'slide',
                 'mobile_enabled' => isset($_POST['mobile_enabled']) ? 1 : 0,
                 'show_names' => isset($_POST['show_names']) ? 1 : 0,
                 'transparent_icons' => isset($_POST['transparent_icons']) ? 1 : 0,
-                'custom_message' => sanitize_text_field($_POST['custom_message']),
+                'custom_message' => isset($_POST['custom_message']) ? sanitize_text_field(wp_unslash($_POST['custom_message'])) : '',
                 'show_custom_message' => isset($_POST['show_custom_message']) ? 1 : 0,
                 'show_shortcut_names' => isset($_POST['show_shortcut_names']) ? 1 : 0,
                 'container_border' => isset($_POST['container_border']) ? 1 : 0,
-                'container_border_color' => sanitize_text_field($_POST['container_border_color']),
-                'container_border_bg' => sanitize_text_field($_POST['container_border_bg']),
-                'primary_color' => sanitize_text_field($_POST['primary_color']),
-                'secondary_color' => sanitize_text_field($_POST['secondary_color']),
+                'container_border_color' => isset($_POST['container_border_color']) ? sanitize_text_field(wp_unslash($_POST['container_border_color'])) : '#ffffff',
+                'container_border_bg' => isset($_POST['container_border_bg']) ? sanitize_text_field(wp_unslash($_POST['container_border_bg'])) : 'rgba(255, 255, 255, 0.1)',
+                'primary_color' => isset($_POST['primary_color']) ? sanitize_text_field(wp_unslash($_POST['primary_color'])) : '#0073aa',
+                'secondary_color' => isset($_POST['secondary_color']) ? sanitize_text_field(wp_unslash($_POST['secondary_color'])) : '#005a87',
                 'use_theme_colors' => isset($_POST['use_theme_colors']) ? 1 : 0
             ];
             
             // Salvează în wp_options
             update_option($this->settings_name, $settings);
             
-            wp_redirect(admin_url('admin.php?page=scfs-social-settings&message=' . urlencode('Settings saved successfully!')));
+            wp_safe_redirect(admin_url('admin.php?page=scfs-social-settings&message=' . urlencode('Settings saved successfully!')));
             exit;
         }
     }
@@ -409,19 +409,19 @@ class SocialSettings {
             return;
         }
         
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
             if (isset($_POST['scfs_add_cdn'])) {
                 check_admin_referer('scfs_add_cdn');
                 
-                $cdn_name = sanitize_text_field($_POST['cdn_name']);
-                $cdn_type = sanitize_text_field($_POST['cdn_type']);
-                $cdn_url = esc_url_raw($_POST['cdn_url']);
+                $cdn_name = isset($_POST['cdn_name']) ? sanitize_text_field(wp_unslash($_POST['cdn_name'])) : '';
+                $cdn_type = isset($_POST['cdn_type']) ? sanitize_text_field(wp_unslash($_POST['cdn_type'])) : '';
+                $cdn_url = isset($_POST['cdn_url']) ? esc_url_raw(wp_unslash($_POST['cdn_url'])) : '';
                 
                 if (!empty($cdn_name) && !empty($cdn_type) && !empty($cdn_url)) {
                     $cdn_settings_key = $this->cdn_settings_name . '_custom';
                     $cdns = get_option($cdn_settings_key, []);
                     
-                    $cdn_id = AjaxHandler::slugify($cdn_name) . '_' . uniqid();
+                    $cdn_id = $this->slugify($cdn_name) . '_' . uniqid();
                     $cdns[$cdn_id] = [
                         'name' => $cdn_name,
                         'type' => $cdn_type,
@@ -431,16 +431,16 @@ class SocialSettings {
                     
                     update_option($cdn_settings_key, $cdns);
                     
-                    wp_redirect(admin_url('admin.php?page=scfs-social-cdn&message=' . urlencode('CDN added successfully!')));
+                    wp_safe_redirect(admin_url('admin.php?page=scfs-social-cdn&message=' . urlencode('CDN added successfully!')));
                     exit;
                 }
             }
             
             if (isset($_POST['scfs_save_predefined_cdn'])) {
-                $cdn_id = sanitize_text_field($_POST['cdn_id']);
+                $cdn_id = isset($_POST['cdn_id']) ? sanitize_text_field(wp_unslash($_POST['cdn_id'])) : '';
                 check_admin_referer('save_cdn_' . $cdn_id);
                 
-                $cdn_url = esc_url_raw($_POST['cdn_url']);
+                $cdn_url = isset($_POST['cdn_url']) ? esc_url_raw(wp_unslash($_POST['cdn_url'])) : '';
                 $cdn_settings_key = $this->cdn_settings_name . '_predefined';
                 $settings = get_option($cdn_settings_key, []);
                 
@@ -452,19 +452,83 @@ class SocialSettings {
                 
                 update_option($cdn_settings_key, $settings);
                 
-                wp_redirect(admin_url('admin.php?page=scfs-social-cdn&message=' . urlencode('CDN settings updated!')));
+                wp_safe_redirect(admin_url('admin.php?page=scfs-social-cdn&message=' . urlencode('CDN settings updated!')));
+                exit;
+            }
+        }
+        
+        // Handle GET actions for CDN management
+        if (isset($_GET['disable_cdn']) && isset($_GET['_wpnonce'])) {
+            $cdn_id = sanitize_text_field(wp_unslash($_GET['disable_cdn']));
+            $nonce = sanitize_text_field(wp_unslash($_GET['_wpnonce']));
+            if (wp_verify_nonce($nonce, 'disable_cdn_' . $cdn_id)) {
+                $cdn_settings_key = $this->cdn_settings_name . '_predefined';
+                $settings = get_option($cdn_settings_key, []);
+                unset($settings[$cdn_id]);
+                update_option($cdn_settings_key, $settings);
+                wp_safe_redirect(admin_url('admin.php?page=scfs-social-cdn&message=' . urlencode('CDN disabled!')));
+                exit;
+            }
+        }
+        
+        if (isset($_GET['toggle_cdn']) && isset($_GET['_wpnonce'])) {
+            $cdn_id = sanitize_text_field(wp_unslash($_GET['toggle_cdn']));
+            $nonce = sanitize_text_field(wp_unslash($_GET['_wpnonce']));
+            if (wp_verify_nonce($nonce, 'toggle_cdn_' . $cdn_id)) {
+                $cdn_settings_key = $this->cdn_settings_name . '_custom';
+                $cdns = get_option($cdn_settings_key, []);
+                if (isset($cdns[$cdn_id])) {
+                    $cdns[$cdn_id]['active'] = !$cdns[$cdn_id]['active'];
+                    update_option($cdn_settings_key, $cdns);
+                }
+                wp_safe_redirect(admin_url('admin.php?page=scfs-social-cdn&message=' . urlencode('CDN toggled!')));
+                exit;
+            }
+        }
+        
+        if (isset($_GET['delete_cdn']) && isset($_GET['_wpnonce'])) {
+            $cdn_id = sanitize_text_field(wp_unslash($_GET['delete_cdn']));
+            $nonce = sanitize_text_field(wp_unslash($_GET['_wpnonce']));
+            if (wp_verify_nonce($nonce, 'delete_cdn_' . $cdn_id)) {
+                $cdn_settings_key = $this->cdn_settings_name . '_custom';
+                $cdns = get_option($cdn_settings_key, []);
+                if (isset($cdns[$cdn_id])) {
+                    unset($cdns[$cdn_id]);
+                    update_option($cdn_settings_key, $cdns);
+                }
+                wp_safe_redirect(admin_url('admin.php?page=scfs-social-cdn&message=' . urlencode('CDN deleted!')));
                 exit;
             }
         }
     }
     
+    private function slugify($text) {
+        // Replace non letter or digits by -
+        $text = preg_replace('~[^\pL\d]+~u', '-', $text);
+        // Transliterate
+        $text = iconv('utf-8', 'us-ascii//TRANSLIT', $text);
+        // Remove unwanted characters
+        $text = preg_replace('~[^-\w]+~', '', $text);
+        // Trim
+        $text = trim($text, '-');
+        // Remove duplicate -
+        $text = preg_replace('~-+~', '-', $text);
+        // Lowercase
+        $text = strtolower($text);
+        
+        if (empty($text)) {
+            return 'cdn';
+        }
+        
+        return $text;
+    }
     
     public function settings_page() {
         if (!isset($_GET['page']) || $_GET['page'] !== 'scfs-social-settings') {
             return;
         }
         
-        $message = $_GET['message'] ?? '';
+        $message = isset($_GET['message']) ? sanitize_text_field(wp_unslash($_GET['message'])) : '';
         
         // Obține setările cu valori default complete
         $settings = $this->get_settings();
@@ -474,7 +538,7 @@ class SocialSettings {
         
         // Breadcrumb
         echo '<nav class="scfs-breadcrumb">';
-        echo '<a href="' . admin_url('admin.php?page=scfs-oop') . '">Dashboard</a> &raquo; ';
+        echo '<a href="' . esc_url(admin_url('admin.php?page=scfs-oop')) . '">Dashboard</a> &raquo; ';
         echo '<span>Social Settings</span>';
         echo '</nav>';
         
@@ -521,7 +585,7 @@ class SocialSettings {
                              </td>
                          </tr>
                         
-                        <tr class="color-row primary-row" style="<?php echo $settings['use_theme_colors'] ? 'display: none;' : ''; ?>">
+                        <tr class="color-row primary-row" style="<?php echo esc_attr($settings['use_theme_colors'] ? 'display: none;' : ''); ?>">
                             <th scope="row"><label for="primary_color">Main Button Color (--primary)</label></th>
                             <td>
                                 <input type="color" name="primary_color" id="primary_color" value="<?php echo esc_attr($settings['primary_color']); ?>">
@@ -529,7 +593,7 @@ class SocialSettings {
                             </td>
                         </tr>
                         
-                        <tr class="color-row secondary-row" style="<?php echo $settings['use_theme_colors'] ? 'display: none;' : ''; ?>">
+                        <tr class="color-row secondary-row" style="<?php echo esc_attr($settings['use_theme_colors'] ? 'display: none;' : ''); ?>">
                             <th scope="row"><label for="secondary_color">Floating Buttons Color (--secondary)</label></th>
                             <td>
                                 <input type="color" name="secondary_color" id="secondary_color" value="<?php echo esc_attr($settings['secondary_color']); ?>">
@@ -589,7 +653,7 @@ class SocialSettings {
 				            </td>
 				        </tr>
 				        
-				        <tr class="border-row" style="<?php echo $settings['container_border'] ? '' : 'display: none;'; ?>">
+				        <tr class="border-row" style="<?php echo esc_attr($settings['container_border'] ? '' : 'display: none;'); ?>">
 				            <th scope="row"><label for="container_border_color">Border Color</label></th>
 				            <td>
 				                <input type="color" name="container_border_color" id="container_border_color" value="<?php echo esc_attr($settings['container_border_color']); ?>">
@@ -597,13 +661,13 @@ class SocialSettings {
 				            </td>
 				        </tr>
 				        
-				        <tr class="border-row" style="<?php echo $settings['container_border'] ? '' : 'display: none;'; ?>">
+				        <tr class="border-row" style="<?php echo esc_attr($settings['container_border'] ? '' : 'display: none;'); ?>">
 				            <th scope="row"><label for="container_border_bg">Background Color</label></th>
 				            <td>
 				                <input type="color" name="container_border_bg" id="container_border_bg" value="<?php echo esc_attr($settings['container_border_bg']); ?>">
 				                <p class="description">Background color behind the button (with opacity)</p>
 				                <p class="description">Tip: Use colors like #ffffff with opacity or rgba values</p>
-				            <td>
+				            </td>
 				        </tr>
 				    </table>
 				</div>
@@ -692,7 +756,7 @@ class SocialSettings {
                             </td>
                         </tr>
                         
-                        <tr id="transparent_icons_row" style="<?php echo $settings['show_names'] ? 'display: none;' : ''; ?>">
+                        <tr id="transparent_icons_row" style="<?php echo esc_attr($settings['show_names'] ? 'display: none;' : ''); ?>">
                             <th scope="row"><label for="transparent_icons">Transparent Icons</label></th>
                             <td>
                                 <label>
@@ -731,7 +795,7 @@ class SocialSettings {
                 ?>
                 
                 <div class="sfb-preview-main" style="background-color: <?php echo esc_attr($primary_color_display); ?>;">
-                    <span class="sfb-preview-icon"><?php echo $settings['button_icon']; ?></span>
+                    <span class="sfb-preview-icon"><?php echo wp_kses_post($settings['button_icon']); ?></span>
                 </div>
                 <p class="preview-label">Main Button (--primary)</p>
                 
@@ -750,7 +814,7 @@ class SocialSettings {
                         <p class="preview-label" style="margin-top: 5px;">Floating Button (--secondary)</p>
                     <?php else: ?>
                         <div class="sfb-preview-item icons-only <?php echo ($settings['transparent_icons'] && !$settings['show_names']) ? 'transparent' : ''; ?>" 
-                             style="background-color: <?php echo $settings['transparent_icons'] ? 'transparent' : esc_attr($secondary_color_display); ?>; <?php echo $settings['transparent_icons'] ? 'border-color: ' . esc_attr($secondary_color_display) . ';' : ''; ?>">
+                             style="background-color: <?php echo esc_attr($settings['transparent_icons'] ? 'transparent' : $secondary_color_display); ?>; <?php echo esc_attr($settings['transparent_icons'] ? 'border-color: ' . $secondary_color_display . ';' : ''); ?>">
                             <span class="sfb-preview-icon">🔗</span>
                         </div>
                         <p class="preview-label" style="margin-top: 5px;">Floating Button (--secondary)</p>
@@ -762,8 +826,8 @@ class SocialSettings {
                     <?php if($settings['use_theme_colors']): ?>
                     Colors: <strong>Using theme colors</strong>
                     <?php else: ?>
-                    Primary: <strong style="color: <?php echo esc_attr($primary_color_display); ?>;"><?php echo esc_attr($primary_color_display); ?></strong> | 
-                    Secondary: <strong style="color: <?php echo esc_attr($secondary_color_display); ?>;"><?php echo esc_attr($secondary_color_display); ?></strong>
+                    Primary: <strong style="color: <?php echo esc_attr($primary_color_display); ?>;"><?php echo esc_html($primary_color_display); ?></strong> | 
+                    Secondary: <strong style="color: <?php echo esc_attr($secondary_color_display); ?>;"><?php echo esc_html($secondary_color_display); ?></strong>
                     <?php endif; ?>
                 </p>
             </div>
@@ -950,7 +1014,7 @@ class SocialSettings {
             return;
         }
         
-        $message = $_GET['message'] ?? '';
+        $message = isset($_GET['message']) ? sanitize_text_field(wp_unslash($_GET['message'])) : '';
         $predefined_cdns = $this->get_predefined_cdns();
         
         $cdn_custom_key = $this->cdn_settings_name . '_custom';
@@ -963,7 +1027,7 @@ class SocialSettings {
         
         // Breadcrumb
         echo '<nav class="scfs-breadcrumb">';
-        echo '<a href="' . admin_url('admin.php?page=scfs-oop') . '">Dashboard</a> &raquo; ';
+        echo '<a href="' . esc_url(admin_url('admin.php?page=scfs-oop')) . '">Dashboard</a> &raquo; ';
         echo '<span>CDN Libraries</span>';
         echo '</nav>';
         
@@ -976,7 +1040,7 @@ class SocialSettings {
         
         <?php if (isset($this->use_database) && $this->use_database): ?>
         <div class="notice notice-info">
-            <p>📊 Datele sunt stocate în baza de date separată (tabela <?php echo $GLOBALS['wpdb']->prefix; ?>scfs)</p>
+            <p>📊 Datele sunt stocate în baza de date separată (tabela <?php echo esc_html($GLOBALS['wpdb']->prefix . 'scfs'); ?>)</p>
         </div>
         <?php endif; ?>
         
@@ -1032,10 +1096,10 @@ class SocialSettings {
                         $is_active = !empty($predefined_settings[$cdn_id]);
                         $current_url = $predefined_settings[$cdn_id] ?? '';
                     ?>
-                        <div class="sfb-cdn-card <?php echo $is_active ? 'active' : 'inactive'; ?>">
+                        <div class="sfb-cdn-card <?php echo esc_attr($is_active ? 'active' : 'inactive'); ?>">
                             <div class="sfb-cdn-header">
                                 <h4><?php echo esc_html($cdn['name']); ?></h4>
-                                <span class="sfb-cdn-type"><?php echo strtoupper($cdn['type']); ?></span>
+                                <span class="sfb-cdn-type"><?php echo esc_html(strtoupper($cdn['type'])); ?></span>
                                 <span class="sfb-cdn-status"><?php echo $is_active ? '✅ Active' : '❌ Inactive'; ?></span>
                             </div>
                             <div class="sfb-cdn-body">
@@ -1057,7 +1121,7 @@ class SocialSettings {
                                             <?php echo $is_active ? 'Update' : 'Activate'; ?>
                                         </button>
                                         <?php if($is_active): ?>
-                                            <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=scfs-social-cdn&disable_cdn=' . $cdn_id), 'disable_cdn_' . $cdn_id); ?>" class="button button-secondary">
+                                            <a href="<?php echo esc_url(wp_nonce_url(admin_url('admin.php?page=scfs-social-cdn&disable_cdn=' . $cdn_id), 'disable_cdn_' . $cdn_id)); ?>" class="button button-secondary">
                                                 Disable
                                             </a>
                                         <?php endif; ?>
@@ -1095,27 +1159,27 @@ class SocialSettings {
                                         <td><?php echo esc_html($cdn['name']); ?></td>
                                         <td>
                                             <span class="sfb-cdn-type-badge sfb-type-<?php echo esc_attr($cdn['type']); ?>">
-                                                <?php echo strtoupper(esc_html($cdn['type'])); ?>
+                                                <?php echo esc_html(strtoupper($cdn['type'])); ?>
                                             </span>
-                                        </td>
+                                         </td>
                                         <td>
                                             <code title="<?php echo esc_attr($cdn['url']); ?>">
                                                 <?php echo esc_html(strlen($cdn['url']) > 50 ? substr($cdn['url'], 0, 47) . '...' : $cdn['url']); ?>
                                             </code>
-                                        </td>
+                                         </td>
                                         <td>
-                                            <span class="sfb-status-badge <?php echo $cdn['active'] ? 'active' : 'inactive'; ?>">
+                                            <span class="sfb-status-badge <?php echo esc_attr($cdn['active'] ? 'active' : 'inactive'); ?>">
                                                 <?php echo $cdn['active'] ? 'Active' : 'Inactive'; ?>
                                             </span>
-                                        </td>
+                                         </td>
                                         <td>
-                                            <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=scfs-social-cdn&toggle_cdn=' . $cdn_id), 'toggle_cdn_' . $cdn_id); ?>" class="button button-small">
+                                            <a href="<?php echo esc_url(wp_nonce_url(admin_url('admin.php?page=scfs-social-cdn&toggle_cdn=' . $cdn_id), 'toggle_cdn_' . $cdn_id)); ?>" class="button button-small">
                                                 <?php echo $cdn['active'] ? 'Deactivate' : 'Activate'; ?>
                                             </a>
-                                            <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=scfs-social-cdn&delete_cdn=' . $cdn_id), 'delete_cdn_' . $cdn_id); ?>" class="button button-small button-danger" onclick="return confirm('Are you sure you want to delete this CDN?')">
+                                            <a href="<?php echo esc_url(wp_nonce_url(admin_url('admin.php?page=scfs-social-cdn&delete_cdn=' . $cdn_id), 'delete_cdn_' . $cdn_id)); ?>" class="button button-small button-danger" onclick="return confirm('Are you sure you want to delete this CDN?')">
                                                 Delete
                                             </a>
-                                        </td>
+                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>

@@ -52,6 +52,7 @@ class LegacySupport {
         global $wpdb;
         
         // 1. Migrează în post_content
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $wpdb->query(
             $wpdb->prepare(
                 "UPDATE {$wpdb->posts} 
@@ -64,6 +65,7 @@ class LegacySupport {
         );
         
         // 2. Migrează în post_excerpt
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $wpdb->query(
             $wpdb->prepare(
                 "UPDATE {$wpdb->posts} 

@@ -6,7 +6,7 @@
  * Version: 1.4.0
  * Author: Steel..xD
  * License: GPL v2 or later
- * Text Domain: scfs-oop
+ * Text Domain: custom-fields-shortcodes-main
  * Domain Path: /languages
  * Requires Plugins: github-plugin-manager-main
  */

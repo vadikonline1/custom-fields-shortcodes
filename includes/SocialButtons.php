@@ -200,18 +200,20 @@ class SocialButtons {
     }
 
     public function admin_page() {
-        $action = isset( $_GET['action'] )
-            ? sanitize_key( wp_unslash( $_GET['action'] ) )
-            : '';
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized via sanitize_key() and wp_unslash().
+		$action = isset( $_GET['action'] )
+			? sanitize_key( wp_unslash( $_GET['action'] ) )
+			: '';
 
-        // NU folosi absint() - ID-urile sunt string-uri (ex: btn_123)
-        $id = isset( $_GET['id'] )
-            ? sanitize_text_field( wp_unslash( $_GET['id'] ) )
-            : '';
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized via sanitize_text_field() and wp_unslash().
+		$id = isset( $_GET['id'] )
+			? sanitize_text_field( wp_unslash( $_GET['id'] ) )
+			: '';
 
-        $message = isset( $_GET['message'] )
-            ? sanitize_text_field( wp_unslash( $_GET['message'] ) )
-            : '';
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized via sanitize_text_field() and wp_unslash().
+		$message = isset( $_GET['message'] )
+			? sanitize_text_field( wp_unslash( $_GET['message'] ) )
+			: '';
 
         if ( 'trash' === $action && empty( $id ) ) {
             $this->trash_page();
