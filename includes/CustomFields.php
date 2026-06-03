@@ -1,7 +1,7 @@
 <?php
 namespace SCFS;
 use SCFS\AjaxHandler;
-
+if ( ! defined( 'ABSPATH' ) ) exit;
 class CustomFields {
     private static $instance = null;
     private $table;
@@ -19,7 +19,7 @@ class CustomFields {
     private function __construct() {
         add_action('admin_menu', [$this, 'admin_menu'], 20);
         add_shortcode('scfs_field', [$this, 'shortcode']);
-        add_shortcode('cfs', [$this, 'legacy_shortcode']); // Shortcode pentru compatibilitate
+        add_shortcode('cfs', [$this, 'legacy_shortcode']);
         
         if (is_admin()) {
             add_action('admin_init', [$this, 'handle_form_submissions']);
@@ -45,15 +45,17 @@ class CustomFields {
             return;
         }
         
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['scfs_action'])) {
-            check_admin_referer('scfs_save_field');
+        $request_method = isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : '';
+
+        if ( 'POST' === $request_method && isset( $_POST['scfs_action'] ) ) {
+				check_admin_referer( 'scfs_save_field' );
             
-            $action = sanitize_text_field($_POST['scfs_action']);
-            $id = sanitize_text_field($_POST['id'] ?? '');
+            $action = sanitize_text_field(wp_unslash($_POST['scfs_action']));
+            $id = isset($_POST['id']) ? sanitize_text_field(wp_unslash($_POST['id'])) : '';
             
             switch ($action) {
                 case 'save':
-                    $label = sanitize_text_field($_POST['label']);
+                    $label = isset($_POST['label']) ? sanitize_text_field(wp_unslash($_POST['label'])) : '';
                     
                     if (empty($id)) {
                         $new_id = uniqid('field_');
@@ -66,7 +68,7 @@ class CustomFields {
                     $data = [
                         'name' => $name,
                         'label' => $label,
-                        'value' => wp_unslash($_POST['value'])
+                        'value' => isset($_POST['value']) ? wp_kses_post(wp_unslash($_POST['value'])) : ''
                     ];
                     
                     $fields = $this->get_all(true);
@@ -89,8 +91,8 @@ class CustomFields {
                         $message = 'Field created successfully!';
                     }
                     
-                    ob_start();
-                    wp_redirect(admin_url('admin.php?page=scfs-custom-fields&message=' . urlencode($message)));
+                    $redirect_url = admin_url('admin.php?page=scfs-custom-fields&message=' . urlencode($message));
+                    wp_safe_redirect($redirect_url);
                     exit;
             }
         }
@@ -101,8 +103,8 @@ class CustomFields {
             return;
         }
         
-        $action = $_GET['action'] ?? '';
-        $id = $_GET['id'] ?? '';
+        $action = isset($_GET['action']) ? sanitize_text_field(wp_unslash($_GET['action'])) : '';
+        $id = isset($_GET['id']) ? sanitize_text_field(wp_unslash($_GET['id'])) : '';
         
         if (empty($action) || empty($id)) {
             return;
@@ -114,7 +116,8 @@ class CustomFields {
         switch ($action) {
             case 'trash_single':
                 $nonce_action = 'trash_field_' . $id;
-                if (wp_verify_nonce($_GET['_wpnonce'] ?? '', $nonce_action)) {
+                $nonce = isset($_GET['_wpnonce']) ? sanitize_text_field(wp_unslash($_GET['_wpnonce'])) : '';
+                if (wp_verify_nonce($nonce, $nonce_action)) {
                     $this->trash($id);
                     $redirect_url .= '&message=' . urlencode('Field moved to trash!');
                 }
@@ -122,7 +125,8 @@ class CustomFields {
                 
             case 'restore_single':
                 $nonce_action = 'restore_field_' . $id;
-                if (wp_verify_nonce($_GET['_wpnonce'] ?? '', $nonce_action)) {
+                $nonce = isset($_GET['_wpnonce']) ? sanitize_text_field(wp_unslash($_GET['_wpnonce'])) : '';
+                if (wp_verify_nonce($nonce, $nonce_action)) {
                     $this->restore($id);
                     $redirect_url .= '&message=' . urlencode('Field restored!');
                 }
@@ -130,7 +134,8 @@ class CustomFields {
                 
             case 'delete_single':
                 $nonce_action = 'delete_field_' . $id;
-                if (wp_verify_nonce($_GET['_wpnonce'] ?? '', $nonce_action)) {
+                $nonce = isset($_GET['_wpnonce']) ? sanitize_text_field(wp_unslash($_GET['_wpnonce'])) : '';
+                if (wp_verify_nonce($nonce, $nonce_action)) {
                     $this->delete($id);
                     $redirect_url .= '&message=' . urlencode('Field permanently deleted!');
                 }
@@ -138,8 +143,7 @@ class CustomFields {
         }
         
         if ($nonce_action) {
-            ob_start();
-            wp_redirect($redirect_url);
+            wp_safe_redirect($redirect_url);
             exit;
         }
     }
@@ -149,14 +153,14 @@ class CustomFields {
             return;
         }
 
-        $action = $_GET['action'] ?? '';
-        $id = $_GET['id'] ?? 0;
-        $message = $_GET['message'] ?? '';
+        $action = isset($_GET['action']) ? sanitize_text_field(wp_unslash($_GET['action'])) : '';
+        $id = isset($_GET['id']) ? sanitize_text_field(wp_unslash($_GET['id'])) : 0;
+        $message = isset($_GET['message']) ? sanitize_text_field(wp_unslash($_GET['message'])) : '';
         
         echo '<div class="wrap scfs-admin">';
         
         echo '<nav class="scfs-breadcrumb">';
-        echo '<a href="' . admin_url('admin.php?page=scfs-oop') . '">Dashboard</a> &raquo; ';
+        echo '<a href="' . esc_url(admin_url('admin.php?page=scfs-oop')) . '">Dashboard</a> &raquo; ';
         echo '<span>Custom Fields</span>';
         echo '</nav>';
         
@@ -189,14 +193,14 @@ class CustomFields {
         
         ?>
         <h1 class="wp-heading-inline">Custom Fields</h1>
-        <a href="<?php echo admin_url('admin.php?page=scfs-custom-fields&action=add'); ?>" class="page-title-action">
+        <a href="<?php echo esc_url(admin_url('admin.php?page=scfs-custom-fields&action=add')); ?>" class="page-title-action">
             Add New
         </a>
-        <a href="<?php echo admin_url('admin.php?page=scfs-custom-fields&action=trash'); ?>" class="page-title-action">
-            Trash (<?php echo $this->get_trash_count(); ?>)
+        <a href="<?php echo esc_url(admin_url('admin.php?page=scfs-custom-fields&action=trash')); ?>" class="page-title-action">
+            Trash (<?php echo esc_html($this->get_trash_count()); ?>)
         </a>
         
-        <form method="post" action="<?php echo admin_url('admin.php?page=scfs-custom-fields'); ?>">
+        <form method="post" action="<?php echo esc_url(admin_url('admin.php?page=scfs-custom-fields')); ?>">
             <?php $this->table->display(); ?>
         </form>
         <?php
@@ -207,7 +211,7 @@ class CustomFields {
         $is_edit = (bool) $field;
         
         ?>
-        <h1><?php echo $is_edit ? 'Edit Field' : 'Add New Field'; ?></h1>
+        <h1><?php echo esc_html($is_edit ? 'Edit Field' : 'Add New Field'); ?></h1>
         
         <form method="post" class="scfs-form">
             <?php wp_nonce_field('scfs_save_field'); ?>
@@ -225,7 +229,7 @@ class CustomFields {
                                value="<?php echo esc_attr($field['label'] ?? ''); ?>"
                                class="regular-text" required>
                         <p class="description">Display name for the field</p>
-                    </td>
+                    </td
                 </tr>
                 
                 <?php if ($is_edit && isset($field['name'])): ?>
@@ -240,7 +244,7 @@ class CustomFields {
                             Use in shortcodes: <br>
                             <code>[scfs_field name="<?php echo esc_attr($field['name']); ?>"]</code><br>
                         </p>
-                    </td>
+                    </td
                 </tr>
                 <?php endif; ?>
                 
@@ -264,12 +268,12 @@ class CustomFields {
                             $editor_settings
                         );
                         ?>
-                    </td>
+                    </td
                 </tr>
-            </table>
+             </table>
             
             <?php submit_button($is_edit ? 'Update Field' : 'Add Field'); ?>
-            <a href="<?php echo admin_url('admin.php?page=scfs-custom-fields'); ?>" class="button button-secondary">
+            <a href="<?php echo esc_url(admin_url('admin.php?page=scfs-custom-fields')); ?>" class="button button-secondary">
                 Cancel
             </a>
         </form>
@@ -286,7 +290,7 @@ class CustomFields {
         
         ?>
         <h1>Trash</h1>
-        <a href="<?php echo admin_url('admin.php?page=scfs-custom-fields'); ?>" class="button">Back to Custom Fields</a>
+        <a href="<?php echo esc_url(admin_url('admin.php?page=scfs-custom-fields')); ?>" class="button">Back to Custom Fields</a>
         
         <form method="post">
             <?php $table->display(); ?>
@@ -691,5 +695,3 @@ class CustomFields {
         return $this->shortcode(['name' => $atts['field'], 'default' => $atts['default']]);
     }
 }
-
-
