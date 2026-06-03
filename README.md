@@ -1,15 +1,15 @@
 === Social & Custom Fields Shortcodes ===
-Contributors: vadikonline1
-Donate link: https://ko-fi.com/vadikonline1/
-Tags: shortcodes, custom fields, social buttons, mobile bar, floating buttons
-Plugin URI: https://github.com/vadikonline1/custom-fields-shortcodes
-Requires at least: 5.0
-Tested up to: 7.0
-Stable tag: 1.4.0
-Requires PHP: 7.0
-License: GPLv2 or later
-License URI: https://www.gnu.org/licenses/gpl-2.0.html
-This plugin is designed for those who need flexible shortcode management and beautiful mobile interaction tools.
+* Contributors: vadikonline1
+* Donate link: https://ko-fi.com/vadikonline1/
+* Tags: shortcodes, custom fields, social buttons, mobile bar, floating buttons
+* Plugin URI: https://github.com/vadikonline1/custom-fields-shortcodes
+* Requires at least: 5.0
+* Tested up to: 7.0
+* Stable tag: 1.4.0
+* Requires PHP: 7.0
+* License: GPLv2 or later
+* License URI: https://www.gnu.org/licenses/gpl-2.0.html
+* This plugin is designed for those who need flexible shortcode management and beautiful mobile interaction tools.
 ---
 
 ## Description
