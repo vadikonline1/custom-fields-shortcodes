@@ -224,9 +224,9 @@ class SocialButtons {
 
         echo '<nav class="scfs-breadcrumb">';
         echo '<a href="' . esc_url( admin_url( 'admin.php?page=scfs-oop' ) ) . '">';
-        echo esc_html__( 'Dashboard', 'custom-fields-shortcodes-main' );
+        echo esc_html__( 'Dashboard', 'social-custom-fields-shortcodes' );
         echo '</a> &raquo; ';
-        echo '<span>' . esc_html__( 'Social Buttons', 'custom-fields-shortcodes-main' ) . '</span>';
+        echo '<span>' . esc_html__( 'Social Buttons', 'social-custom-fields-shortcodes' ) . '</span>';
         echo '</nav>';
 
         if ( ! empty( $message ) ) {
@@ -262,13 +262,13 @@ class SocialButtons {
         ?>
         <h1 class="wp-heading-inline">Social Buttons</h1>
         <a href="<?php echo esc_url( admin_url( 'admin.php?page=scfs-social-buttons&action=add' ) ); ?>" class="page-title-action">
-            <?php esc_html_e( 'Add New', 'custom-fields-shortcodes-main' ); ?>
+            <?php esc_html_e( 'Add New', 'social-custom-fields-shortcodes' ); ?>
         </a>
 
         <a href="<?php echo esc_url( admin_url( 'admin.php?page=scfs-social-buttons&action=trash' ) ); ?>" class="page-title-action">
             <?php
             printf(
-                esc_html__( 'Trash (%d)', 'custom-fields-shortcodes-main' ),
+                esc_html__( 'Trash (%d)', 'social-custom-fields-shortcodes' ),
                 absint( $this->get_trash_count() )
             );
             ?>
@@ -515,7 +515,7 @@ class SocialButtons {
         ?>
         <h1>Trash</h1>
         <a href="<?php echo esc_url( admin_url( 'admin.php?page=scfs-social-buttons' ) ); ?>" class="button">
-            <?php esc_html_e( 'Back to Buttons', 'custom-fields-shortcodes-main' ); ?>
+            <?php esc_html_e( 'Back to Buttons', 'social-custom-fields-shortcodes' ); ?>
         </a>
         
         <form method="post">
