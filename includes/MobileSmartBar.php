@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Mobile Smart Bar Module for SCFS Plugin
  * 
@@ -40,9 +41,9 @@ class MobileSmartBar {
         wp_enqueue_style('dashicons');
         wp_enqueue_style('wp-color-picker');
         wp_enqueue_script('wp-color-picker');
-        ?>
-        <style>
-            @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+        
+        $custom_css = '
+            @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css");
             @import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css");
             
             .scfs-msb-wrap {
@@ -224,134 +225,129 @@ class MobileSmartBar {
                     flex-direction: column;
                 }
             }
-        </style>
+        ';
         
-        <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof jQuery !== 'undefined') {
+        wp_add_inline_style('wp-color-picker', $custom_css);
+        
+        $custom_js = '
+        document.addEventListener("DOMContentLoaded", function() {
+            if (typeof jQuery !== "undefined") {
                 (function($) {
-                    // Initialize color pickers
-                    $('.scfs-color-picker').wpColorPicker();
+                    $(".scfs-color-picker").wpColorPicker();
                     
-                    // Toggle custom colors section based on theme selection
                     function toggleCustomColors() {
-                        if ($('select[name="scfs_mobile_smart_bar[theme]"]').val() === 'custom') {
-                            $('.custom-colors-section').addClass('visible');
+                        if ($("select[name=\'' . esc_js($this->option_name) . '[theme]\']").val() === "custom") {
+                            $(".custom-colors-section").addClass("visible");
                         } else {
-                            $('.custom-colors-section').removeClass('visible');
+                            $(".custom-colors-section").removeClass("visible");
                         }
                     }
                     
-                    $('select[name="scfs_mobile_smart_bar[theme]"]').on('change', toggleCustomColors);
+                    $("select[name=\'' . esc_js($this->option_name) . '[theme]\']").on("change", toggleCustomColors);
                     toggleCustomColors();
                     
-                    // Add new button
-                    $('#scfs-add-item').on('click', function() {
-                        var newId = 'new_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-                        var $template = $('.scfs-item-template').clone();
-                        $template.removeClass('scfs-item-template').addClass('scfs-item-row');
-                        $template.find('.show-field').attr('name', 'scfs_mobile_smart_bar[items][' + newId + '][show]');
-                        $template.find('.label-field').attr('name', 'scfs_mobile_smart_bar[items][' + newId + '][label]');
-                        $template.find('.url-field').attr('name', 'scfs_mobile_smart_bar[items][' + newId + '][url]');
-                        $template.find('.position-field').attr('name', 'scfs_mobile_smart_bar[items][' + newId + '][position]');
-                        $template.find('.icon-field').attr('name', 'scfs_mobile_smart_bar[items][' + newId + '][icon]');
-                        $template.find('.order-field').attr('name', 'scfs_mobile_smart_bar[items][' + newId + '][order]');
-                        $template.find('.show-field').prop('checked', true);
-                        $template.find('.label-field').val('');
-                        $template.find('.url-field').val('');
-                        $template.find('.icon-field').val('');
-                        $template.find('.icon-preview').html('');
-                        $template.css('display', 'flex');
-                        $('.scfs-items-container').append($template);
+                    $("#scfs-add-item").on("click", function() {
+                        var newId = "new_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5);
+                        var $template = $(".scfs-item-template").clone();
+                        $template.removeClass("scfs-item-template").addClass("scfs-item-row");
+                        $template.find(".show-field").attr("name", "' . esc_js($this->option_name) . '[items][" + newId + "][show]");
+                        $template.find(".label-field").attr("name", "' . esc_js($this->option_name) . '[items][" + newId + "][label]");
+                        $template.find(".url-field").attr("name", "' . esc_js($this->option_name) . '[items][" + newId + "][url]");
+                        $template.find(".position-field").attr("name", "' . esc_js($this->option_name) . '[items][" + newId + "][position]");
+                        $template.find(".icon-field").attr("name", "' . esc_js($this->option_name) . '[items][" + newId + "][icon]");
+                        $template.find(".order-field").attr("name", "' . esc_js($this->option_name) . '[items][" + newId + "][order]");
+                        $template.find(".show-field").prop("checked", true);
+                        $template.find(".label-field").val("");
+                        $template.find(".url-field").val("");
+                        $template.find(".icon-field").val("");
+                        $template.find(".icon-preview").html("");
+                        $template.css("display", "flex");
+                        $(".scfs-items-container").append($template);
                         
-                        var $deleteBtn = $template.find('.scfs-remove-item');
-                        $deleteBtn.addClass('disabled');
-                        $deleteBtn.prop('disabled', true);
+                        var $deleteBtn = $template.find(".scfs-remove-item");
+                        $deleteBtn.addClass("disabled");
+                        $deleteBtn.prop("disabled", true);
                     });
                     
-                    // Delete button
-                    $(document).on('click', '.scfs-remove-item', function() {
-                        var $row = $(this).closest('.scfs-item-row');
-                        var isEnabled = $row.find('.show-field').is(':checked');
+                    $(document).on("click", ".scfs-remove-item", function() {
+                        var $row = $(this).closest(".scfs-item-row");
+                        var isEnabled = $row.find(".show-field").is(":checked");
                         
                         if (isEnabled) {
-                            alert('Please disable the button first before deleting it!');
+                            alert("Please disable the button first before deleting it!");
                             return;
                         }
                         
-                        if (confirm('Are you sure you want to delete this button?')) {
+                        if (confirm("Are you sure you want to delete this button?")) {
                             $row.remove();
                         }
                     });
                     
-                    // Validate only one center position
-                    $(document).on('change', '.position-field', function() {
+                    $(document).on("change", ".position-field", function() {
                         var $select = $(this);
                         var selectedValue = $select.val();
                         
-                        if (selectedValue === 'center') {
-                            var centerCount = $('.position-field').filter(function() {
-                                return $(this).val() === 'center';
+                        if (selectedValue === "center") {
+                            var centerCount = $(".position-field").filter(function() {
+                                return $(this).val() === "center";
                             }).length;
                             
                             if (centerCount > 1) {
-                                alert('You can only have ONE button with Center position!');
-                                $select.val('left');
+                                alert("You can only have ONE button with Center position!");
+                                $select.val("left");
                             }
                         }
                     });
                     
-                    // Disable delete for enabled buttons
-                    $(document).on('change', '.show-field', function() {
-                        var $row = $(this).closest('.scfs-item-row');
-                        var $deleteBtn = $row.find('.scfs-remove-item');
+                    $(document).on("change", ".show-field", function() {
+                        var $row = $(this).closest(".scfs-item-row");
+                        var $deleteBtn = $row.find(".scfs-remove-item");
                         
-                        if ($(this).is(':checked')) {
-                            $deleteBtn.addClass('disabled');
-                            $deleteBtn.prop('disabled', true);
+                        if ($(this).is(":checked")) {
+                            $deleteBtn.addClass("disabled");
+                            $deleteBtn.prop("disabled", true);
                         } else {
-                            $deleteBtn.removeClass('disabled');
-                            $deleteBtn.prop('disabled', false);
+                            $deleteBtn.removeClass("disabled");
+                            $deleteBtn.prop("disabled", false);
                         }
                     });
                     
-                    // Live icon preview
-                    $(document).on('input', '.icon-field', function() {
+                    $(document).on("input", ".icon-field", function() {
                         var iconValue = $(this).val();
-                        var $preview = $(this).closest('.scfs-item-field').find('.icon-preview');
+                        var $preview = $(this).closest(".scfs-item-field").find(".icon-preview");
                         if (iconValue.trim()) {
                             $preview.html(iconValue);
                         } else {
-                            $preview.html('No icon');
+                            $preview.html("No icon");
                         }
                     });
                     
-                    // Initialize delete buttons state and previews
-                    $('.scfs-item-row').each(function() {
+                    $(".scfs-item-row").each(function() {
                         var $row = $(this);
-                        var $deleteBtn = $row.find('.scfs-remove-item');
-                        if ($row.find('.show-field').is(':checked')) {
-                            $deleteBtn.addClass('disabled');
-                            $deleteBtn.prop('disabled', true);
+                        var $deleteBtn = $row.find(".scfs-remove-item");
+                        if ($row.find(".show-field").is(":checked")) {
+                            $deleteBtn.addClass("disabled");
+                            $deleteBtn.prop("disabled", true);
                         }
                         
-                        var iconValue = $row.find('.icon-field').val();
+                        var iconValue = $row.find(".icon-field").val();
                         if (iconValue && iconValue.trim()) {
-                            $row.find('.icon-preview').html(iconValue);
+                            $row.find(".icon-preview").html(iconValue);
                         }
                     });
                 })(jQuery);
             } else {
-                var script = document.createElement('script');
-                script.src = 'https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js';
+                var script = document.createElement("script");
+                script.src = "https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js";
                 script.onload = function() {
                     location.reload();
                 };
                 document.head.appendChild(script);
             }
         });
-        </script>
-        <?php
+        ';
+        
+        wp_add_inline_script('jquery-ui-core', $custom_js);
     }
     
     public function frontend_assets() {
@@ -364,7 +360,6 @@ class MobileSmartBar {
         
         $custom_css = '';
         
-        // CSS personalizat - se aplică doar când tema este "custom"
         if ($options['theme'] === 'custom') {
             $custom_css .= "
                 .scfs-mobile-bar {
@@ -390,12 +385,11 @@ class MobileSmartBar {
             ";
         }
         
-        // Adaugă CSS-ul personalizat scris de utilizator
         if (!empty($options['custom_css'])) {
-            $custom_css .= "\n" . $options['custom_css'];
+            $custom_css .= "\n" . wp_strip_all_tags($options['custom_css']);
         }
-        ?>
-        <style>
+        
+        $frontend_css = '
             .scfs-mobile-bar {
                 position: fixed !important;
                 bottom: 20px !important;
@@ -490,9 +484,9 @@ class MobileSmartBar {
                 font-size: 28px !important;
             }
             
-            <?php if ($options['center_pulse']): ?>
+            ' . ($options['center_pulse'] ? '
             .scfs-mobile-center::before {
-                content: '' !important;
+                content: "" !important;
                 position: absolute !important;
                 top: 50% !important;
                 left: 50% !important;
@@ -506,7 +500,7 @@ class MobileSmartBar {
             }
             
             .scfs-mobile-center::after {
-                content: '' !important;
+                content: "" !important;
                 position: absolute !important;
                 top: 50% !important;
                 left: 50% !important;
@@ -531,7 +525,7 @@ class MobileSmartBar {
                     opacity: 0;
                 }
             }
-            <?php endif; ?>
+            ' : '') . '
             
             .scfs-mobile-center:hover {
                 transform: scale(1.08) !important;
@@ -604,10 +598,9 @@ class MobileSmartBar {
                     margin-bottom: 80px !important;
                 }
             }
-            
-            <?php echo $custom_css; ?>
-        </style>
-        <?php
+        ';
+        
+        wp_add_inline_style('dashicons', $frontend_css . $custom_css);
     }
     
     public function admin_menu() {
@@ -684,7 +677,6 @@ class MobileSmartBar {
         if (!isset($options['items']) || empty($options['items'])) {
             $options['items'] = $this->get_defaults()['items'];
         }
-        // Setează valorile implicite pentru câmpurile noi dacă nu există
         if (!isset($options['shadow_color'])) {
             $options['shadow_color'] = 'rgba(0,0,0,0.15)';
         }
@@ -716,7 +708,7 @@ class MobileSmartBar {
         $output = array(
             'enabled' => !empty($input['enabled']),
             'theme' => sanitize_text_field($input['theme']),
-            'custom_css' => wp_kses_post($input['custom_css']),
+            'custom_css' => wp_strip_all_tags($input['custom_css']),
             'bg_color' => sanitize_hex_color($input['bg_color']),
             'text_color' => sanitize_hex_color($input['text_color']),
             'hover_color' => sanitize_hex_color($input['hover_color']),
@@ -747,21 +739,106 @@ class MobileSmartBar {
         return $output;
     }
     
+    /**
+     * Get allowed HTML tags for icons
+     */
+    private function get_allowed_icon_html() {
+        return array(
+            'span' => array(
+                'class' => array(),
+                'id' => array(),
+                'style' => array(),
+                'data-*' => true,
+            ),
+            'i' => array(
+                'class' => array(),
+                'id' => array(),
+                'style' => array(),
+                'data-*' => true,
+            ),
+            'svg' => array(
+                'class' => array(),
+                'id' => array(),
+                'width' => array(),
+                'height' => array(),
+                'viewBox' => array(),
+                'xmlns' => array(),
+                'fill' => array(),
+                'stroke' => array(),
+                'style' => array(),
+            ),
+            'path' => array(
+                'd' => array(),
+                'fill' => array(),
+                'stroke' => array(),
+                'stroke-width' => array(),
+                'stroke-linecap' => array(),
+                'stroke-linejoin' => array(),
+            ),
+            'g' => array(
+                'fill' => array(),
+                'stroke' => array(),
+            ),
+            'circle' => array(
+                'cx' => array(),
+                'cy' => array(),
+                'r' => array(),
+                'fill' => array(),
+                'stroke' => array(),
+            ),
+            'rect' => array(
+                'x' => array(),
+                'y' => array(),
+                'width' => array(),
+                'height' => array(),
+                'fill' => array(),
+                'stroke' => array(),
+            ),
+            'polygon' => array(
+                'points' => array(),
+                'fill' => array(),
+                'stroke' => array(),
+            ),
+            'img' => array(
+                'class' => array(),
+                'src' => array(),
+                'alt' => array(),
+                'width' => array(),
+                'height' => array(),
+                'draggable' => array(),
+                'role' => array(),
+            ),
+            'br' => array(),
+            'strong' => array(),
+            'em' => array(),
+            'div' => array(
+                'class' => array(),
+                'style' => array(),
+            ),
+        );
+    }
+    
+    /**
+     * Get icon HTML with proper escaping
+     */
     private function get_icon_html($icon) {
         if (empty($icon)) {
-            return '<span class="scfs-mobile-icon">🔗</span>';
+            return wp_kses('<span class="scfs-mobile-icon">🔗</span>', $this->get_allowed_icon_html());
         }
         
+        // Check if icon contains HTML (SVG, Font Awesome i class, etc.)
         if (strpos($icon, '<') !== false && strpos($icon, '>') !== false) {
-            return '<span class="scfs-mobile-icon">' . $icon . '</span>';
+            $icon_html = '<span class="scfs-mobile-icon">' . $icon . '</span>';
+            return wp_kses($icon_html, $this->get_allowed_icon_html());
         }
         
-        return '<span class="scfs-mobile-icon">' . esc_html($icon) . '</span>';
+        // For emojis and plain text, escape the text but keep the span
+        return wp_kses('<span class="scfs-mobile-icon">' . esc_html($icon) . '</span>', $this->get_allowed_icon_html());
     }
     
     public function admin_page() {
         if (!current_user_can('manage_options')) {
-            wp_die('Unauthorized');
+            wp_die(esc_html__('Unauthorized', 'custom-fields-shortcodes-main'));
         }
         
         $options = $this->get_options();
@@ -774,8 +851,8 @@ class MobileSmartBar {
         <div class="scfs-msb-wrap">
             <div class="scfs-msb-container">
                 <div class="scfs-msb-header">
-                    <h1>📱 Mobile Smart Bar</h1>
-                    <p>Configure your mobile action bar - Add unlimited buttons!</p>
+                    <h1><?php esc_html_e('📱 Mobile Smart Bar', 'custom-fields-shortcodes-main'); ?></h1>
+                    <p><?php esc_html_e('Configure your mobile action bar - Add unlimited buttons!', 'custom-fields-shortcodes-main'); ?></p>
                 </div>
                 
                 <div class="scfs-msb-main-grid">
@@ -784,178 +861,179 @@ class MobileSmartBar {
                             <?php settings_fields('scfs_msb_group'); ?>
                             
                             <div class="scfs-card">
-                                <h3>⚙️ General Settings</h3>
+                                <h3><?php esc_html_e('⚙️ General Settings', 'custom-fields-shortcodes-main'); ?></h3>
                                 <div class="scfs-item-field">
                                     <label>
-                                        <input type="checkbox" name="<?php echo $this->option_name; ?>[enabled]" value="1" <?php checked(1, $options['enabled']); ?>>
-                                        <strong>Enable Mobile Bar</strong>
+                                        <input type="checkbox" name="<?php echo esc_attr($this->option_name); ?>[enabled]" value="1" <?php checked(1, $options['enabled']); ?>>
+                                        <strong><?php esc_html_e('Enable Mobile Bar', 'custom-fields-shortcodes-main'); ?></strong>
                                     </label>
                                 </div>
                                 <div class="scfs-item-field">
-                                    <label>Theme Preset</label>
-                                    <select name="<?php echo $this->option_name; ?>[theme]">
-                                        <option value="auto" <?php selected($options['theme'], 'auto'); ?>>🌓 Auto (follows device settings)</option>
-                                        <option value="light" <?php selected($options['theme'], 'light'); ?>>☀️ Light</option>
-                                        <option value="dark" <?php selected($options['theme'], 'dark'); ?>>🌙 Dark</option>
-                                        <option value="glass" <?php selected($options['theme'], 'glass'); ?>>✨ Glass</option>
-                                        <option value="custom" <?php selected($options['theme'], 'custom'); ?>>🎨 Custom</option>
+                                    <label><?php esc_html_e('Theme Preset', 'custom-fields-shortcodes-main'); ?></label>
+                                    <select name="<?php echo esc_attr($this->option_name); ?>[theme]">
+                                        <option value="auto" <?php selected($options['theme'], 'auto'); ?>><?php esc_html_e('🌓 Auto (follows device settings)', 'custom-fields-shortcodes-main'); ?></option>
+                                        <option value="light" <?php selected($options['theme'], 'light'); ?>><?php esc_html_e('☀️ Light', 'custom-fields-shortcodes-main'); ?></option>
+                                        <option value="dark" <?php selected($options['theme'], 'dark'); ?>><?php esc_html_e('🌙 Dark', 'custom-fields-shortcodes-main'); ?></option>
+                                        <option value="glass" <?php selected($options['theme'], 'glass'); ?>><?php esc_html_e('✨ Glass', 'custom-fields-shortcodes-main'); ?></option>
+                                        <option value="custom" <?php selected($options['theme'], 'custom'); ?>><?php esc_html_e('🎨 Custom', 'custom-fields-shortcodes-main'); ?></option>
                                     </select>
                                 </div>
                             </div>
                             
                             <div class="scfs-card custom-colors-section <?php echo ($options['theme'] === 'custom') ? 'visible' : ''; ?>">
-                                <h3>🎨 Custom Colors</h3>
+                                <h3><?php esc_html_e('🎨 Custom Colors', 'custom-fields-shortcodes-main'); ?></h3>
                                 
-                                <h4>Bar Settings</h4>
+                                <h4><?php esc_html_e('Bar Settings', 'custom-fields-shortcodes-main'); ?></h4>
                                 <div class="scfs-color-row">
                                     <div class="scfs-color-field">
-                                        <label>Background Color</label>
-                                        <input type="text" class="scfs-color-picker" name="<?php echo $this->option_name; ?>[bg_color]" value="<?php echo esc_attr($options['bg_color']); ?>" data-default-color="#ffffff">
+                                        <label><?php esc_html_e('Background Color', 'custom-fields-shortcodes-main'); ?></label>
+                                        <input type="text" class="scfs-color-picker" name="<?php echo esc_attr($this->option_name); ?>[bg_color]" value="<?php echo esc_attr($options['bg_color']); ?>" data-default-color="#ffffff">
                                     </div>
                                     <div class="scfs-color-field">
-                                        <label>Text Color</label>
-                                        <input type="text" class="scfs-color-picker" name="<?php echo $this->option_name; ?>[text_color]" value="<?php echo esc_attr($options['text_color']); ?>" data-default-color="#333333">
+                                        <label><?php esc_html_e('Text Color', 'custom-fields-shortcodes-main'); ?></label>
+                                        <input type="text" class="scfs-color-picker" name="<?php echo esc_attr($this->option_name); ?>[text_color]" value="<?php echo esc_attr($options['text_color']); ?>" data-default-color="#333333">
                                     </div>
                                     <div class="scfs-color-field">
-                                        <label>Hover Color</label>
-                                        <input type="text" class="scfs-color-picker" name="<?php echo $this->option_name; ?>[hover_color]" value="<?php echo esc_attr($options['hover_color']); ?>" data-default-color="#667eea">
+                                        <label><?php esc_html_e('Hover Color', 'custom-fields-shortcodes-main'); ?></label>
+                                        <input type="text" class="scfs-color-picker" name="<?php echo esc_attr($this->option_name); ?>[hover_color]" value="<?php echo esc_attr($options['hover_color']); ?>" data-default-color="#667eea">
                                     </div>
                                 </div>
                                 <div class="scfs-color-row">
                                     <div class="scfs-color-field">
-                                        <label>Shadow Color</label>
-                                        <input type="text" class="scfs-color-picker" name="<?php echo $this->option_name; ?>[shadow_color]" value="<?php echo esc_attr($options['shadow_color']); ?>" data-default-color="rgba(0,0,0,0.15)">
+                                        <label><?php esc_html_e('Shadow Color', 'custom-fields-shortcodes-main'); ?></label>
+                                        <input type="text" class="scfs-color-picker" name="<?php echo esc_attr($this->option_name); ?>[shadow_color]" value="<?php echo esc_attr($options['shadow_color']); ?>" data-default-color="rgba(0,0,0,0.15)">
                                     </div>
                                     <div class="scfs-color-field">
-                                        <label>Border Radius (px)</label>
-                                        <input type="number" name="<?php echo $this->option_name; ?>[border_radius]" value="<?php echo esc_attr($options['border_radius']); ?>" min="0" max="100" step="1">
+                                        <label><?php esc_html_e('Border Radius (px)', 'custom-fields-shortcodes-main'); ?></label>
+                                        <input type="number" name="<?php echo esc_attr($this->option_name); ?>[border_radius]" value="<?php echo esc_attr($options['border_radius']); ?>" min="0" max="100" step="1">
                                     </div>
                                 </div>
                                 
-                                <h4>Center Button Settings</h4>
+                                <h4><?php esc_html_e('Center Button Settings', 'custom-fields-shortcodes-main'); ?></h4>
                                 <div class="scfs-color-row">
                                     <div class="scfs-color-field">
-                                        <label>Background Color</label>
-                                        <input type="text" class="scfs-color-picker" name="<?php echo $this->option_name; ?>[center_bg_color]" value="<?php echo esc_attr($options['center_bg_color']); ?>" data-default-color="#25d366">
+                                        <label><?php esc_html_e('Background Color', 'custom-fields-shortcodes-main'); ?></label>
+                                        <input type="text" class="scfs-color-picker" name="<?php echo esc_attr($this->option_name); ?>[center_bg_color]" value="<?php echo esc_attr($options['center_bg_color']); ?>" data-default-color="#25d366">
                                     </div>
                                     <div class="scfs-color-field">
-                                        <label>Hover Color</label>
-                                        <input type="text" class="scfs-color-picker" name="<?php echo $this->option_name; ?>[center_hover_color]" value="<?php echo esc_attr($options['center_hover_color']); ?>" data-default-color="#1da15b">
+                                        <label><?php esc_html_e('Hover Color', 'custom-fields-shortcodes-main'); ?></label>
+                                        <input type="text" class="scfs-color-picker" name="<?php echo esc_attr($this->option_name); ?>[center_hover_color]" value="<?php echo esc_attr($options['center_hover_color']); ?>" data-default-color="#1da15b">
                                     </div>
                                     <div class="scfs-color-field">
-                                        <label>Shadow Color</label>
-                                        <input type="text" class="scfs-color-picker" name="<?php echo $this->option_name; ?>[center_shadow_color]" value="<?php echo esc_attr($options['center_shadow_color']); ?>" data-default-color="rgba(37,211,102,0.4)">
+                                        <label><?php esc_html_e('Shadow Color', 'custom-fields-shortcodes-main'); ?></label>
+                                        <input type="text" class="scfs-color-picker" name="<?php echo esc_attr($this->option_name); ?>[center_shadow_color]" value="<?php echo esc_attr($options['center_shadow_color']); ?>" data-default-color="rgba(37,211,102,0.4)">
                                     </div>
                                 </div>
                                 
                                 <div class="scfs-color-row">
                                     <div class="scfs-color-field">
                                         <label>
-                                            <input type="checkbox" name="<?php echo $this->option_name; ?>[center_pulse]" value="1" <?php checked(1, $options['center_pulse']); ?>>
-                                            <strong>Enable Pulse Effect</strong>
+                                            <input type="checkbox" name="<?php echo esc_attr($this->option_name); ?>[center_pulse]" value="1" <?php checked(1, $options['center_pulse']); ?>>
+                                            <strong><?php esc_html_e('Enable Pulse Effect', 'custom-fields-shortcodes-main'); ?></strong>
                                         </label>
-                                        <p class="description">Ringing/pulsing animation on center button</p>
+                                        <p class="description"><?php esc_html_e('Ringing/pulsing animation on center button', 'custom-fields-shortcodes-main'); ?></p>
                                     </div>
                                 </div>
                             </div>
                             
                             <div class="scfs-card">
-                                <h3>🎨 Custom CSS</h3>
+                                <h3><?php esc_html_e('🎨 Custom CSS', 'custom-fields-shortcodes-main'); ?></h3>
                                 <div class="scfs-item-field">
-                                    <textarea class="scfs-css-editor" name="<?php echo $this->option_name; ?>[custom_css]" rows="8" style="font-family: monospace; width: 100%;" placeholder="/* Add your custom CSS here */
+                                    <textarea class="scfs-css-editor" name="<?php echo esc_attr($this->option_name); ?>[custom_css]" rows="8" style="font-family: monospace; width: 100%;" placeholder="/* Add your custom CSS here */
+
 .scfs-mobile-item {
     /* Example: font-weight: bold; */
 }"><?php echo esc_textarea($options['custom_css']); ?></textarea>
-                                    <p class="description">Add your own CSS rules for advanced customization.</p>
+                                    <p class="description"><?php esc_html_e('Add your own CSS rules for advanced customization.', 'custom-fields-shortcodes-main'); ?></p>
                                 </div>
                             </div>
                             
                             <div class="scfs-card">
-                                <h3>🔘 Buttons</h3>
-                                <p><strong>Note:</strong> You can only have ONE button with Center position. To delete a button, first disable it (uncheck "Enabled"), then click Delete.</p>
+                                <h3><?php esc_html_e('🔘 Buttons', 'custom-fields-shortcodes-main'); ?></h3>
+                                <p><strong><?php esc_html_e('Note:', 'custom-fields-shortcodes-main'); ?></strong> <?php esc_html_e('You can only have ONE button with Center position. To delete a button, first disable it (uncheck "Enabled"), then click Delete.', 'custom-fields-shortcodes-main'); ?></p>
                                 
                                 <div class="scfs-items-container">
                                     <?php foreach ($items as $key => $item): ?>
                                     <div class="scfs-item-row">
                                         <div class="scfs-item-fields">
                                             <div class="scfs-item-field">
-                                                <label>Enabled</label>
-                                                <input type="checkbox" class="show-field" name="<?php echo $this->option_name; ?>[items][<?php echo $key; ?>][show]" value="1" <?php checked(1, $item['show']); ?>>
+                                                <label><?php esc_html_e('Enabled', 'custom-fields-shortcodes-main'); ?></label>
+                                                <input type="checkbox" class="show-field" name="<?php echo esc_attr($this->option_name); ?>[items][<?php echo esc_attr($key); ?>][show]" value="1" <?php checked(1, $item['show']); ?>>
                                             </div>
                                             <div class="scfs-item-field">
-                                                <label>Label</label>
-                                                <input type="text" class="label-field" name="<?php echo $this->option_name; ?>[items][<?php echo $key; ?>][label]" value="<?php echo esc_attr($item['label']); ?>" placeholder="Button text">
+                                                <label><?php esc_html_e('Label', 'custom-fields-shortcodes-main'); ?></label>
+                                                <input type="text" class="label-field" name="<?php echo esc_attr($this->option_name); ?>[items][<?php echo esc_attr($key); ?>][label]" value="<?php echo esc_attr($item['label']); ?>" placeholder="<?php esc_attr_e('Button text', 'custom-fields-shortcodes-main'); ?>">
                                             </div>
                                             <div class="scfs-item-field">
-                                                <label>URL</label>
-                                                <input type="url" class="url-field" name="<?php echo $this->option_name; ?>[items][<?php echo $key; ?>][url]" value="<?php echo esc_url($item['url']); ?>" placeholder="https:// or tel: or mailto:">
+                                                <label><?php esc_html_e('URL', 'custom-fields-shortcodes-main'); ?></label>
+                                                <input type="url" class="url-field" name="<?php echo esc_attr($this->option_name); ?>[items][<?php echo esc_attr($key); ?>][url]" value="<?php echo esc_url($item['url']); ?>" placeholder="https:// or tel: or mailto:">
                                             </div>
                                             <div class="scfs-item-field">
-                                                <label>Position</label>
-                                                <select class="position-field" name="<?php echo $this->option_name; ?>[items][<?php echo $key; ?>][position]">
-                                                    <option value="left" <?php selected($item['position'], 'left'); ?>>Left</option>
-                                                    <option value="center" <?php selected($item['position'], 'center'); ?>>Center (Highlighted)</option>
-                                                    <option value="right" <?php selected($item['position'], 'right'); ?>>Right</option>
+                                                <label><?php esc_html_e('Position', 'custom-fields-shortcodes-main'); ?></label>
+                                                <select class="position-field" name="<?php echo esc_attr($this->option_name); ?>[items][<?php echo esc_attr($key); ?>][position]">
+                                                    <option value="left" <?php selected($item['position'], 'left'); ?>><?php esc_html_e('Left', 'custom-fields-shortcodes-main'); ?></option>
+                                                    <option value="center" <?php selected($item['position'], 'center'); ?>><?php esc_html_e('Center (Highlighted)', 'custom-fields-shortcodes-main'); ?></option>
+                                                    <option value="right" <?php selected($item['position'], 'right'); ?>><?php esc_html_e('Right', 'custom-fields-shortcodes-main'); ?></option>
                                                 </select>
                                             </div>
                                             <div class="scfs-item-field">
-                                                <label>Icon (HTML, Emoji, or Text)</label>
-                                                <textarea class="icon-field" name="<?php echo $this->option_name; ?>[items][<?php echo $key; ?>][icon]" rows="3" placeholder="Enter emoji (👍), HTML code, or text"><?php echo esc_textarea($item['icon']); ?></textarea>
+                                                <label><?php esc_html_e('Icon (HTML, Emoji, or Text)', 'custom-fields-shortcodes-main'); ?></label>
+                                                <textarea class="icon-field" name="<?php echo esc_attr($this->option_name); ?>[items][<?php echo esc_attr($key); ?>][icon]" rows="3" placeholder="<?php esc_attr_e('Enter emoji (👍), HTML code, or text', 'custom-fields-shortcodes-main'); ?>"><?php echo esc_textarea($item['icon']); ?></textarea>
                                                 <div class="scfs-icon-preview icon-preview">
-                                                    <?php echo $this->get_icon_html($item['icon']); ?>
+                                                    <?php echo wp_kses_post( $this->get_icon_html( $item['icon'] ) ); ?>
                                                 </div>
-                                                <p class="description">Examples: "👍", "📞", "💬", "&lt;svg&gt;...&lt;/svg&gt;", "🚀"</p>
+                                                <p class="description"><?php esc_html_e('Examples: "👍", "📞", "💬", "<svg>...</svg>", "🚀"', 'custom-fields-shortcodes-main'); ?></p>
                                             </div>
-                                            <input type="hidden" class="order-field" name="<?php echo $this->option_name; ?>[items][<?php echo $key; ?>][order]" value="<?php echo esc_attr($item['order'] ?? 0); ?>">
+                                            <input type="hidden" class="order-field" name="<?php echo esc_attr($this->option_name); ?>[items][<?php echo esc_attr($key); ?>][order]" value="<?php echo esc_attr($item['order'] ?? 0); ?>">
                                         </div>
-                                        <button type="button" class="scfs-remove-item <?php echo $item['show'] ? 'disabled' : ''; ?>" <?php echo $item['show'] ? 'disabled' : ''; ?>>Delete</button>
+                                        <button type="button" class="scfs-remove-item <?php echo $item['show'] ? 'disabled' : ''; ?>" <?php echo $item['show'] ? 'disabled' : ''; ?>><?php esc_html_e('Delete', 'custom-fields-shortcodes-main'); ?></button>
                                     </div>
                                     <?php endforeach; ?>
                                 </div>
                                 
-                                <button type="button" id="scfs-add-item" class="scfs-add-item">+ Add New Button</button>
+                                <button type="button" id="scfs-add-item" class="scfs-add-item"><?php esc_html_e('+ Add New Button', 'custom-fields-shortcodes-main'); ?></button>
                                 
                                 <div class="scfs-note">
-                                    <strong>💡 Tips:</strong><br>
-                                    • Only ONE button can have Center position (highlighted with pulse effect)<br>
-                                    • To delete a button, first uncheck "Enabled", then click Delete<br>
-                                    • You can use any emoji: 😊, ❤️, 🎉, 📞, 💬, etc.<br>
-                                    • You can use HTML code for custom icons (SVG, Font Awesome, etc.)
+                                    <strong><?php esc_html_e('💡 Tips:', 'custom-fields-shortcodes-main'); ?></strong><br>
+                                    <?php esc_html_e('• Only ONE button can have Center position (highlighted with pulse effect)', 'custom-fields-shortcodes-main'); ?><br>
+                                    <?php esc_html_e('• To delete a button, first uncheck "Enabled", then click Delete', 'custom-fields-shortcodes-main'); ?><br>
+                                    <?php esc_html_e('• You can use any emoji: 😊, ❤️, 🎉, 📞, 💬, etc.', 'custom-fields-shortcodes-main'); ?><br>
+                                    <?php esc_html_e('• You can use HTML code for custom icons (SVG, Font Awesome, etc.)', 'custom-fields-shortcodes-main'); ?>
                                 </div>
                             </div>
                             
-                            <?php submit_button('💾 Save Settings', 'primary'); ?>
+                            <?php submit_button(__('💾 Save Settings', 'custom-fields-shortcodes-main'), 'primary'); ?>
                         </form>
                     </div>
                     
                     <div class="scfs-msb-sidebar">
                         <div class="scfs-card">
-                            <h3>📱 Live Preview</h3>
+                            <h3><?php esc_html_e('📱 Live Preview', 'custom-fields-shortcodes-main'); ?></h3>
                             <div class="scfs-phone-mockup">
                                 <div class="scfs-preview-bar">
-                                    <div class="scfs-preview-item">💬<br>Messenger</div>
-                                    <div class="scfs-preview-item">💚<br>WhatsApp</div>
+                                    <div class="scfs-preview-item">💬<br><?php esc_html_e('Messenger', 'custom-fields-shortcodes-main'); ?></div>
+                                    <div class="scfs-preview-item">💚<br><?php esc_html_e('WhatsApp', 'custom-fields-shortcodes-main'); ?></div>
                                     <div class="scfs-preview-center">📞</div>
                                 </div>
                             </div>
                             <p style="margin-top: 15px; font-size: 12px; color: #666; text-align: center;">
-                                ⚡ The bar appears only on mobile devices
+                                ⚡ <?php esc_html_e('The bar appears only on mobile devices', 'custom-fields-shortcodes-main'); ?>
                             </p>
                         </div>
                         
                         <div class="scfs-card">
-                            <h3>ℹ️ URL Examples</h3>
+                            <h3><?php esc_html_e('ℹ️ URL Examples', 'custom-fields-shortcodes-main'); ?></h3>
                             <ul style="margin: 0; padding-left: 20px; font-size: 13px;">
-                                <li><strong>Facebook:</strong> https://facebook.com/username</li>
-                                <li><strong>Messenger:</strong> https://m.me/username</li>
-                                <li><strong>WhatsApp:</strong> https://wa.me/123456789</li>
-                                <li><strong>Phone:</strong> tel:+123456789</li>
-                                <li><strong>Email:</strong> mailto:email@example.com</li>
-                                <li><strong>Instagram:</strong> https://instagram.com/username</li>
-                                <li><strong>Twitter/X:</strong> https://twitter.com/username</li>
-                                <li><strong>YouTube:</strong> https://youtube.com/@channel</li>
-                                <li><strong>LinkedIn:</strong> https://linkedin.com/in/username</li>
-                                <li><strong>TikTok:</strong> https://tiktok.com/@username</li>
+                                <li><strong><?php esc_html_e('Facebook:', 'custom-fields-shortcodes-main'); ?></strong> https://facebook.com/username</li>
+                                <li><strong><?php esc_html_e('Messenger:', 'custom-fields-shortcodes-main'); ?></strong> https://m.me/username</li>
+                                <li><strong><?php esc_html_e('WhatsApp:', 'custom-fields-shortcodes-main'); ?></strong> https://wa.me/123456789</li>
+                                <li><strong><?php esc_html_e('Phone:', 'custom-fields-shortcodes-main'); ?></strong> tel:+123456789</li>
+                                <li><strong><?php esc_html_e('Email:', 'custom-fields-shortcodes-main'); ?></strong> mailto:email@example.com</li>
+                                <li><strong><?php esc_html_e('Instagram:', 'custom-fields-shortcodes-main'); ?></strong> https://instagram.com/username</li>
+                                <li><strong><?php esc_html_e('Twitter/X:', 'custom-fields-shortcodes-main'); ?></strong> https://twitter.com/username</li>
+                                <li><strong><?php esc_html_e('YouTube:', 'custom-fields-shortcodes-main'); ?></strong> https://youtube.com/@channel</li>
+                                <li><strong><?php esc_html_e('LinkedIn:', 'custom-fields-shortcodes-main'); ?></strong> https://linkedin.com/in/username</li>
+                                <li><strong><?php esc_html_e('TikTok:', 'custom-fields-shortcodes-main'); ?></strong> https://tiktok.com/@username</li>
                             </ul>
                         </div>
                     </div>
@@ -967,33 +1045,33 @@ class MobileSmartBar {
         <div class="scfs-item-row scfs-item-template" style="display:none;">
             <div class="scfs-item-fields">
                 <div class="scfs-item-field">
-                    <label>Enabled</label>
+                    <label><?php esc_html_e('Enabled', 'custom-fields-shortcodes-main'); ?></label>
                     <input type="checkbox" class="show-field" value="1" checked>
                 </div>
                 <div class="scfs-item-field">
-                    <label>Label</label>
-                    <input type="text" class="label-field" placeholder="Button text">
+                    <label><?php esc_html_e('Label', 'custom-fields-shortcodes-main'); ?></label>
+                    <input type="text" class="label-field" placeholder="<?php esc_attr_e('Button text', 'custom-fields-shortcodes-main'); ?>">
                 </div>
                 <div class="scfs-item-field">
-                    <label>URL</label>
+                    <label><?php esc_html_e('URL', 'custom-fields-shortcodes-main'); ?></label>
                     <input type="url" class="url-field" placeholder="https://...">
                 </div>
                 <div class="scfs-item-field">
-                    <label>Position</label>
+                    <label><?php esc_html_e('Position', 'custom-fields-shortcodes-main'); ?></label>
                     <select class="position-field">
-                        <option value="left">Left</option>
-                        <option value="center">Center (Highlighted)</option>
-                        <option value="right">Right</option>
+                        <option value="left"><?php esc_html_e('Left', 'custom-fields-shortcodes-main'); ?></option>
+                        <option value="center"><?php esc_html_e('Center (Highlighted)', 'custom-fields-shortcodes-main'); ?></option>
+                        <option value="right"><?php esc_html_e('Right', 'custom-fields-shortcodes-main'); ?></option>
                     </select>
                 </div>
                 <div class="scfs-item-field">
-                    <label>Icon (HTML, Emoji, or Text)</label>
-                    <textarea class="icon-field" rows="3" placeholder="Enter emoji (👍), HTML code, or text"></textarea>
-                    <div class="scfs-icon-preview icon-preview">No icon</div>
+                    <label><?php esc_html_e('Icon (HTML, Emoji, or Text)', 'custom-fields-shortcodes-main'); ?></label>
+                    <textarea class="icon-field" rows="3" placeholder="<?php esc_attr_e('Enter emoji (👍), HTML code, or text', 'custom-fields-shortcodes-main'); ?>"></textarea>
+                    <div class="scfs-icon-preview icon-preview"><?php esc_html_e('No icon', 'custom-fields-shortcodes-main'); ?></div>
                 </div>
                 <input type="hidden" class="order-field" value="0">
             </div>
-            <button type="button" class="scfs-remove-item">Delete</button>
+            <button type="button" class="scfs-remove-item"><?php esc_html_e('Delete', 'custom-fields-shortcodes-main'); ?></button>
         </div>
         <?php
     }
@@ -1032,20 +1110,20 @@ class MobileSmartBar {
         <div class="scfs-mobile-bar <?php echo esc_attr($theme_class); ?>">
             <?php foreach ($left_items as $item): ?>
                 <a href="<?php echo esc_url($item['url']); ?>" class="scfs-mobile-item" target="_blank" rel="noopener noreferrer">
-                    <?php echo $this->get_icon_html($item['icon']); ?>
+                    <?php echo wp_kses_post( $this->get_icon_html( $item['icon'] ) ); ?>
                     <span><?php echo esc_html($item['label']); ?></span>
                 </a>
             <?php endforeach; ?>
             
             <?php if ($center_item): ?>
                 <a href="<?php echo esc_url($center_item['url']); ?>" class="scfs-mobile-center">
-                    <?php echo $this->get_icon_html($center_item['icon']); ?>
+                    <?php echo wp_kses_post( $this->get_icon_html( $center_item['icon'] ) ); ?>
                 </a>
             <?php endif; ?>
             
             <?php foreach ($right_items as $item): ?>
                 <a href="<?php echo esc_url($item['url']); ?>" class="scfs-mobile-item" target="_blank" rel="noopener noreferrer">
-                    <?php echo $this->get_icon_html($item['icon']); ?>
+                    <?php echo wp_kses_post( $this->get_icon_html( $item['icon'] ) ); ?>
                     <span><?php echo esc_html($item['label']); ?></span>
                 </a>
             <?php endforeach; ?>
