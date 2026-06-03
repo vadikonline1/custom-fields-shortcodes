@@ -1,6 +1,6 @@
 <?php
 namespace SCFS;
-
+if ( ! defined( 'ABSPATH' ) ) exit;
 if (!class_exists('WP_List_Table')) {
     require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 }
@@ -62,9 +62,9 @@ class CustomFieldsTable extends \WP_List_Table {
         $this->_column_headers = [$this->get_columns(), [], $this->get_sortable_columns()];
         $this->items = $data;
         
-        if ($this->current_action() && isset($_POST['id'])) {
-            $this->process_bulk_action();
-        }
+        if ( $this->current_action() ) {
+			$this->process_bulk_action();
+		}
     }
     
     public function column_cb($item) {
@@ -161,47 +161,61 @@ class CustomFieldsTable extends \WP_List_Table {
     }
     
     public function process_bulk_action() {
-        if (empty($this->current_action())) return;
-        
-        if (!isset($_REQUEST['_wpnonce']) || !wp_verify_nonce($_REQUEST['_wpnonce'], 'bulk-' . $this->_args['plural'])) {
-            return;
-        }
-        
-        if (!isset($_POST['id']) || empty($_POST['id'])) {
-            return;
-        }
-        
-        $ids = is_array($_POST['id']) ? $_POST['id'] : [$_POST['id']];
-        $ids = array_map('sanitize_text_field', $ids);
-        
-        switch ($this->current_action()) {
-            case 'trash':
-                foreach ($ids as $id) {
-                    $this->custom_fields->trash($id);
-                }
-                break;
-                
-            case 'restore':
-                foreach ($ids as $id) {
-                    $this->custom_fields->restore($id);
-                }
-                break;
-                
-            case 'delete_permanently':
-                foreach ($ids as $id) {
-                    $this->custom_fields->delete($id);
-                }
-                break;
-        }
-        
-        $redirect_url = admin_url('admin.php?page=scfs-custom-fields');
-        if ($this->is_trash) {
-            $redirect_url .= '&action=trash';
-        }
-        
-        wp_redirect($redirect_url);
-        exit;
-    }
+
+		if ( empty( $this->current_action() ) ) {
+			return;
+		}
+
+		$nonce = isset( $_REQUEST['_wpnonce'] )
+			? sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) )
+			: '';
+
+		if (
+			empty( $nonce ) ||
+			! wp_verify_nonce( $nonce, 'bulk-' . $this->_args['plural'] )
+		) {
+			return;
+		}
+
+		if ( empty( $_POST['id'] ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized via absint().
+		$raw_ids = isset( $_POST['id'] ) ? wp_unslash( $_POST['id'] ) : array();
+
+		$ids = array_map( 'absint', (array) $raw_ids );
+
+		switch ( $this->current_action() ) {
+
+			case 'trash':
+				foreach ( $ids as $id ) {
+					$this->custom_fields->trash( $id );
+				}
+				break;
+
+			case 'restore':
+				foreach ( $ids as $id ) {
+					$this->custom_fields->restore( $id );
+				}
+				break;
+
+			case 'delete_permanently':
+				foreach ( $ids as $id ) {
+					$this->custom_fields->delete( $id );
+				}
+				break;
+		}
+
+		$redirect_url = admin_url( 'admin.php?page=scfs-custom-fields' );
+
+		if ( $this->is_trash ) {
+			$redirect_url .= '&action=trash';
+		}
+
+		wp_safe_redirect( $redirect_url );
+		exit;
+	}
     
     public function no_items() {
         if ($this->is_trash) {
